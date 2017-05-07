@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Photo Index</title>
+</head>
+<script src="node_modules/vue/dist/vue.min.js"></script>
+<script src="node_modules/vue-resource/dist/vue-resource.min.js"></script>
+<link rel="stylesheet" href="css/photoindex.css">
+<body>
+
+<div id="app">
+    <div class="title">
+    {{ title }}
+    </div>
+
+    <div v-for="img in images" class="photo" :style="{ backgroundImage: 'url(' + '/images/' + img.name + ')' }">
+    </div>
+
+</div>
+
+<script src="js/photoindex.js"></script>
+
+</body>
+</html>
