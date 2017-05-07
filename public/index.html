@@ -10,15 +10,20 @@
 
 <div id="app">
     <div class="title">
-    {{ title }}
+        {{ title }}
     </div>
 
-    <div v-for="img in images" class="photo" :style="{ backgroundImage: 'url(' + '/images/' + img.name + ')' }">
+    <div v-for="img in images" class="photo"
+         :style="{ backgroundImage: 'url(\'' + '/images/' + img.path + '\')' }">
+        <span class="photoText">{{img.name}}</span>
     </div>
 
 </div>
 
+<script src="node_modules/socket.io-client/dist/socket.io.js"></script>
+<script>
+	var socket = io();
+</script>
 <script src="js/photoindex.js"></script>
-
 </body>
 </html>

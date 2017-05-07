@@ -12,3 +12,8 @@ body {
 	display: inline-block;
 	margin: 0;
 }
+
+.photoText {
+	background-color: rgba(0, 0, 0, 0.3);
+	font-size: smaller;
+}
