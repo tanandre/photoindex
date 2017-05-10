@@ -5,30 +5,44 @@ var cache = require('memory-cache');
 var mysql      = require('mysql');
 var connection = mysql.createConnection({
 	host     : 'kanji',
-	user     : 'root',
-	password : 'appelflap',
+	user     : 'photoindex',
+	password : 'dc0b5jjF7bNjarkA',
 	database : 'photoindex'
 });
 
-connection.connect(function() {
-	var sqlCreatePhotoTable = "CREATE TABLE photo ( id INT NOT NULL , date DATE NULL DEFAULT NULL , path VARCHAR NOT NULL , description VARCHAR NULL , PRIMARY KEY (id), INDEX IX_DATE (date))";
-	connection.query(sqlCreatePhotoTable, function (err, result) {
-		if (err) throw err;
-		console.log("Table created");
-	});
+function createDbHandle(logMessage) {
+	return function(error, result) {
+		if (error) {
+			throw error;
+		}
+		console.log(logMessage);
+	};
+}
+
+connection.connect(function(err) {
+	if (err) {
+		throw err;
+	}
+	console.log("Connnection with DB established");
+
+	var sqlCreatePhotoTable = "CREATE TABLE if not exists photoindex.photo ( id INT NOT NULL , date DATE NULL DEFAULT NULL , path VARCHAR(255) NOT NULL , description VARCHAR(255) NULL , PRIMARY KEY (id), INDEX IX_DATE (date))";
+	var sqlCreateTagTable = "CREATE TABLE if not exists photoindex.tag ( id INT NOT NULL , description VARCHAR(255) NOT NULL , PRIMARY KEY (id))";
+// 	var sqlCreatePhotoTable = "CREATE TABLE if not exists photoindex.photo ( id INT NOT NULL , date DATE NULL DEFAULT NULL , path VARCHAR(255) NOT NULL )";
+	connection.query(sqlCreatePhotoTable, createDbHandle('table photo created'));
+	connection.query(sqlCreateTagTable, createDbHandle('table tag created'));
 });
 
 /*
 photo (id, date, path, description)
 photo_tag (photoid, tagid)
 tag (id, name)
-*/
+
 connection.query('SELECT * from photo', function (error, results, fields) {
 	if (error) throw error;
 	console.log('The solution is: ', results[0].solution);
 });
-
-connection.end();
+ */
+//connection.end();
 
 
 
