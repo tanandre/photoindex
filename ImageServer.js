@@ -1,20 +1,53 @@
 var getExif = require('exif-async');
 var express = require("express");
+var cache = require('memory-cache');
+
+var mysql      = require('mysql');
+var connection = mysql.createConnection({
+	host     : 'kanji',
+	user     : 'root',
+	password : 'appelflap',
+	database : 'photoindex'
+});
+
+connection.connect(function() {
+	var sqlCreatePhotoTable = "CREATE TABLE photo ( id INT NOT NULL , date DATE NULL DEFAULT NULL , path VARCHAR NOT NULL , description VARCHAR NULL , PRIMARY KEY (id), INDEX IX_DATE (date))";
+	connection.query(sqlCreatePhotoTable, function (err, result) {
+		if (err) throw err;
+		console.log("Table created");
+	});
+});
+
+/*
+photo (id, date, path, description)
+photo_tag (photoid, tagid)
+tag (id, name)
+*/
+connection.query('SELECT * from photo', function (error, results, fields) {
+	if (error) throw error;
+	console.log('The solution is: ', results[0].solution);
+});
+
+connection.end();
+
+
+
 var app = express();
 var server = app.listen(1337, function() {
 	console.log('Example app listening on port 1337!')
 });
 
+var isCacheEnabled = true;
 var io = require('socket.io').listen(server);
 
 var fs = require('fs');
 var path = require('path');
 
 var imageDir = "c:\\andre\\afdruk\\";
-var nfsimageDir = "\\\\kanji\\photo\\";
+var nfsimageDir = "\\\\kanji\\photo\\2009\\2009-04-30 Middelkerke\\";
+//var nfsimageDir = "\\\\kanji\\photo\\collage\\";
 
-var diretoryTreeToObj = function(dir, done) {
-	var results = [];
+var diretoryTreeToObj = function(dir, done, results) {
 
 	function isImageFile(file) {
 		return file.toLowerCase().indexOf('.jpg') !== -1 || file.toLowerCase().indexOf('.jpeg') !== -1
@@ -39,23 +72,16 @@ var diretoryTreeToObj = function(dir, done) {
 			file = path.resolve(dir, file);
 			fs.stat(file, function(err, stat) {
 				if (stat && stat.isDirectory()) {
-					diretoryTreeToObj(file, function(err, res) {
-						/*results.push({
-						 name: path.basename(file),
-						 type: 'folder',
-						 children: res
-						 });*/
+					diretoryTreeToObj(file, function() {
 						if (!--pending) {
 							done(null, results);
 						}
-					});
+					}, results);
 				} else {
 					if (isImageFile(file)) {
+						console.log('selecting image file: ', file);
+
 						results.push(file);
-						// results.push({
-						// 	type: 'file',
-						// 	name: file.replace(imageDir, '')
-						// });
 					}
 					if (!--pending) {
 						done(null, results);
@@ -66,17 +92,22 @@ var diretoryTreeToObj = function(dir, done) {
 	});
 };
 
-app.get("/images/:image", function(request, response) {
-	var path = imageDir + request.params.image;
-
-	//console.log("fetching image: ", path);
-	response.sendFile(path);
-});
-
-app.get("/listing", function(request, response) {
+function getImageList(response, dir, requestUrl) {
 	response.setHeader('Content-Type', 'application/json');
 
-	diretoryTreeToObj(imageDir, function(err, res) {
+	var cachedResponse = cache.get(requestUrl);
+	if (isCacheEnabled && cachedResponse) {
+		console.log('*** returning cached response ***');
+		response.write(cachedResponse);
+		response.send();
+		return;
+	}
+
+	console.log('*** start selecting image files ***');
+	console.time('readFiles');
+	diretoryTreeToObj(dir, function(err, res) {
+		console.log('*** done selecting image files ***', res.length);
+		console.timeEnd('readFiles');
 		if (err) {
 			response.write(JSON.stringify(err));
 		}
@@ -84,19 +115,14 @@ app.get("/listing", function(request, response) {
 		var count = res.length;
 		var result = [];
 
-		function exifDataLoaded(file, exif) {
-			result.push({
-				path: file.replace(imageDir, ''),
-				name: path.basename(file),
-				attr: exif
-			});
-
-			if (--count < 1) {
+		function exifDataLoaded() {
+			if (count < 1) {
+				console.timeEnd('readExif');
 				result.sort(function(a, b){
 					function getDate(f) {
 						if (f.attr.exif === undefined || f.attr.exif.CreateDate === undefined) {
 							if (f.name.match(/(19|20)\d{6}/)) {
-								console.log('match date!', f.name, /((?:19|20)\d{6})/.exec(f.name)[1]);
+//								console.log('match date!', f.name, /((?:19|20)\d{6})/.exec(f.name)[1]);
 
 								return /((?:19|20)\d{6})/.exec(f.name)[1];
 							}
@@ -107,35 +133,51 @@ app.get("/listing", function(request, response) {
 
 					return getDate(b).localeCompare(getDate(a));
 				});
+
+				cache.put(requestUrl, JSON.stringify(result));
+
 				response.write(JSON.stringify(result, null, 3));
 				response.send();
 			}
 		}
 
+		console.time('readExif');
 		res.forEach(function(file) {
+			//console.log('reading exif data for file: ', file);
 			getExif(file).then(function(exif) {
-				exifDataLoaded(file, exif)
+				count--;
+			//	console.log('exif data loaded for file: ', file, count);
+				result.push({
+					path: file.replace(dir, '').replace('\\', '/'),
+					name: path.basename(file),
+					attr: exif
+				});
+
+				exifDataLoaded();
 			}, function(err) {
-				console.error(err);
-				--count;
+				count--;
+				result.push({
+					path: file.replace(dir, '').replace('\\', '/'),
+					name: path.basename(file),
+					attr: {}
+				});
+				console.error(err, count);
+				exifDataLoaded();
 			});
 		});
-	});
+	}, []);
+}
 
+
+app.use('/images', express.static(imageDir));
+app.use('/imagesnfs', express.static(nfsimageDir));
+
+app.get("/listing", function(request, response) {
+	getImageList(response, imageDir, '/listing');
 });
 
 app.get("/listingnfs", function(request, response) {
-	response.setHeader('Content-Type', 'application/json');
-
-	diretoryTreeToObj(nfsimageDir, function(err, res) {
-		if (err) {
-			response.write(JSON.stringify(err));
-		}
-
-		response.write(JSON.stringify(res, null, 3));
-		response.send();
-	});
-
+	getImageList(response, nfsimageDir, '/listingnfs');
 });
 
 app.use(express.static('public'));

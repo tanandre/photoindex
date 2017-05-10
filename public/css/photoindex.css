@@ -16,4 +16,9 @@ body {
 .photoText {
 	background-color: rgba(0, 0, 0, 0.3);
 	font-size: smaller;
+	text-align: center;
+}
+
+.action {
+	cursor: pointer;
 }

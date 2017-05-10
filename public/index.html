@@ -13,9 +13,9 @@
         {{ title }}
     </div>
 
-    <div v-for="img in images" class="photo"
-         :style="{ backgroundImage: 'url(\'' + '/images/' + img.path + '\')' }">
-        <span class="photoText">{{img.name}}</span>
+    <div v-for="img in images" class="photo action"
+         :style="{ backgroundImage: 'url(\'' + '/images/' + img.path + '\')' }" v-on:click="displayPhoto(img)">
+        <div class="photoText">{{img.name}}</div>
     </div>
 
 </div>

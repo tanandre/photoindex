@@ -13,6 +13,11 @@ var app = new Vue({
 			this.$http.get('/listing').then(function(response) {
 				this.images = response.body;
 			});
+		},
+
+		displayPhoto: function(img) {
+			console.log('display 1 !');
 		}
+
 	}
 });
