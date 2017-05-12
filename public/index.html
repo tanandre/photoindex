@@ -14,8 +14,8 @@
     </div>
 
     <div v-for="img in images" class="photo action"
-         :style="{ backgroundImage: 'url(\'' + '/images/' + img.path + '\')' }" v-on:click="displayPhoto(img)">
-        <div class="photoText">{{img.name}}</div>
+         :style="{ backgroundImage: 'url(\'' + '/photo?path=' + encodeURIComponent(img.path) + '\')' }" v-on:click="displayPhoto(img)">
+        <div class="photoText">{{img.date}}</div>
     </div>
 
 </div>

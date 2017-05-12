@@ -1,50 +1,50 @@
 var getExif = require('exif-async');
 var express = require("express");
 var cache = require('memory-cache');
+var dbIO = require('./server/DatabaseIO');
+var photoCrawler = require('./server/PhotoCrawler');
 
-var mysql      = require('mysql');
-var connection = mysql.createConnection({
-	host     : 'kanji',
-	user     : 'photoindex',
-	password : 'dc0b5jjF7bNjarkA',
-	database : 'photoindex'
-});
-
-function createDbHandle(logMessage) {
-	return function(error, result) {
-		if (error) {
-			throw error;
-		}
-		console.log(logMessage);
-	};
+function isImageFile(file) {
+	return file.toLowerCase().indexOf('.jpg') !== -1 || file.toLowerCase().indexOf('.jpeg') !== -1
 }
 
-connection.connect(function(err) {
+function readDateFromFile(file, done) {
+	fs.stat(file, function(err, stats) {
+		if (err) {
+			console.error(err);
+			return;
+		}
+		done(stats.mtime);
+	});
+}
+
+dbIO.createTables(function(err, connection) {
 	if (err) {
-		throw err;
+		console.error(err);
+		return;
 	}
-	console.log("Connnection with DB established");
+	photoCrawler.indexPhotosInFolder(imageDir, function(file) {
+		if (!isImageFile(file)) {
+			return;
+		}
 
-	var sqlCreatePhotoTable = "CREATE TABLE if not exists photoindex.photo ( id INT NOT NULL , date DATE NULL DEFAULT NULL , path VARCHAR(255) NOT NULL , description VARCHAR(255) NULL , PRIMARY KEY (id), INDEX IX_DATE (date))";
-	var sqlCreateTagTable = "CREATE TABLE if not exists photoindex.tag ( id INT NOT NULL , description VARCHAR(255) NOT NULL , PRIMARY KEY (id))";
-// 	var sqlCreatePhotoTable = "CREATE TABLE if not exists photoindex.photo ( id INT NOT NULL , date DATE NULL DEFAULT NULL , path VARCHAR(255) NOT NULL )";
-	connection.query(sqlCreatePhotoTable, createDbHandle('table photo created'));
-	connection.query(sqlCreateTagTable, createDbHandle('table tag created'));
+		console.log('indexing file', file);
+		getExif(file).then(function(exif) {
+			if (exif.exif.CreateDate) {
+				dbIO.addPhoto(file, exif.exif.CreateDate);
+			} else {
+				readDateFromFile(file, function(date) {
+					dbIO.addPhoto(file, date);
+				});
+			}
+		}, function(err) {
+			console.error(err);
+			readDateFromFile(file, function(date) {
+				dbIO.addPhoto(file, date);
+			});
+		});
+	});
 });
-
-/*
-photo (id, date, path, description)
-photo_tag (photoid, tagid)
-tag (id, name)
-
-connection.query('SELECT * from photo', function (error, results, fields) {
-	if (error) throw error;
-	console.log('The solution is: ', results[0].solution);
-});
- */
-//connection.end();
-
-
 
 var app = express();
 var server = app.listen(1337, function() {
@@ -59,13 +59,10 @@ var path = require('path');
 
 var imageDir = "c:\\andre\\afdruk\\";
 var nfsimageDir = "\\\\kanji\\photo\\2009\\2009-04-30 Middelkerke\\";
+var nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
 //var nfsimageDir = "\\\\kanji\\photo\\collage\\";
 
 var diretoryTreeToObj = function(dir, done, results) {
-
-	function isImageFile(file) {
-		return file.toLowerCase().indexOf('.jpg') !== -1 || file.toLowerCase().indexOf('.jpeg') !== -1
-	}
 
 	fs.readdir(dir, function(err, list) {
 		if (err) {
@@ -93,7 +90,7 @@ var diretoryTreeToObj = function(dir, done, results) {
 					}, results);
 				} else {
 					if (isImageFile(file)) {
-						console.log('selecting image file: ', file);
+						// console.log('selecting image file: ', file);
 
 						results.push(file);
 					}
@@ -132,17 +129,17 @@ function getImageList(response, dir, requestUrl) {
 		function exifDataLoaded() {
 			if (count < 1) {
 				console.timeEnd('readExif');
-				result.sort(function(a, b){
+				result.sort(function(a, b) {
 					function getDate(f) {
 						if (f.attr.exif === undefined || f.attr.exif.CreateDate === undefined) {
 							if (f.name.match(/(19|20)\d{6}/)) {
-//								console.log('match date!', f.name, /((?:19|20)\d{6})/.exec(f.name)[1]);
+								//								console.log('match date!', f.name, /((?:19|20)\d{6})/.exec(f.name)[1]);
 
 								return /((?:19|20)\d{6})/.exec(f.name)[1];
 							}
 							return "1";
 						}
-						return f.attr.exif.CreateDate.replace(/\D/g,'');
+						return f.attr.exif.CreateDate.replace(/\D/g, '');
 					}
 
 					return getDate(b).localeCompare(getDate(a));
@@ -160,7 +157,7 @@ function getImageList(response, dir, requestUrl) {
 			//console.log('reading exif data for file: ', file);
 			getExif(file).then(function(exif) {
 				count--;
-			//	console.log('exif data loaded for file: ', file, count);
+				//	console.log('exif data loaded for file: ', file, count);
 				result.push({
 					path: file.replace(dir, '').replace('\\', '/'),
 					name: path.basename(file),
@@ -182,12 +179,28 @@ function getImageList(response, dir, requestUrl) {
 	}, []);
 }
 
+app.use('/photo', function(request, res) {
+	var file = fs.readFileSync(request.query.path, 'binary');
+	res.setHeader('Content-Type', 'image/jpeg');
+	res.write(file, 'binary');
+	res.end();
+});
 
 app.use('/images', express.static(imageDir));
 app.use('/imagesnfs', express.static(nfsimageDir));
 
 app.get("/listing", function(request, response) {
-	getImageList(response, imageDir, '/listing');
+	response.setHeader('Content-Type', 'application/json');
+	dbIO.readAllPhotos(function(err, rows) {
+		if (err) {
+			console.error(err);
+			return;
+		}
+		response.write(JSON.stringify(rows));
+		response.send();
+
+	});
+	//getImageList(response, imageDir, '/listing');
 });
 
 app.get("/listingnfs", function(request, response) {
