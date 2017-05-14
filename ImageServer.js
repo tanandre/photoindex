@@ -1,3 +1,4 @@
+
 var getExif = require('exif-async');
 var express = require("express");
 var cache = require('memory-cache');
@@ -14,7 +15,18 @@ function readDateFromFile(file, done) {
 			console.error(err);
 			return;
 		}
-		done(stats.mtime);
+		var fileName = path.basename(file);
+		var dates = [stats.ctime, stats.mtime];
+		if (fileName.match(/(19|20)\d{6}/)) {
+			var dateStr = /((?:19|20)\d{6})/.exec(fileName)[1];
+			// TODO add time parsing to improve precision of date
+			//console.log(dateStr.slice(0, 4) + "-" + dateStr.slice(4, 6) + "-" + dateStr.slice(6), fileName);
+			dates.push(new Date(Date.parse(
+				dateStr.slice(0, 4) + "-" + dateStr.slice(4, 6) + "-" + dateStr.slice(8))));
+		}
+
+		dates.sort();
+		done(dates[0]);
 	});
 }
 
@@ -24,21 +36,23 @@ dbIO.createTables(function(err, connection) {
 		return;
 	}
 	photoCrawler.indexPhotosInFolder(imageDir, function(file) {
+		process.stdout.write(".");
 		if (!isImageFile(file)) {
 			return;
 		}
 
-		console.log('indexing file', file);
 		getExif(file).then(function(exif) {
 			if (exif.exif.CreateDate) {
 				dbIO.addPhoto(file, exif.exif.CreateDate);
 			} else {
+				console.error('exif header present but no CreateDate attribute, reading date from file',
+					file);
 				readDateFromFile(file, function(date) {
 					dbIO.addPhoto(file, date);
 				});
 			}
 		}, function(err) {
-			console.error(err);
+			console.error('no exif header found reading date from file', file);
 			readDateFromFile(file, function(date) {
 				dbIO.addPhoto(file, date);
 			});
@@ -60,6 +74,8 @@ var path = require('path');
 var imageDir = "c:\\andre\\afdruk\\";
 var nfsimageDir = "\\\\kanji\\photo\\2009\\2009-04-30 Middelkerke\\";
 var nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
+var nfsimageDir2016 = "\\\\kanji\\photo\\2016\\";
+var nfsimageDirOldPhone = "\\\\kanji\\photo\\phone\\phonedata";
 //var nfsimageDir = "\\\\kanji\\photo\\collage\\";
 
 var diretoryTreeToObj = function(dir, done, results) {
@@ -179,18 +195,35 @@ function getImageList(response, dir, requestUrl) {
 	}, []);
 }
 
-app.use('/photo', function(request, res) {
+app.use('/photo', function(request, responseres) {
 	var file = fs.readFileSync(request.query.path, 'binary');
-	res.setHeader('Content-Type', 'image/jpeg');
-	res.write(file, 'binary');
-	res.end();
+	responseres.setHeader('Content-Type', 'image/jpeg');
+	responseres.write(file, 'binary');
+	responseres.end();
 });
 
-app.use('/images', express.static(imageDir));
-app.use('/imagesnfs', express.static(nfsimageDir));
+app.use('/exif', function(request, response) {
+	var file = fs.readFileSync(request.query.path, 'binary');
+	response.setHeader('Content-Type', 'application/json');
+	getExif(file, function(err, exif) {
+		if (err) {
+			throw err;
+		}
+		response.write(JSON.stringify(exif));
+		response.end();
+	});
+});
 
 app.get("/listing", function(request, response) {
 	response.setHeader('Content-Type', 'application/json');
+	var cachedResponse = cache.get('/listing');
+	if (isCacheEnabled && cachedResponse) {
+		console.log('*** returning cached response ***');
+		response.write(cachedResponse);
+		response.send();
+		return;
+	}
+
 	dbIO.readAllPhotos(function(err, rows) {
 		if (err) {
 			console.error(err);
@@ -200,11 +233,6 @@ app.get("/listing", function(request, response) {
 		response.send();
 
 	});
-	//getImageList(response, imageDir, '/listing');
-});
-
-app.get("/listingnfs", function(request, response) {
-	getImageList(response, nfsimageDir, '/listingnfs');
 });
 
 app.use(express.static('public'));

@@ -5,20 +5,28 @@
 </head>
 <script src="node_modules/vue/dist/vue.min.js"></script>
 <script src="node_modules/vue-resource/dist/vue-resource.min.js"></script>
+<!--<script type="text/javascript"-->
+        <!--src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>-->
+<!--<script src="node_modules/tether/dist/js/tether.min.js"></script>-->
+<!--<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>-->
+<!--<script src="node_modules/bootstrap-vue/dist/bootstrap-vue.js"></script>-->
+<!--<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">-->
+<!--<link rel="stylesheet" href="node_modules/bootstrap-vue/dist/bootstrap-vue.css">-->
 <link rel="stylesheet" href="css/photoindex.css">
 <body>
 
-<div id="app">
+<div id="app" class="mainDiv" :class="selectedImage === null ? 'mainThumbnailView' : 'mainPhotoView'">
+    <photo-detail-view v-if="selectedImage !== null" v-on:close="selectedImage=null" v-bind:photo="selectedImage"></photo-detail-view>
     <div class="title">
         {{ title }}
     </div>
 
-    <div v-for="img in images" class="photo action"
-         :style="{ backgroundImage: 'url(\'' + '/photo?path=' + encodeURIComponent(img.path) + '\')' }" v-on:click="displayPhoto(img)">
-        <div class="photoText">{{img.date}}</div>
-    </div>
+    <thumbnail v-for="img in images"  v-bind:photo="img" :key="img.id"
+               v-on:click.native="displayPhoto(img)"></thumbnail>
 
 </div>
+
+<!-- Modal Component -->
 
 <script src="node_modules/socket.io-client/dist/socket.io.js"></script>
 <script>

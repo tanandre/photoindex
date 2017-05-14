@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "async": "^2.4.0",
+    "bootstrap-vue": "^0.15.6",
     "exif-async": "^1.0.2",
     "express": "^4.15.2",
     "memory-cache": "^0.1.6",

@@ -1,7 +1,6 @@
 (function() {
 	var fs = require('fs');
 	var path = require('path');
-	var getExif = require('exif-async');
 
 	var crawl = function(dir, done, fnc) {
 		var results = [];
@@ -37,7 +36,7 @@
 
 	module.exports.indexPhotosInFolder = function(folderToIndex, fnc) {
 		crawl(folderToIndex, function(err, results) {
-			console.log('done indexing', results.length);
+			console.log('*** done indexing ***', results.length);
 		}, fnc)
 	};
 
