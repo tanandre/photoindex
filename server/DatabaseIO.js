@@ -29,7 +29,9 @@
 			connection.query("DROP TABLE tag");
 			connection.query("DROP TABLE photo");
 
-			var sqlCreatePhotoTable = "CREATE TABLE if not exists photoindex.photo ( id INT NOT NULL AUTO_INCREMENT, date DATETIME, path VARCHAR(255) NOT NULL , description VARCHAR(255) NULL , PRIMARY KEY (id), INDEX IX_DATE (date), UNIQUE(path))";
+			var sqlCreatePhotoTable = "CREATE TABLE if not exists photoindex.photo " +
+				"( id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, path VARCHAR(255) NOT NULL, description VARCHAR(255) NULL, " +
+				"PRIMARY KEY (id), INDEX IX_DATE (date), UNIQUE(path))";
 			var sqlCreateTagTable = "CREATE TABLE if not exists photoindex.tag ( id INT NOT NULL AUTO_INCREMENT, description VARCHAR(255) NOT NULL , PRIMARY KEY (id))";
 			var sqlCreateLinkTable = "CREATE TABLE if not exists photoindex.photo_tag ( photoid INT NOT NULL , tagid INT NOT NULL, INDEX IX_PHOTO_ID (photoid), INDEX IX_TAG_ID (tagid), FOREIGN KEY (photoid) REFERENCES photo(id), FOREIGN KEY (tagid) REFERENCES tag(id))";
 			connection.query(sqlCreatePhotoTable, createDbHandle('table photo created', function() {
@@ -59,6 +61,17 @@
 		var sql = "SELECT * FROM photo ORDER BY date DESC";
 		connection.query(sql, function(err, rows) {
 			done(err, rows);
+		});
+	};
+
+	module.exports.readPhotoById = function(id, done) {
+		var sql = "SELECT * FROM photo where id = " + id;
+		connection.query(sql, function(err, rows) {
+			if (rows.length !== 1) {
+				done('incorrect ID photo not found: ' + id);
+			} else {
+				done(err, rows[0]);
+			}
 		});
 	};
 }());

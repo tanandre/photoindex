@@ -1,9 +1,22 @@
-
+var fs = require('fs');
+var path = require('path');
 var getExif = require('exif-async');
 var express = require("express");
 var cache = require('memory-cache');
+var sharp = require('sharp');
 var dbIO = require('./server/DatabaseIO');
 var photoCrawler = require('./server/PhotoCrawler');
+
+var isCacheEnabled = true;
+var imageDir = "c:\\andre\\afdruk\\";
+var tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
+var nfsimageDir = "\\\\kanji\\photo\\2009\\2009-04-30 Middelkerke\\";
+var nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
+var nfsimageDir2016 = "\\\\kanji\\photo\\2016\\";
+var nfsimageDirOldPhone = "\\\\kanji\\photo\\phone\\phonedata";
+//var nfsimageDir = "\\\\kanji\\photo\\collage\\";
+
+var app = express();
 
 function isImageFile(file) {
 	return file.toLowerCase().indexOf('.jpg') !== -1 || file.toLowerCase().indexOf('.jpeg') !== -1
@@ -40,7 +53,6 @@ dbIO.createTables(function(err, connection) {
 		if (!isImageFile(file)) {
 			return;
 		}
-
 		getExif(file).then(function(exif) {
 			if (exif.exif.CreateDate) {
 				dbIO.addPhoto(file, exif.exif.CreateDate);
@@ -60,157 +72,72 @@ dbIO.createTables(function(err, connection) {
 	});
 });
 
-var app = express();
 var server = app.listen(1337, function() {
 	console.log('Example app listening on port 1337!')
 });
 
-var isCacheEnabled = true;
-var io = require('socket.io').listen(server);
+app.use(express.static('public'));
+app.use('/node_modules', express.static('node_modules'));
 
-var fs = require('fs');
-var path = require('path');
-
-var imageDir = "c:\\andre\\afdruk\\";
-var nfsimageDir = "\\\\kanji\\photo\\2009\\2009-04-30 Middelkerke\\";
-var nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
-var nfsimageDir2016 = "\\\\kanji\\photo\\2016\\";
-var nfsimageDirOldPhone = "\\\\kanji\\photo\\phone\\phonedata";
-//var nfsimageDir = "\\\\kanji\\photo\\collage\\";
-
-var diretoryTreeToObj = function(dir, done, results) {
-
-	fs.readdir(dir, function(err, list) {
-		if (err) {
-			return done(err);
-		}
-
-		var pending = list.length;
-
-		if (!pending) {
-			return done(null, {
-				name: path.basename(dir),
-				type: 'folder',
-				children: results
-			});
-		}
-
-		list.forEach(function(file) {
-			file = path.resolve(dir, file);
-			fs.stat(file, function(err, stat) {
-				if (stat && stat.isDirectory()) {
-					diretoryTreeToObj(file, function() {
-						if (!--pending) {
-							done(null, results);
-						}
-					}, results);
-				} else {
-					if (isImageFile(file)) {
-						// console.log('selecting image file: ', file);
-
-						results.push(file);
-					}
-					if (!--pending) {
-						done(null, results);
-					}
-				}
-			});
-		});
-	});
-};
-
-function getImageList(response, dir, requestUrl) {
-	response.setHeader('Content-Type', 'application/json');
-
-	var cachedResponse = cache.get(requestUrl);
-	if (isCacheEnabled && cachedResponse) {
-		console.log('*** returning cached response ***');
-		response.write(cachedResponse);
-		response.send();
-		return;
-	}
-
-	console.log('*** start selecting image files ***');
-	console.time('readFiles');
-	diretoryTreeToObj(dir, function(err, res) {
-		console.log('*** done selecting image files ***', res.length);
-		console.timeEnd('readFiles');
-		if (err) {
-			response.write(JSON.stringify(err));
-		}
-
-		var count = res.length;
-		var result = [];
-
-		function exifDataLoaded() {
-			if (count < 1) {
-				console.timeEnd('readExif');
-				result.sort(function(a, b) {
-					function getDate(f) {
-						if (f.attr.exif === undefined || f.attr.exif.CreateDate === undefined) {
-							if (f.name.match(/(19|20)\d{6}/)) {
-								//								console.log('match date!', f.name, /((?:19|20)\d{6})/.exec(f.name)[1]);
-
-								return /((?:19|20)\d{6})/.exec(f.name)[1];
-							}
-							return "1";
-						}
-						return f.attr.exif.CreateDate.replace(/\D/g, '');
-					}
-
-					return getDate(b).localeCompare(getDate(a));
-				});
-
-				cache.put(requestUrl, JSON.stringify(result));
-
-				response.write(JSON.stringify(result, null, 3));
-				response.send();
-			}
-		}
-
-		console.time('readExif');
-		res.forEach(function(file) {
-			//console.log('reading exif data for file: ', file);
-			getExif(file).then(function(exif) {
-				count--;
-				//	console.log('exif data loaded for file: ', file, count);
-				result.push({
-					path: file.replace(dir, '').replace('\\', '/'),
-					name: path.basename(file),
-					attr: exif
-				});
-
-				exifDataLoaded();
-			}, function(err) {
-				count--;
-				result.push({
-					path: file.replace(dir, '').replace('\\', '/'),
-					name: path.basename(file),
-					attr: {}
-				});
-				console.error(err, count);
-				exifDataLoaded();
-			});
-		});
-	}, []);
+function setCacheHeaders(response) {
+	// response.setHeader("Cache-Control", "public, max-age=31536000");
+	// response.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
 }
 
-app.use('/photo', function(request, responseres) {
-	var file = fs.readFileSync(request.query.path, 'binary');
-	responseres.setHeader('Content-Type', 'image/jpeg');
-	responseres.write(file, 'binary');
-	responseres.end();
+app.use('/photo/:id/:width', function(request, response) {
+	response.setHeader('Content-Type', 'image/jpeg');
+	setCacheHeaders(response);
+
+	dbIO.readPhotoById(request.params.id, function(err, row) {
+		// TODO if original photo is smaller than requested param don't resize
+		// TODO store exif dimensions in db to optimize calculation?
+		// TODO check if modified since if we are reading the file from the cache
+		// TODO store in cache, use cache headers
+
+		if (request.params.width === undefined) {
+			var file = fs.readFileSync(row.path, 'binary');
+			response.write(file, 'binary');
+			response.end();
+			return;
+		}
+
+		sharp(row.path)
+			.resize(parseInt(request.params.width))
+			.toBuffer()
+			.then(function(data) {
+				response.write(data, 'binary');
+				response.end();
+			}).catch(function(err) {
+			console.log('error resizing: ', err);
+			response.end();
+		});
+	});
 });
 
-app.use('/exif', function(request, response) {
-	var file = fs.readFileSync(request.query.path, 'binary');
-	response.setHeader('Content-Type', 'application/json');
-	getExif(file, function(err, exif) {
-		if (err) {
-			throw err;
-		}
-		response.write(JSON.stringify(exif));
+app.use('/photo/:id', function(request, response) {
+	response.setHeader('Content-Type', 'image/jpeg');
+	setCacheHeaders(response);
+
+	dbIO.readPhotoById(request.params.id, function(err, row) {
+		var file = fs.readFileSync(row.path, 'binary');
+		console.log(file);
+		response.write(file, 'binary');
 		response.end();
+	});
+});
+
+app.use('/exif/:id', function(request, response) {
+	response.setHeader('Content-Type', 'application/json');
+
+	dbIO.readPhotoById(request.params.id, function(err, row) {
+		getExif(row.path).then(function(exif) {
+			response.write(JSON.stringify(exif));
+			response.end();
+		}).catch(function(err) {
+			console.log('error reading exif', row.path);
+			response.write(JSON.stringify({error: err}));
+			response.end();
+		});
 	});
 });
 
@@ -229,17 +156,8 @@ app.get("/listing", function(request, response) {
 			console.error(err);
 			return;
 		}
+		cache.put('/listing', JSON.stringify(rows));
 		response.write(JSON.stringify(rows));
 		response.send();
-
 	});
 });
-
-app.use(express.static('public'));
-
-app.use('/node_modules', express.static('node_modules'));
-
-io.on('connection', function(socket) {
-	console.log('a user connected');
-});
-
