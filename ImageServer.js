@@ -19,7 +19,11 @@ var nfsimageDirOldPhone = "\\\\kanji\\photo\\phone\\phonedata";
 var app = express();
 
 function isImageFile(file) {
-	return file.toLowerCase().indexOf('.jpg') !== -1 || file.toLowerCase().indexOf('.jpeg') !== -1
+	return file.toLowerCase().indexOf('.jpg') !== -1 || file.toLowerCase().indexOf('.jpeg') !== -1;
+}
+
+function isVideoFile(file) {
+	return file.toLowerCase().indexOf('.mp4') !== -1 || file.toLowerCase().indexOf('.avi') !== -1;
 }
 
 function readDateFromFile(file, done) {
@@ -50,25 +54,30 @@ dbIO.createTables(function(err, connection) {
 	}
 	photoCrawler.indexPhotosInFolder(imageDir, function(file) {
 		process.stdout.write(".");
-		if (!isImageFile(file)) {
-			return;
-		}
-		getExif(file).then(function(exif) {
-			if (exif.exif.CreateDate) {
-				dbIO.addPhoto(file, exif.exif.CreateDate);
-			} else {
-				console.error('exif header present but no CreateDate attribute, reading date from file',
-					file);
+		if (isImageFile(file)) {
+			getExif(file).then(function(exif) {
+				if (exif.exif.CreateDate) {
+					dbIO.addPhoto(file, exif.exif.CreateDate);
+				} else {
+					console.error(
+						'exif header present but no CreateDate attribute, reading date from file', file);
+					readDateFromFile(file, function(date) {
+						dbIO.addPhoto(file, date);
+					});
+				}
+			}, function(err) {
+				console.error('no exif header found reading date from file', file);
 				readDateFromFile(file, function(date) {
 					dbIO.addPhoto(file, date);
 				});
-			}
-		}, function(err) {
-			console.error('no exif header found reading date from file', file);
-			readDateFromFile(file, function(date) {
-				dbIO.addPhoto(file, date);
 			});
-		});
+		}
+
+		// if (isVideoFile(file)) {
+		// 	readDateFromFile(file, function(date) {
+		// 		dbIO.addPhoto(file, date);
+		// 	});
+		// }
 	});
 });
 
@@ -120,7 +129,6 @@ app.use('/photo/:id', function(request, response) {
 
 	dbIO.readPhotoById(request.params.id, function(err, row) {
 		var file = fs.readFileSync(row.path, 'binary');
-		console.log(file);
 		response.write(file, 'binary');
 		response.end();
 	});
@@ -131,6 +139,7 @@ app.use('/exif/:id', function(request, response) {
 
 	dbIO.readPhotoById(request.params.id, function(err, row) {
 		getExif(row.path).then(function(exif) {
+			delete exif.thumbnail;
 			response.write(JSON.stringify(exif));
 			response.end();
 		}).catch(function(err) {

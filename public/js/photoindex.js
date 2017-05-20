@@ -4,12 +4,16 @@ function getPhotoUrl(photo, width) {
 
 Vue.component('thumbnail', {
 	props: ['photo'],
-	template: "<div class='photoThumbnail action' :style=\"{ backgroundImage: 'url(/photo/' + photo.id + '/' + 300 + ')' }\"><div class='photoText'>{{photo.date}}</div></div>"
+	template: "<div class='photoThumbnailBox action' :title='photo.date' >" +
+		"<div class='photoThumbnail' :style=\"{ backgroundImage: 'url(/photo/' + photo.id + '/' + 300 + ')' }\"></div>"+
+	"</div>"
 });
 
 Vue.component('photoDetailView', {
 	props: ['photo', 'exif'],
-	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()'></div><div class='exifView'>{{exif}}</div></div>",
+	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()'></div><div class='exifView'>" +
+	"<div>Date: {{photo.date}}</div><div class='exifFile' :title='photo.path'>File: {{photo.path}}</div>" +
+	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
 	methods: {
 		onClick: function() {
 			this.$emit('close');
@@ -19,7 +23,6 @@ Vue.component('photoDetailView', {
 	mounted: function() {
 		var _this = this;
 		document.body.classList.add("noScroll");
-		// TODO display exif data nicely
 		var photoUrl = getPhotoUrl(_this.photo, 1000);
 		var img = new Image();
 		img.onload = function() {
@@ -41,7 +44,9 @@ var app = new Vue({
 	data: {
 		title: 'Andre\'s Album',
 		images: [],
-		selectedImage: null
+		selectedImage: null,
+		currentPage: 1,
+		imagesPerPage: 100
 	},
 	mounted: function() {
 		this.fetchImages();
@@ -54,10 +59,17 @@ var app = new Vue({
 			});
 		},
 
+		onClickThumbnail: function(img) {
+			this.displayPhoto(img);
+		},
+
 		displayPhoto: function(img) {
 			this.selectedImage = img;
 			console.log('selected image', img);
+		},
+		getImagesForPage: function() {
+			var startIndex = (this.currentPage - 1) * this.imagesPerPage;
+			return this.images.slice(startIndex, startIndex + this.imagesPerPage);
 		}
-
 	}
 });

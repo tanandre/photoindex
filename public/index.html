@@ -7,22 +7,26 @@
 <script src="node_modules/vue-resource/dist/vue-resource.min.js"></script>
 <!--<script type="text/javascript"-->
         <!--src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>-->
-<!--<script src="node_modules/tether/dist/js/tether.min.js"></script>-->
+<script src="node_modules/babel-polyfill/dist/polyfill.min.js"></script>
+<script src="node_modules/tether/dist/js/tether.min.js"></script>
 <!--<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>-->
-<!--<script src="node_modules/bootstrap-vue/dist/bootstrap-vue.js"></script>-->
-<!--<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">-->
-<!--<link rel="stylesheet" href="node_modules/bootstrap-vue/dist/bootstrap-vue.css">-->
+<script src="node_modules/bootstrap-vue/dist/bootstrap-vue.js"></script>
+<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+<link rel="stylesheet" href="node_modules/bootstrap-vue/dist/bootstrap-vue.css">
 <link rel="stylesheet" href="css/photoindex.css">
 <body>
 
 <div id="app" class="mainDiv" :class="selectedImage === null ? 'mainThumbnailView' : 'mainPhotoView'">
-    <photo-detail-view v-if="selectedImage !== null" v-on:close="selectedImage=null" v-bind:photo="selectedImage"></photo-detail-view>
-    <div class="title">
-        {{ title }}
-    </div>
 
-    <thumbnail v-for="img in images"  v-bind:photo="img" :key="img.id"
-               v-on:click.native="displayPhoto(img)"></thumbnail>
+    <photo-detail-view v-if="selectedImage !== null" v-on:close="selectedImage=null" v-bind:photo="selectedImage" @keyup.right="selectNext()"></photo-detail-view>
+    <div class="title">
+        {{ title }} ({{images.length}})
+    </div>
+    <b-pagination v-if="imagesPerPage < images.length" size="sm" :total-rows="images.length" v-model="currentPage" :per-page="imagesPerPage" limit="6">
+    </b-pagination>
+
+    <thumbnail v-for="img in getImagesForPage()"  v-bind:photo="img" :key="img.id"
+               v-on:click.native="onClickThumbnail(img)"></thumbnail>
 
 </div>
 

@@ -1,18 +1,52 @@
 body {
 	background-color: rgb(43, 43, 43);
 	color: rgb(223, 223, 223);
-	font-family: "Courier New";
+	font-family: "Verdana";
 	padding: 0;
 	margin: 0;
 }
 
-.photoThumbnail {
-	width: 200px;
+
+@media only screen and (max-width : 480px) {
+	.photoThumbnailBox {
+		width: calc(100%/3);
+	}
+}
+
+@media only screen and (max-width : 650px) and (min-width : 481px) {
+	.photoThumbnailBox {
+		width: calc(100%/4);
+	}
+}
+
+@media only screen and (max-width : 1024px) and (min-width : 481px) {
+	.photoThumbnailBox {
+		width: calc(100%/5);
+	}
+}
+
+@media only screen and (min-width : 1025px) {
+	.photoThumbnailBox {
+		width: calc(100%/7);
+	}
+}
+
+.photoThumbnailBox {
+	/*width: 200px;*/
 	height: 200px;
 	background-size: cover;
 	background-position: center;
 	display: inline-block;
-	margin: 0;
+	margin: 0px;
+	float: left;
+	padding: 1px;
+	/*position: relative;*/
+}
+
+.photoThumbnail {
+	height: 100%;
+	background-size: cover;
+	background-position: center;
 }
 
 .photoText {
@@ -33,12 +67,41 @@ body {
 }
 
 .photoDetailView .exifView {
-	background-color: rgb(0, 0, 0);
+	background-color: #222;
 	position: absolute;
 	right: 0;
 	width: 20%;
 	height: 100%;
 	overflow: auto;
+	font-size: 11px;
+	padding: 4px;
+}
+
+.photoDetailView .exifView .exifFile {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.photoDetailView .exifView .exifHeader {
+	font-weight: bold;
+	margin-top: 10px;
+	margin-left: 5px;
+}
+
+.photoDetailView .exifView table {
+	width: 100%;
+}
+
+.photoDetailView .exifView table td.key {
+	width: 50%;
+}
+
+.photoDetailView .exifView table td {
+	background-color: #191919;
+	word-break: break-word;
+	vertical-align: top;
+	color: #aaa;
+	padding: 0 4px;
 }
 
 .photoDetailView .photoView {
