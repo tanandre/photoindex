@@ -124,6 +124,7 @@ body {
 }
 
 .dark input, .dark input.form-control:focus {
+	display: inline-block;
 	background-color: #000;
 	color: #5cb3fd;
 }

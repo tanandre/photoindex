@@ -23,7 +23,8 @@
         <b-link class="navbar-brand" to="#">
             <span>{{ title }} <span class="badge">({{images.length}})</span></span>
         </b-link>
-        <b-form-input v-model="search" type="text" placeholder="Enter search criteria" v-on:keyup.enter="addSearchString" autofocus></b-form-input>
+        <search-tags v-on:tags="onTagsChanged"></search-tags>
+        <!--<b-form-input v-model="search" type="text" placeholder="Enter search criteria" v-on:keyup.enter="addSearchString" autofocus></b-form-input>-->
     </b-navbar>
     <!--<p>-->
         <!--<router-link to="/album">Go to album</router-link>-->

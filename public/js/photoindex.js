@@ -26,18 +26,18 @@ var app = new Vue({
 		search: ''
 	},
 	mounted: function() {
-		this.fetchImages();
+		this.fetchImages({});
 	},
 
 	methods: {
-		fetchImages: function() {
-			this.$http.get('/listing').then(function(response) {
+		fetchImages: function(data) {
+			this.$http.get('/listing', {params: data}).then(function(response) {
 				this.images = response.body;
 			});
 		},
 
-		addSearchString: function(msg) {
-			console.log(msg);
+		onTagsChanged: function(tags) {
+			console.log('onTagsChanged', tags);
 		},
 
 		onClickThumbnail: function(img) {
@@ -46,11 +46,11 @@ var app = new Vue({
 
 		displayPhoto: function(img) {
 			this.selectedImage = img;
-			console.log('selected image', img);
+			// console.log('selected image', img);
 		},
 		getImagesForPage: function() {
 			var startIndex = (this.currentPage - 1) * this.imagesPerPage;
 			return this.images.slice(startIndex, startIndex + this.imagesPerPage);
 		}
 	}
-}).$mount('#app');
+});

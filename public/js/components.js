@@ -33,8 +33,30 @@ Vue.component('photoDetailView', {
 
 		_this.$http.get('/exif/' + _this.photo.id)
 			.then(function(response) {
-				console.log('exif', response.body);
 				_this.exif = response.body;
 			});
+	}
+});
+
+Vue.component('searchTags', {
+	props: ['search', 'tags'],
+	template: "<div><b-form-input v-model='search' type='text' placeholder='Enter search criteria' v-on:keyup.enter='addSearchString' autofocus></b-form-input>" +
+	"<b-badge class='label action' v-for='tag in tags' :title='tag' v-on:click.native='removeTag(tag)'>{{tag}} </b-badge></div>",
+	methods: {
+		addSearchString: function() {
+			if (this.tags === undefined) {
+				this.tags = [];
+			}
+			this.tags.push(this.search);
+			this.search = '';
+			this.$emit('tags', this.tags);
+		},
+		removeTag: function(tag) {
+			var found = this.tags.indexOf(tag);
+			if (found > -1) {
+				this.tags.splice(found, 1);
+			}
+			this.$emit('tags', this.tags);
+		}
 	}
 });
