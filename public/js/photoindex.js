@@ -1,52 +1,29 @@
-function getPhotoUrl(photo, width) {
-	return "/photo/" + photo.id + (width === undefined ? '' : '/' + width);
-}
+const Bar = {template: '<div>bar</div>'}
+const Album = {template: '<div>Album</div>'}
 
-Vue.component('thumbnail', {
-	props: ['photo'],
-	template: "<div class='photoThumbnailBox action' :title='photo.date' >" +
-		"<div class='photoThumbnail' :style=\"{ backgroundImage: 'url(/photo/' + photo.id + '/' + 300 + ')' }\"></div>"+
-	"</div>"
-});
+const routes = [{
+	path: '/bar',
+	component: Bar
+}, {
+	path: '/album',
+	component: Album
+}]
 
-Vue.component('photoDetailView', {
-	props: ['photo', 'exif'],
-	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()'></div><div class='exifView'>" +
-	"<div>Date: {{photo.date}}</div><div class='exifFile' :title='photo.path'>File: {{photo.path}}</div>" +
-	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
-	methods: {
-		onClick: function() {
-			this.$emit('close');
-			document.body.classList.remove("noScroll");
-		}
-	},
-	mounted: function() {
-		var _this = this;
-		document.body.classList.add("noScroll");
-		var photoUrl = getPhotoUrl(_this.photo, 1000);
-		var img = new Image();
-		img.onload = function() {
-			_this.$el.firstChild.classList.remove('loading');
-			_this.$el.firstChild.style.backgroundImage = "url(" + photoUrl + ")";
-		};
-		img.src = photoUrl;
-
-		_this.$http.get('/exif/' + _this.photo.id)
-			.then(function(response) {
-				console.log('exif', response.body);
-				_this.exif = response.body;
-			});
-	}
-});
+const router = new VueRouter({
+	routes // short for routes: routes
+})
 
 var app = new Vue({
+	router,
 	el: '#app',
 	data: {
-		title: 'Andre\'s Album',
+		title: 'dre\'s album',
 		images: [],
 		selectedImage: null,
 		currentPage: 1,
-		imagesPerPage: 100
+		imagesPerPage: 100,
+		currentRoute: window.location.pathname,
+		search: ''
 	},
 	mounted: function() {
 		this.fetchImages();
@@ -57,6 +34,10 @@ var app = new Vue({
 			this.$http.get('/listing').then(function(response) {
 				this.images = response.body;
 			});
+		},
+
+		addSearchString: function(msg) {
+			console.log(msg);
 		},
 
 		onClickThumbnail: function(img) {
@@ -72,4 +53,4 @@ var app = new Vue({
 			return this.images.slice(startIndex, startIndex + this.imagesPerPage);
 		}
 	}
-});
+}).$mount('#app');

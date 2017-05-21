@@ -10,7 +10,7 @@ var photoCrawler = require('./server/PhotoCrawler');
 var isCacheEnabled = true;
 var imageDir = "c:\\andre\\afdruk\\";
 var tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
-var nfsimageDir = "\\\\kanji\\photo\\2009\\2009-04-30 Middelkerke\\";
+var nfsimageDir = "\\\\kanji\\photo\\2006\\2006-03-11 Eerste date\\";
 var nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
 var nfsimageDir2016 = "\\\\kanji\\photo\\2016\\";
 var nfsimageDirOldPhone = "\\\\kanji\\photo\\phone\\phonedata";
@@ -47,50 +47,67 @@ function readDateFromFile(file, done) {
 	});
 }
 
-dbIO.createTables(function(err, connection) {
+function indexPhotos(dir, max) {
+	var count = max;
+	dbIO.readAllPhotosPaths(function(err, rows) {
+		var paths = rows.map(function(row) {
+			return row.path;
+		});
+
+		photoCrawler.indexPhotosInFolder(dir, function(file) {
+			if (isImageFile(file)) {
+				if (paths.indexOf((file)) > -1) {
+					// console.log('already indexed: ');
+					return true;
+				}
+				if (count-- === 0) {
+					console.log('stopping indexing of files, exceeded max count: ', max, count);
+					return false;
+				}
+				getExif(file).then(function(exif) {
+					process.stdout.write(".");
+					if (exif.exif.CreateDate) {
+						dbIO.addPhoto(file, exif.exif.CreateDate);
+					} else {
+						console.error(
+							'exif header present but no CreateDate attribute, reading date from file',
+							file);
+						readDateFromFile(file, function(date) {
+							dbIO.addPhoto(file, date);
+						});
+					}
+				}, function(err) {
+					console.error('no exif header found reading date from file', file);
+					readDateFromFile(file, function(date) {
+						dbIO.addPhoto(file, date);
+					});
+				});
+			}
+			return true;
+		});
+	});
+}
+
+dbIO.initialize(function(err, connection) {
 	if (err) {
 		console.error(err);
 		return;
 	}
-	photoCrawler.indexPhotosInFolder(imageDir, function(file) {
-		process.stdout.write(".");
-		if (isImageFile(file)) {
-			getExif(file).then(function(exif) {
-				if (exif.exif.CreateDate) {
-					dbIO.addPhoto(file, exif.exif.CreateDate);
-				} else {
-					console.error(
-						'exif header present but no CreateDate attribute, reading date from file', file);
-					readDateFromFile(file, function(date) {
-						dbIO.addPhoto(file, date);
-					});
-				}
-			}, function(err) {
-				console.error('no exif header found reading date from file', file);
-				readDateFromFile(file, function(date) {
-					dbIO.addPhoto(file, date);
-				});
-			});
-		}
 
-		// if (isVideoFile(file)) {
-		// 	readDateFromFile(file, function(date) {
-		// 		dbIO.addPhoto(file, date);
-		// 	});
-		// }
-	});
+	indexPhotos(nfsimageDir, 100);
+
 });
 
 var server = app.listen(1337, function() {
-	console.log('Example app listening on port 1337!')
+	console.log('photoindex listening on port 1337!')
 });
 
 app.use(express.static('public'));
 app.use('/node_modules', express.static('node_modules'));
 
 function setCacheHeaders(response) {
-	// response.setHeader("Cache-Control", "public, max-age=31536000");
-	// response.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
+	response.setHeader("Cache-Control", "public, max-age=31536000");
+	response.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
 }
 
 app.use('/photo/:id/:width', function(request, response) {
@@ -101,7 +118,6 @@ app.use('/photo/:id/:width', function(request, response) {
 		// TODO if original photo is smaller than requested param don't resize
 		// TODO store exif dimensions in db to optimize calculation?
 		// TODO check if modified since if we are reading the file from the cache
-		// TODO store in cache, use cache headers
 
 		if (request.params.width === undefined) {
 			var file = fs.readFileSync(row.path, 'binary');

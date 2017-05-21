@@ -36,7 +36,7 @@
 
 	module.exports.indexPhotosInFolder = function(folderToIndex, fnc) {
 		crawl(folderToIndex, function(err, results) {
-			console.log('*** done indexing ***', results.length);
+			console.log('*** done crawling photos: starting to index exif data ***', results.length);
 		}, fnc)
 	};
 
