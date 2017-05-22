@@ -128,3 +128,16 @@ body {
 	background-color: #000;
 	color: #5cb3fd;
 }
+.popover-content-wrapper {
+	overflow: auto;
+}
+.popoverContent {
+}
+.popoverContent .seriesThumbnail {
+	width: 100px;
+	height: 100px;
+	background-image: url('/photo/1/300');
+	background-size: cover;
+	background-repeat: no-repeat;
+	display: inline-block;
+}

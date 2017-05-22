@@ -156,6 +156,7 @@ app.use('/exif/:id', function(request, response) {
 	dbIO.readPhotoById(request.params.id, function(err, row) {
 		getExif(row.path).then(function(exif) {
 			delete exif.thumbnail;
+			delete exif.exif.MakerNote;
 			response.write(JSON.stringify(exif));
 			response.end();
 		}).catch(function(err) {
@@ -181,6 +182,9 @@ app.get("/listing", function(request, response) {
 			console.error(err);
 			return;
 		}
+		rows.forEach(function(row) {
+			row.dateInMillis = Date.parse(row.date);
+		});
 		cache.put('/listing', JSON.stringify(rows));
 		response.write(JSON.stringify(rows));
 		response.send();

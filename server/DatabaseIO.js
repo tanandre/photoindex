@@ -79,6 +79,11 @@
 	module.exports.readPhotoById = function(id, done) {
 		var sql = "SELECT * FROM photo where id = " + id;
 		connection.query(sql, function(err, rows) {
+			if (err) {
+				done(err, rows);
+				return;
+			}
+
 			if (rows.length !== 1) {
 				done('incorrect ID photo not found: ' + id);
 			} else {

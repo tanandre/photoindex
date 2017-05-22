@@ -2,16 +2,30 @@ function getPhotoUrl(photo, width) {
 	return "/photo/" + photo.id + (width === undefined ? '' : '/' + width);
 }
 
+Vue.component('thumbnailPhoto', {
+	props: ['photo'],
+	template: "<div :style=\"{ backgroundImage: 'url(/photo/' + photo.id + '/' + 300 + ')' }\"><slot></slot></div>"
+});
+
 Vue.component('thumbnail', {
 	props: ['photo'],
-	template: "<div class='photoThumbnailBox action' :title='photo.date' >" +
-	"<div class='photoThumbnail' :style=\"{ backgroundImage: 'url(/photo/' + photo.id + '/' + 300 + ')' }\"></div>" +
-	"</div>"
+	template: "<div class='photoThumbnailBox action' :title='photo.key.date' >" +
+	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:photo='photo.key'>" +
+	"<b-popover  :triggers='[\"click\",\"hover\"]' :placement='\"bottom\"' v-if='photo.series.length > 1'><div class='popoverContent' slot='content'>" +
+	"<thumbnail-photo v-for='img in photo.series' v-bind:photo='img' class='seriesThumbnail'></thumbnail-photo></div>" +
+	"<b-badge>{{photo.series.length}}</b-badge></b-popover></thumbnail-photo>" +
+	"</div>",
+	methods: {
+		onClick: function() {
+			console.log('test', this.photo.key);
+			this.$emit('select', this.photo.key);
+		}
+	}
 });
 
 Vue.component('photoDetailView', {
 	props: ['photo', 'exif'],
-	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()'></div><div class='exifView'>" +
+	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()'><div class='leftArrow'>Left</div><div class='rightArrow'>right</div></div><div class='exifView'>" +
 	"<div>Date: {{photo.date}}</div><div class='exifFile' :title='photo.path'>File: {{photo.path}}</div>" +
 	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
 	methods: {

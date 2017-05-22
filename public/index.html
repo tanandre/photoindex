@@ -32,8 +32,8 @@
     <!--</p>-->
     <!--<router-view></router-view>-->
 
-    <b-pagination v-if="imagesPerPage < images.length" size="sm" :total-rows="images.length" v-model="currentPage" :per-page="imagesPerPage" limit="6"></b-pagination>
-    <thumbnail v-for="img in getImagesForPage()"  v-bind:photo="img" :key="img.id" v-on:click.native="onClickThumbnail(img)"></thumbnail>
+    <b-pagination v-if="imagesPerPage < imageItems.length" size="sm" :total-rows="imageItems.length" v-model="currentPage" :per-page="imagesPerPage" limit="6"></b-pagination>
+    <thumbnail v-for="(img, index) in getImagesForPage(currentPage)" v-bind:photo="img" :key="img.key.id" v-on:select="onClickThumbnail"></thumbnail>
 </div>
 
 <script src="js/components.js"></script>
