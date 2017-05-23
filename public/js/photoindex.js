@@ -94,6 +94,22 @@ var app = new Vue({
 		getImagesForPage: function(currentPage) {
 			var startIndex = (currentPage - 1) * this.imagesPerPage;
 			return this.imageItems.slice(startIndex, startIndex + this.imagesPerPage);
+		},
+
+		selectPrevious: function(item) {
+			var index = this.imageItems.indexOf(item);
+			console.log('index', index);
+			if (index > 0) {
+				this.selectedImage = this.imageItems[index - 1];
+			}
+		},
+
+		selectNext: function(item) {
+			var index = this.imageItems.indexOf(item);
+			console.log('index', index);
+			if (index < (this.imageItems.length - 1)) {
+				this.selectedImage = this.imageItems[index + 1];
+			}
 		}
 	}
 });

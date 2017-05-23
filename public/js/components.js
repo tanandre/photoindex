@@ -13,42 +13,71 @@ Vue.component('thumbnail', {
 	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:photo='photo.key'>" +
 	"<b-popover  :triggers='[\"click\",\"hover\"]' :placement='\"bottom\"' v-if='photo.series.length > 1'><div class='popoverContent' slot='content'>" +
 	"<thumbnail-photo v-for='img in photo.series' v-bind:photo='img' class='seriesThumbnail'></thumbnail-photo></div>" +
-	"<b-badge>{{photo.series.length}}</b-badge></b-popover></thumbnail-photo>" +
-	"</div>",
+	"<b-badge>{{photo.series.length}}</b-badge></b-popover></thumbnail-photo>" + "</div>",
 	methods: {
 		onClick: function() {
-			console.log('test', this.photo.key);
-			this.$emit('select', this.photo.key);
+			this.$emit('select', this.photo);
 		}
 	}
 });
 
+Vue.component('photoDetails', {
+	props: ['photo', 'exif', 'index', 'size'],
+	template: "<div class='exifView'><div>{{index + 1}} / {{size}}</div><div>Date: {{photo.key.date}}</div><div class='exifFile' :title='photo.key.path'>{{photo.key.path}}</div>" +
+	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>"
+
+});
+
 Vue.component('photoDetailView', {
-	props: ['photo', 'exif'],
-	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()'><div class='leftArrow'>Left</div><div class='rightArrow'>right</div></div><div class='exifView'>" +
-	"<div>Date: {{photo.date}}</div><div class='exifFile' :title='photo.path'>File: {{photo.path}}</div>" +
-	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
+	props: ['photo', 'exif', 'showLeft', 'showRight', 'index', 'size'],
+	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()' ref='photoView'>" +
+	"<div @click.stop='onNavigate(\"prev\")' class='navigationPane left' title='navigate to previous' @mousemove='showLeft = true' @mouseover='showLeft = true' @mouseleave='showLeft = false'><div v-show='showLeft' class='navigation left'></div></div>" +
+	"<div @click.stop='onNavigate(\"next\")' class='navigationPane right' title='navigate to next' @mouseover='showRight = true' @mouseleave='showRight = false'><div v-show='showRight' class='navigation right'></div></div></div>" +
+	"<photo-details v-bind:photo='photo' v-bind:exif='exif' v-bind:index='index' v-bind:size='size'></photo-details>",
 	methods: {
+		onNavigate: function(direction) {
+			this.$emit(direction, this.photo);
+		},
 		onClick: function() {
 			this.$emit('close');
 			document.body.classList.remove("noScroll");
+		},
+		loadPhoto: function() {
+			this.index = this.$parent.imageItems.indexOf(this.photo);
+			this.size = this.$parent.imageItems.length;
+
+			var photoView = this.$refs['photoView'];
+			photoView.style.backgroundImage = '';
+			photoView.classList.add('loading');
+			var photoUrl = getPhotoUrl(this.photo.key, 1000);
+			var img = new Image();
+			img.onload = function() {
+				photoView.classList.remove('loading');
+				photoView.style.backgroundImage = "url(" + photoUrl + ")";
+			};
+			img.src = photoUrl;
+		},
+
+		loadExif: function() {
+			var _this = this;
+			this.$http.get('/exif/' + _this.photo.key.id)
+				.then(function(response) {
+					_this.exif = response.body;
+				});
 		}
 	},
-	mounted: function() {
-		var _this = this;
-		document.body.classList.add("noScroll");
-		var photoUrl = getPhotoUrl(_this.photo, 1000);
-		var img = new Image();
-		img.onload = function() {
-			_this.$el.firstChild.classList.remove('loading');
-			_this.$el.firstChild.style.backgroundImage = "url(" + photoUrl + ")";
-		};
-		img.src = photoUrl;
 
-		_this.$http.get('/exif/' + _this.photo.id)
-			.then(function(response) {
-				_this.exif = response.body;
-			});
+	mounted: function() {
+		document.body.classList.add("noScroll");
+		this.loadPhoto();
+		this.loadExif();
+	},
+
+	watch: {
+		photo: function() {
+			this.loadPhoto();
+			this.loadExif();
+		}
 	}
 });
 

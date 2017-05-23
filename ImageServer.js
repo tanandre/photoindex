@@ -118,6 +118,11 @@ app.use('/photo/:id/:width', function(request, response) {
 		// TODO if original photo is smaller than requested param don't resize
 		// TODO store exif dimensions in db to optimize calculation?
 		// TODO check if modified since if we are reading the file from the cache
+		if (err) {
+			console.error(err);
+			response.end();
+			return;
+		}
 
 		if (request.params.width === undefined) {
 			var file = fs.readFileSync(row.path, 'binary');

@@ -18,10 +18,10 @@
 <body class="dark">
 
 <div id="app" class="mainDiv" :class="selectedImage === null ? 'mainThumbnailView' : 'mainPhotoView'">
-    <photo-detail-view v-if="selectedImage !== null" v-on:close="selectedImage=null" v-bind:photo="selectedImage" @keyup.right="selectNext()"></photo-detail-view>
+    <photo-detail-view v-if="selectedImage !== null" v-on:close="selectedImage=null" v-bind:photo="selectedImage" @keyup.right="selectNext()" v-on:next="selectNext" v-on:prev="selectPrevious"></photo-detail-view>
     <b-navbar toggleable type="dark">
         <b-link class="navbar-brand" to="#">
-            <span>{{ title }} <span class="badge">({{images.length}})</span></span>
+            <span>{{ title }}</span> <span class="badge">({{images.length}} | {{imageItems.length}})</span>
         </b-link>
         <search-tags v-on:tags="onTagsChanged"></search-tags>
         <!--<b-form-input v-model="search" type="text" placeholder="Enter search criteria" v-on:keyup.enter="addSearchString" autofocus></b-form-input>-->
