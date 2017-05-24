@@ -29,6 +29,11 @@ var app = new Vue({
 	},
 	mounted: function() {
 		this.fetchImages({});
+		document.onkeypress = function(key) {
+			// TODO close image on escape
+			// TODO use arrow keys to navigate
+			console.log('key', key)
+		};
 	},
 
 	methods: {
@@ -91,6 +96,11 @@ var app = new Vue({
 			this.selectedImage = img;
 			// console.log('selected image', img);
 		},
+
+		clearSelection: function() {
+			this.selectedImage = null;
+		},
+
 		getImagesForPage: function(currentPage) {
 			var startIndex = (currentPage - 1) * this.imagesPerPage;
 			return this.imageItems.slice(startIndex, startIndex + this.imagesPerPage);

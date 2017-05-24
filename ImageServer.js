@@ -94,7 +94,7 @@ dbIO.initialize(function(err, connection) {
 		return;
 	}
 
-	indexPhotos(nfsimageDir, 100);
+	//indexPhotos(nfsimageDir, 100);
 
 });
 
@@ -157,15 +157,25 @@ app.use('/photo/:id', function(request, response) {
 
 app.use('/exif/:id', function(request, response) {
 	response.setHeader('Content-Type', 'application/json');
+	var cacheUrl = '/exif/' + request.params.id;
+	var cachedResponse = cache.get(cacheUrl);
+	if (isCacheEnabled && cachedResponse) {
+		console.log('*** returning cached response ***');
+		response.write(cachedResponse);
+		response.send();
+		return;
+	}
 
 	dbIO.readPhotoById(request.params.id, function(err, row) {
 		getExif(row.path).then(function(exif) {
 			delete exif.thumbnail;
 			delete exif.exif.MakerNote;
+			cache.put(cacheUrl, JSON.stringify(exif));
 			response.write(JSON.stringify(exif));
 			response.end();
 		}).catch(function(err) {
 			console.log('error reading exif', row.path);
+			cache.put(cacheUrl, JSON.stringify({error: err}));
 			response.write(JSON.stringify({error: err}));
 			response.end();
 		});
