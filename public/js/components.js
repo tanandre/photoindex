@@ -1,10 +1,20 @@
+var thumbnailLoader = LoaderFactory.createImageLoader(1);
+var exifLoader = LoaderFactory.createExifLoader(1);
+
 function getPhotoUrl(photo, width) {
 	return "/photo/" + photo.id + (width === undefined ? '' : '/' + width);
 }
 
 Vue.component('thumbnailPhoto', {
 	props: ['photo'],
-	template: "<div :style=\"{ backgroundImage: 'url(/photo/' + photo.id + '/' + 300 + ')' }\"><slot></slot></div>"
+	template: "<div ref='thumbnail'><slot></slot></div>",
+	mounted: function() {
+		var photoUrl = getPhotoUrl(this.photo, 300);
+		var thumbnail = this.$refs['thumbnail'];
+		thumbnailLoader.load(photoUrl).then(function() {
+			thumbnail.style.backgroundImage = 'url(' + photoUrl + ')';
+		});
+	}
 });
 
 Vue.component('thumbnail', {
@@ -21,10 +31,15 @@ Vue.component('thumbnail', {
 	}
 });
 
+function stackTrace() {
+	var err = new Error();
+	return err.stack;
+}
+
 Vue.component('photoDetails', {
 	props: ['photo', 'exif', 'index', 'size'],
-	template: "<div class='exifView'><div>{{index + 1}} / {{size}}</div><div>Date: {{photo.key.date}}</div><div class='exifFile' :title='photo.key.path'>{{photo.key.path}}</div>" +
-	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>"
+	template: "<div class='exifView'><div>{{index + 1}} / {{size}}</div><div>Date: {{photo ? photo.date : ''}}</div><div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}} {{exif === undefined}}</div>" +
+	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
 });
 
 Vue.component('photoSeries', {
@@ -35,23 +50,26 @@ Vue.component('photoSeries', {
 		select: function(img, index) {
 			this.$emit('select', img, index);
 		}
-	},
-	created: function() {
-		console.log('created!');
-	},
-	beforeUpdate: function() {
-		console.log('update!');
 	}
-
 });
 
 Vue.component('photoDetailView', {
-	props: ['photo', 'exif', 'showLeft', 'showRight', 'index', 'size', 'indexSeries'],
+	props: ['photo', 'size'],
+	data: function() {
+		return {
+			exif: null,
+			index: -1,
+			indexSeries: 0,
+			selectedPhoto: null,
+			showLeft: false,
+			showRight: false
+		};
+	},
 	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()' ref='photoView'>" +
 	"<div @click.stop='onNavigate(\"prev\")' class='navigationPane left' title='navigate to previous' @mousemove='showLeft = true' @mouseover='showLeft = true' @mouseleave='showLeft = false'><div v-show='showLeft' class='navigation left'></div></div>" +
 	"<div @click.stop='onNavigate(\"next\")' class='navigationPane right' title='navigate to next' @mousemove='showRight = true' @mouseover='showRight = true' @mouseleave='showRight = false'><div v-show='showRight' class='navigation right'></div></div></div>" +
-	"<photo-details v-bind:photo='photo' v-bind:exif='exif' v-bind:index='index' v-bind:size='size'></photo-details>" +
-	"<photo-series v-if='photo.series.length > 1' v-on:select='selectSeriesPhoto' v-bind:photo='photo' v-bind:indexSeries='indexSeries'></photo-series>",
+	"<photo-details v-bind:photo='selectedPhoto' v-bind:exif='exif' v-bind:index='index' v-bind:size='size'></photo-details>" +
+	"<photo-series v-if='photo.series.length > 1' v-on:select='selectSeriesPhoto' v-bind:photo='photo' v-bind:indexSeries='indexSeries'></photo-series></div>",
 	methods: {
 		onNavigate: function(direction) {
 			this.$emit(direction, this.photo);
@@ -70,28 +88,28 @@ Vue.component('photoDetailView', {
 		},
 
 		loadPhoto: function(photoToDisplay) {
+			this.selectedPhoto = photoToDisplay;
+
 			this.index = this.$parent.imageItems.indexOf(this.photo);
-			this.size = this.$parent.imageItems.length;
 
 			var photoView = this.$refs['photoView'];
 			photoView.style.backgroundImage = '';
 			photoView.classList.add('loading');
 			var photoUrl = getPhotoUrl(photoToDisplay, 1000);
-			var img = new Image();
-			img.onload = function() {
+
+			thumbnailLoader.load(photoUrl).then(function() {
 				photoView.classList.remove('loading');
 				photoView.style.backgroundImage = "url(" + photoUrl + ")";
-			};
-			img.src = photoUrl;
+			});
 		},
 
 		loadExif: function(photoToDisplay) {
-			// clear exif if take long
+			// clear exif might still contain previous info
 			this.exif = {};
 			var _this = this;
-			this.$http.get('/exif/' + photoToDisplay.id)
-				.then(function(response) {
-					_this.exif = response.body;
+			exifLoader.load('/exif/' + photoToDisplay.id)
+				.then(function(data) {
+					_this.exif = data;
 				});
 		}
 	},
@@ -138,3 +156,4 @@ Vue.component('searchTags', {
 		}
 	}
 });
+

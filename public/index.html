@@ -3,7 +3,7 @@
 <head>
     <title>Photo Index</title>
 </head>
-<script src="node_modules/vue/dist/vue.min.js"></script>
+<script src="node_modules/vue/dist/vue.js"></script>
 <script src="node_modules/vue-resource/dist/vue-resource.min.js"></script>
 <script src="node_modules/vue-router/dist/vue-router.js"></script>
 <!--<script type="text/javascript"-->
@@ -18,7 +18,7 @@
 <body class="dark">
 
 <div id="app" class="mainDiv" :class="selectedImage === null ? 'mainThumbnailView' : 'mainPhotoView'">
-    <photo-detail-view v-if="selectedImage !== null" v-on:close="clearSelection" v-bind:photo="selectedImage" @keyup.right="selectNext()" v-on:next="selectNext" v-on:prev="selectPrevious"></photo-detail-view>
+    <photo-detail-view v-if="selectedImage !== null" v-on:close="clearSelection" v-bind:photo="selectedImage" v-bind:size="imageItems.length" @keyup.right="selectNext()" v-on:next="selectNext" v-on:prev="selectPrevious"></photo-detail-view>
     <b-navbar toggleable type="dark">
         <b-link class="navbar-brand" to="#">
             <span>{{ title }}</span> <span class="badge">({{images.length}} | {{imageItems.length}})</span>
@@ -32,10 +32,11 @@
     <!--</p>-->
     <!--<router-view></router-view>-->
 
-    <b-pagination v-if="imagesPerPage < imageItems.length" size="sm" :total-rows="imageItems.length" v-model="currentPage" :per-page="imagesPerPage" limit="6"></b-pagination>
+    <b-pagination v-if="imagesPerPage < imageItems.length" size="sm" :total-rows="imageItems.length" v-model="currentPage" :per-page="imagesPerPage" :limit="6"></b-pagination>
     <thumbnail v-for="(img, index) in getImagesForPage(currentPage)" v-bind:photo="img" :key="img.key.id" v-on:select="onClickThumbnail"></thumbnail>
 </div>
 
+<script src="js/util.js"></script>
 <script src="js/components.js"></script>
 <script src="js/photoindex.js"></script>
 </body>
