@@ -197,11 +197,62 @@ class Deferred {
 		return deferred;
 	};
 
-	module.exports.readAllPhotos = function(done) {
+	module.exports.readAllPhotos = function() {
+		var deferred = new Deferred();
 		var sql = "SELECT * FROM photo ORDER BY date DESC";
 		connection.query(sql, function(err, rows) {
-			done(err, rows);
+			if (err) {
+				deferred.reject(err);
+				return;
+			}
+			deferred.resolve(rows);
 		});
+		return deferred;
+	};
+
+	function getSqlMatch(dateStr) {
+		if (dateStr.length === 4) {
+			// match year
+			return {
+				sql: 'YEAR(date) = ?',
+				values: [dateStr]
+			};
+		}
+		if (dateStr.length === 5 || dateStr.length === 6) {
+			// match year+month
+			return {
+				sql: 'YEAR(date) = ? AND MONTH(date) = ?',
+				values: [dateStr.substring(0, 4), dateStr.substring(4, dateStr.length)]
+			};
+		}
+		if (dateStr.length === 8) {
+			// match year+month+day
+			return {
+				sql: 'DATE(date) = ?',
+				values: [dateStr]
+			};
+		}
+		return null;
+	}
+
+	module.exports.getPhotosByDate = function(dateStr) {
+		var deferred = new Deferred();
+		var sqlMatch = getSqlMatch(dateStr);
+		if (sqlMatch === null) {
+			deferred.reject(new Error('cannot parse date expected search string length of 4,6 or 8'));
+			return deferred;
+		}
+
+		var sql = "SELECT * FROM photo WHERE " + sqlMatch.sql + " ORDER BY date DESC";
+		console.log('sql query', sql);
+		connection.query(sql, sqlMatch.values, function(err, rows) {
+			if (err) {
+				deferred.reject(err);
+				return;
+			}
+			deferred.resolve(rows);
+		});
+		return deferred;
 	};
 
 	module.exports.readAllPhotosPaths = function(done) {
@@ -221,18 +272,14 @@ class Deferred {
 				return;
 			}
 
-			if (rows.length !== 1) {
-				deferred.reject(new Error('incorrect ID photo not found: ' + id));
-				return;
-			}
 			deferred.resolve(rows);
 		});
 		return deferred;
 	};
 
 	module.exports.readPhotoById = function(id, done) {
-		var sql = "SELECT * FROM photo where id = " + id;
-		connection.query(sql, function(err, rows) {
+		var sql = "SELECT * FROM photo where id = ?";
+		connection.query(sql, [id], function(err, rows) {
 			if (err) {
 				done(err, rows);
 				return;

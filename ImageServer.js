@@ -46,7 +46,7 @@ function readDateFromFile(file, done) {
 		done(dates[0]);
 	});
 }
-
+var dateUnconfirmedTag = 'dateUnconfirmed';
 function indexPhotos(dir, max) {
 	var count = max;
 	dbIO.readAllPhotosPaths(function(err, rows) {
@@ -79,7 +79,11 @@ function indexPhotos(dir, max) {
 							file);
 						readDateFromFile(file, function(date) {
 							dbIO.addPhoto(file, date).then(function(photoId) {
+								console.log('----- adding 2 tags for photo ', file, photoId);
 								dbIO.addOrGetTag(deviceTag).then(function(tagId) {
+									dbIO.addPhotoTag(photoId, tagId);
+								});
+								dbIO.addOrGetTag(dateUnconfirmedTag).then(function(tagId) {
 									dbIO.addPhotoTag(photoId, tagId);
 								});
 							});
@@ -89,7 +93,11 @@ function indexPhotos(dir, max) {
 				}, function(err) {
 					console.error('no exif header found reading date from file', file);
 					readDateFromFile(file, function(date) {
-						dbIO.addPhoto(file, date);
+						dbIO.addPhoto(file, date).then(function(photoId) {
+							dbIO.addOrGetTag(dateUnconfirmedTag).then(function(tagId) {
+								dbIO.addPhotoTag(photoId, tagId);
+							});
+						});
 					});
 				});
 			}
@@ -105,7 +113,6 @@ dbIO.initialize(function(err, connection) {
 	}
 
 	indexPhotos(imageDir, 100);
-
 });
 
 var server = app.listen(1337, function() {
@@ -116,8 +123,10 @@ app.use(express.static('public'));
 app.use('/node_modules', express.static('node_modules'));
 
 function setCacheHeaders(response) {
-	response.setHeader("Cache-Control", "public, max-age=31536000");
-	response.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
+	if (isCacheEnabled) {
+		response.setHeader("Cache-Control", "public, max-age=31536000");
+		response.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
+	}
 }
 
 app.use('/photo/:id/:width', function(request, response) {
@@ -211,16 +220,25 @@ app.use('/tags/:id', function(request, response) {
 		response.write(JSON.stringify({tags: tags}));
 		response.end();
 	}, function(err) {
-		console.log('error reading tags');
-		cache.put(cacheUrl, JSON.stringify({error: err, tags:[]}));
-		response.write(JSON.stringify({error: err, tags:[]}));
+		console.log('error reading tags', err);
+		var value = JSON.stringify({
+			error: err,
+			tags: []
+		});
+		cache.put(cacheUrl, value);
+		response.write(value);
 		response.end();
 	});
 });
 
 app.get("/listing", function(request, response) {
+	// request.query.search
+	console.log(request.query);
+	console.log(JSON.stringify(request.query));
+
 	response.setHeader('Content-Type', 'application/json');
-	var cachedResponse = cache.get('/listing');
+	var cacheUrl = '/listing?' + JSON.stringify(request.query);
+	var cachedResponse = cache.get(cacheUrl);
 	if (isCacheEnabled && cachedResponse) {
 		console.log('*** returning cached response ***');
 		response.write(cachedResponse);
@@ -228,7 +246,43 @@ app.get("/listing", function(request, response) {
 		return;
 	}
 
-	dbIO.readAllPhotos(function(err, rows) {
+	if (request.query.tag !== undefined && request.query.tag.length > 0) {
+		dbIO.getPhotosByDate(request.query.tag[0]).then(function(rows) {
+			rows.forEach(function(row) {
+				row.dateInMillis = Date.parse(row.date);
+			});
+			cache.put('/listing', JSON.stringify(rows));
+			response.write(JSON.stringify(rows));
+			response.send();
+		}, function(err) {
+			console.error(err);
+			response.write(JSON.stringify({images: []}));
+			response.send();
+		});
+		return;
+	}
+
+
+	dbIO.readAllPhotos().then(function(rows) {
+		rows.forEach(function(row) {
+			row.dateInMillis = Date.parse(row.date);
+		});
+		cache.put(cacheUrl, JSON.stringify(rows));
+		response.write(JSON.stringify(rows));
+		response.send();
+	}, function(err) {
+		console.error(err);
+		response.write(JSON.stringify({images: []}));
+		response.send();
+	});
+});
+
+app.get("/photo/query", function(request, response) {
+	var filter = request.query.filter;
+
+	response.setHeader('Content-Type', 'application/json');
+
+	dbIO.getPhotosByDate(filter).then(function(err, rows) {
 		if (err) {
 			console.error(err);
 			return;

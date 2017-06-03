@@ -1,20 +1,4 @@
-const Bar = {template: '<div>bar</div>'}
-const Album = {template: '<div>Album</div>'}
-
-const routes = [{
-	path: '/bar',
-	component: Bar
-}, {
-	path: '/album',
-	component: Album
-}]
-
-const router = new VueRouter({
-	routes // short for routes: routes
-})
-
 var app = new Vue({
-	router,
 	el: '#app',
 	data: {
 		title: 'dre\'s album',
@@ -86,6 +70,7 @@ var app = new Vue({
 
 		onTagsChanged: function(tags) {
 			console.log('onTagsChanged', tags);
+			this.fetchImages({tag: tags});
 		},
 
 		onClickThumbnail: function(img) {
