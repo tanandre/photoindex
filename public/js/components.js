@@ -37,9 +37,23 @@ function stackTrace() {
 }
 
 Vue.component('photoDetails', {
-	props: ['photo', 'exif', 'index', 'size'],
+	props: ['photo', 'index', 'size'],
+	data: function() {
+		return {
+			exif: null
+		}
+	},
 	template: "<div class='exifView'><div>{{index + 1}} / {{size}}</div><div>Date: {{photo ? photo.date : ''}}</div><div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}}</div>" +
-	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>"
+	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
+	watch: {
+		photo: function() {
+			var _this = this;
+			exifLoader.load('/exif/' + this.photo.id)
+				.then(function(data) {
+					_this.exif = data;
+				});
+		}
+	}
 });
 
 Vue.component('photoSeries', {
@@ -68,7 +82,7 @@ Vue.component('photoDetailView', {
 	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()' ref='photoView'>" +
 	"<div @click.stop='onNavigate(\"prev\")' class='navigationPane left' title='navigate to previous' @mousemove='showLeft = true' @mouseover='showLeft = true' @mouseleave='showLeft = false'><div v-show='showLeft' class='navigation left'></div></div>" +
 	"<div @click.stop='onNavigate(\"next\")' class='navigationPane right' title='navigate to next' @mousemove='showRight = true' @mouseover='showRight = true' @mouseleave='showRight = false'><div v-show='showRight' class='navigation right'></div></div></div>" +
-	"<photo-details v-bind:photo='selectedPhoto' v-bind:exif='exif' v-bind:index='index' v-bind:size='size'></photo-details>" +
+	"<photo-details v-bind:photo='selectedPhoto' v-bind:index='index' v-bind:size='size'></photo-details>" +
 	"<photo-series v-if='photo.series.length > 1' v-on:select='selectSeriesPhoto' v-bind:photo='photo' v-bind:indexSeries='indexSeries'></photo-series></div>",
 	methods: {
 		onNavigate: function(direction) {
@@ -82,7 +96,6 @@ Vue.component('photoDetailView', {
 		selectSeriesPhoto: function(img, indexSeries) {
 			this.indexSeries = indexSeries;
 			this.loadPhoto(img);
-			this.loadExif(img);
 		},
 
 		loadPhoto: function(photoToDisplay) {
@@ -99,16 +112,6 @@ Vue.component('photoDetailView', {
 				photoView.classList.remove('loading');
 				photoView.style.backgroundImage = "url(" + photoUrl + ")";
 			});
-		},
-
-		loadExif: function(photoToDisplay) {
-			// clear exif might still contain previous info
-			this.exif = {};
-			var _this = this;
-			exifLoader.load('/exif/' + photoToDisplay.id)
-				.then(function(data) {
-					_this.exif = data;
-				});
 		}
 	},
 
@@ -116,7 +119,6 @@ Vue.component('photoDetailView', {
 		document.body.classList.add("noScroll");
 		this.indexSeries = 0;
 		this.loadPhoto(this.photo.key);
-		this.loadExif(this.photo.key);
 	},
 
 	watch: {
@@ -127,7 +129,6 @@ Vue.component('photoDetailView', {
 			this.showLeft = index < oldIndex;
 			this.showRight = index > oldIndex;
 			this.loadPhoto(this.photo.key);
-			this.loadExif(this.photo.key);
 		}
 	}
 });
