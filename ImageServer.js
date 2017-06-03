@@ -212,8 +212,8 @@ app.use('/tags/:id', function(request, response) {
 		response.end();
 	}, function(err) {
 		console.log('error reading tags');
-		cache.put(cacheUrl, JSON.stringify({error: err}));
-		response.write(JSON.stringify({error: err}));
+		cache.put(cacheUrl, JSON.stringify({error: err, tags:[]}));
+		response.write(JSON.stringify({error: err, tags:[]}));
 		response.end();
 	});
 });

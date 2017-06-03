@@ -1,5 +1,5 @@
 var thumbnailLoader = LoaderFactory.createImageLoader(1);
-var exifLoader = LoaderFactory.createExifLoader(1);
+var jsonLoader = LoaderFactory.createJsonLoader(1);
 
 function getPhotoUrl(photo, width) {
 	return "/photo/" + photo.id + (width === undefined ? '' : '/' + width);
@@ -31,26 +31,28 @@ Vue.component('thumbnail', {
 	}
 });
 
-function stackTrace() {
-	var err = new Error();
-	return err.stack;
-}
-
 Vue.component('photoDetails', {
 	props: ['photo', 'index', 'size'],
 	data: function() {
 		return {
-			exif: null
+			exif: null,
+			tags: []
 		}
 	},
 	template: "<div class='exifView'><div>{{index + 1}} / {{size}}</div><div>Date: {{photo ? photo.date : ''}}</div><div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}}</div>" +
+	"<b-badge v-for='tag in tags'>{{tag}}</b-badge>" +
 	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
 	watch: {
 		photo: function() {
 			var _this = this;
-			exifLoader.load('/exif/' + this.photo.id)
+			jsonLoader.load('/exif/' + this.photo.id)
 				.then(function(data) {
 					_this.exif = data;
+				});
+			jsonLoader.load('/tags/' + this.photo.id)
+				.then(function(data) {
+					console.log('tags', data);
+					_this.tags = data.tags;
 				});
 		}
 	}

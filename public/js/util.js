@@ -167,7 +167,7 @@ class CachedLoader {
 
 class LoaderFactory {
 
-	static createExifLoader(workerCount) {
+	static createJsonLoader(workerCount) {
 		return new CachedLoader(QueuedLoader.create(function() {
 			return new XhrWorker(Vue.http);
 		}, workerCount));
