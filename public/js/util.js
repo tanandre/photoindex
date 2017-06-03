@@ -80,7 +80,8 @@ class ImageWorker {
 }
 
 class XhrWorker {
-	constructor() {
+	constructor(http) {
+		this._http = http;
 		this._isAvailable = true;
 	}
 
@@ -92,7 +93,7 @@ class XhrWorker {
 		this._isAvailable = false;
 		var deferred = new Deferred();
 		var _this = this;
-		Vue.http.get(url).then(function(response) {
+		this._http.get(url).then(function(response) {
 			_this._isAvailable = true;
 			deferred.resolve(response.body);
 		});

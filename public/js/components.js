@@ -38,8 +38,8 @@ function stackTrace() {
 
 Vue.component('photoDetails', {
 	props: ['photo', 'exif', 'index', 'size'],
-	template: "<div class='exifView'><div>{{index + 1}} / {{size}}</div><div>Date: {{photo ? photo.date : ''}}</div><div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}} {{exif === undefined}}</div>" +
-	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
+	template: "<div class='exifView'><div>{{index + 1}} / {{size}}</div><div>Date: {{photo ? photo.date : ''}}</div><div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}}</div>" +
+	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>"
 });
 
 Vue.component('photoSeries', {
@@ -80,8 +80,6 @@ Vue.component('photoDetailView', {
 		},
 
 		selectSeriesPhoto: function(img, indexSeries) {
-			// TODO also update path, maybe create a selectedPhoto prop?
-			// TODO highlight selected photo
 			this.indexSeries = indexSeries;
 			this.loadPhoto(img);
 			this.loadExif(img);

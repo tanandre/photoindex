@@ -66,16 +66,26 @@ function indexPhotos(dir, max) {
 				}
 				getExif(file).then(function(exif) {
 					process.stdout.write(".");
+					var deviceTag = exif.image.Model;
 					if (exif.exif.CreateDate) {
-						dbIO.addPhoto(file, exif.exif.CreateDate);
+						dbIO.addPhoto(file, exif.exif.CreateDate).then(function(photoId) {
+							dbIO.addOrGetTag(deviceTag).then(function(tagId) {
+								dbIO.addPhotoTag(photoId, tagId);
+							});
+						});
 					} else {
 						console.error(
 							'exif header present but no CreateDate attribute, reading date from file',
 							file);
 						readDateFromFile(file, function(date) {
-							dbIO.addPhoto(file, date);
+							dbIO.addPhoto(file, date).then(function(photoId) {
+								dbIO.addOrGetTag(deviceTag).then(function(tagId) {
+									dbIO.addPhotoTag(photoId, tagId);
+								});
+							});
 						});
 					}
+
 				}, function(err) {
 					console.error('no exif header found reading date from file', file);
 					readDateFromFile(file, function(date) {
@@ -94,7 +104,7 @@ dbIO.initialize(function(err, connection) {
 		return;
 	}
 
-	//indexPhotos(nfsimageDir, 100);
+	indexPhotos(imageDir, 100);
 
 });
 
@@ -179,6 +189,32 @@ app.use('/exif/:id', function(request, response) {
 			response.write(JSON.stringify({error: err}));
 			response.end();
 		});
+	});
+});
+
+app.use('/tags/:id', function(request, response) {
+	response.setHeader('Content-Type', 'application/json');
+	var cacheUrl = '/tags/' + request.params.id;
+	var cachedResponse = cache.get(cacheUrl);
+	if (isCacheEnabled && cachedResponse) {
+		console.log('*** returning cached response ***');
+		response.write(cachedResponse);
+		response.send();
+		return;
+	}
+
+	dbIO.readTagsForPhoto(request.params.id).then(function(rows) {
+		var tags = rows.map(function(row) {
+			return row.name;
+		});
+		cache.put(cacheUrl, JSON.stringify({tags: tags}));
+		response.write(JSON.stringify({tags: tags}));
+		response.end();
+	}, function(err) {
+		console.log('error reading tags');
+		cache.put(cacheUrl, JSON.stringify({error: err}));
+		response.write(JSON.stringify({error: err}));
+		response.end();
 	});
 });
 
