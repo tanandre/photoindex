@@ -1,14 +1,14 @@
 (function() {
-	var fs = require('fs');
-	var path = require('path');
+	let fs = require('fs');
+	let path = require('path');
 
-	var crawl = function(dir, done, fnc) {
-		var results = [];
+	let crawl = function(dir, done, fnc) {
+		let results = [];
 		fs.readdir(dir, function(err, list) {
 			if (err) {
 				return done(err);
 			}
-			var pending = list.length;
+			let pending = list.length;
 			if (!pending) {
 				return done(null, results);
 			}
@@ -35,7 +35,7 @@
 	};
 
 	module.exports.indexPhotosInFolder = function(folderToIndex, fnc) {
-		crawl(folderToIndex, function(err, results) {
+		crawl(folderToIndex, (err, results) => {
 			console.log('*** done crawling photos: starting to index exif data ***', results.length);
 		}, fnc)
 	};

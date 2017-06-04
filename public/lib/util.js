@@ -1,54 +1,4 @@
-class Deferred {
-
-	static createResolved(data) {
-		var deferred = new Deferred();
-		deferred.resolve(data);
-		return deferred;
-	}
-
-	constructor() {
-		this.isResolved = false;
-		this.isRejected = false;
-		this.listeners = [];
-	}
-
-	then(onOk, onError, onProgress) {
-		var listener = [onOk, onError, onProgress];
-		this.listeners.push(listener);
-
-		if (this.isResolved) {
-			onOk(this.data);
-		} else if (this.isRejected) {
-			onError(this.data);
-		}
-		return this;
-	}
-
-	progress(data) {
-		this.signalListeners(data, 2);
-	}
-
-	resolve(data) {
-		this.isResolved = true;
-		this.data = data;
-		this.signalListeners(data, 0);
-	}
-
-	signalListeners(data, index) {
-		this.listeners.forEach(function(listener) {
-			var callback = listener[index];
-			if (callback) {
-				callback(data);
-			}
-		});
-	}
-
-	reject(data) {
-		this.isRejected = true;
-		this.data = data;
-		this.signalListeners(data, 1);
-	}
-}
+'use strict';
 
 class ImageWorker {
 	constructor() {
@@ -66,9 +16,9 @@ class ImageWorker {
 		}
 		// console.log('ImageWorker start loading url', url);
 
-		var deferred = new Deferred();
+		let deferred = new Deferred();
 		this._isAvailable = false;
-		var _this = this;
+		let _this = this;
 		this.img.onload = function() {
 			_this._isAvailable = true;
 			// console.log('ImageWorker onload', url);
@@ -91,9 +41,9 @@ class XhrWorker {
 
 	execute(url) {
 		this._isAvailable = false;
-		var deferred = new Deferred();
-		var _this = this;
-		this._http.get(url).then(function(response) {
+		let deferred = new Deferred();
+		let _this = this;
+		this._http.get(url).then((response) => {
 			_this._isAvailable = true;
 			deferred.resolve(response.body);
 		});
@@ -103,8 +53,8 @@ class XhrWorker {
 
 class QueuedLoader {
 	static create(fnc, workerCount) {
-		var workers = [];
-		for (var i = 0; i < workerCount; i++) {
+		let workers = [];
+		for (let i = 0; i < workerCount; i++) {
 			workers.push(fnc());
 		}
 		return new QueuedLoader(workers);
@@ -116,7 +66,7 @@ class QueuedLoader {
 	}
 
 	load(url) {
-		var deferred = new Deferred();
+		let deferred = new Deferred();
 		this.queue.push({
 			url: url,
 			fnc: function(data) {
@@ -129,20 +79,18 @@ class QueuedLoader {
 
 	start() {
 		function loadNext(worker, queue) {
-			var item = queue.shift();
+			let item = queue.shift();
 			if (item !== undefined) {
-				var promise = worker.execute(item.url);
-				promise.then(function(data) {
+				let promise = worker.execute(item.url);
+				promise.then((data) => {
 					item.fnc(data);
 					loadNext(worker, queue);
 				});
 			}
 		}
 
-		var queue = this.queue;
-		this.workers.filter(function(worker) {
-			return worker.isAvailable();
-		}).forEach(function(worker) {
+		let queue = this.queue;
+		this.workers.filter((worker) => worker.isAvailable()).forEach((worker) => {
 			loadNext(worker, queue);
 		});
 	}
@@ -155,11 +103,11 @@ class CachedLoader {
 	}
 
 	load(url) {
-		var cache = this.cache;
+		let cache = this.cache;
 		if (cache[url] !== undefined) {
 			return Deferred.createResolved(cache[url]);
 		}
-		return this.loader.load(url).then(function(data) {
+		return this.loader.load(url).then((data) => {
 			cache[url] = data;
 		});
 	}
@@ -168,15 +116,14 @@ class CachedLoader {
 class LoaderFactory {
 
 	static createJsonLoader(workerCount) {
-		return new CachedLoader(QueuedLoader.create(function() {
+		return new CachedLoader(QueuedLoader.create(() => {
 			return new XhrWorker(Vue.http);
 		}, workerCount));
 	}
 
 	static createImageLoader(workerCount) {
-		return new CachedLoader(QueuedLoader.create(function() {
+		return new CachedLoader(QueuedLoader.create(() => {
 			return new ImageWorker();
 		}, workerCount));
 	}
 }
-

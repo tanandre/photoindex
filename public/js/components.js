@@ -1,5 +1,5 @@
-var thumbnailLoader = LoaderFactory.createImageLoader(1);
-var jsonLoader = LoaderFactory.createJsonLoader(1);
+let thumbnailLoader = LoaderFactory.createImageLoader(1);
+let jsonLoader = LoaderFactory.createJsonLoader(1);
 
 function getPhotoUrl(photo, width) {
 	return "/photo/" + photo.id + (width === undefined ? '' : '/' + width);
@@ -9,9 +9,9 @@ Vue.component('thumbnailPhoto', {
 	props: ['photo'],
 	template: "<div ref='thumbnail'><slot></slot></div>",
 	mounted: function() {
-		var photoUrl = getPhotoUrl(this.photo, 300);
-		var thumbnail = this.$refs['thumbnail'];
-		thumbnailLoader.load(photoUrl).then(function() {
+		let photoUrl = getPhotoUrl(this.photo, 300);
+		let thumbnail = this.$refs['thumbnail'];
+		thumbnailLoader.load(photoUrl).then(() => {
 			thumbnail.style.backgroundImage = 'url(' + photoUrl + ')';
 		});
 	}
@@ -20,10 +20,11 @@ Vue.component('thumbnailPhoto', {
 Vue.component('thumbnail', {
 	props: ['photo'],
 	template: "<div class='photoThumbnailBox action' :title='photo.key.date' >" +
-	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:photo='photo.key'>" +
-	"<b-popover  :triggers='[\"click\"]' :placement='\"bottom\"' v-if='photo.series.length > 1'><div class='popoverContent' slot='content'>" +
-	"<thumbnail-photo v-for='img in photo.series' :key='img.id' v-bind:photo='img' class='seriesThumbnail'></thumbnail-photo></div>" +
-	"<b-badge>{{photo.series.length}}</b-badge></b-popover></thumbnail-photo>" + "</div>",
+	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:photo='photo.key'>" + /*"<b-popover  :triggers='[\"click\"]' :placement='\"bottom\"' v-if='photo.series.length > 1'><div class='popoverContent' slot='content'>" +
+	 "<thumbnail-photo v-for='img in photo.series' :key='img.id' v-bind:photo='img' class='seriesThumbnail'></thumbnail-photo></div>" +
+	 "<b-badge>{{photo.series.length}}</b-badge></b-popover>" +*/
+	"<b-badge v-if='photo.series.length > 1'>{{photo.series.length}}</b-badge>" + "</thumbnail-photo>" +
+	"</div>",
 	methods: {
 		onClick: function() {
 			this.$emit('select', this.photo);
@@ -48,15 +49,15 @@ Vue.component('photoDetails', {
 	"<tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
 	watch: {
 		photo: function() {
-			var _this = this;
-			var d = new Date(this.photo.date);
+			let _this = this;
+			let d = new Date(this.photo.date);
 			this.date = d.toLocaleString();
 			jsonLoader.load('/exif/' + this.photo.id)
-				.then(function(data) {
+				.then((data) => {
 					_this.exif = data;
 				});
 			jsonLoader.load('/tags/' + this.photo.id)
-				.then(function(data) {
+				.then((data) => {
 					console.log('tags', data);
 					_this.tags = data.tags;
 				});
@@ -122,12 +123,12 @@ Vue.component('photoDetailView', {
 				}
 			};
 
-			var photoView = this.$refs['photoView'];
+			let photoView = this.$refs['photoView'];
 			photoView.style.backgroundImage = '';
 			photoView.classList.add('loading');
-			var photoUrl = getPhotoUrl(photoToDisplay, 1000);
+			let photoUrl = getPhotoUrl(photoToDisplay, 1000);
 
-			thumbnailLoader.load(photoUrl).then(function() {
+			thumbnailLoader.load(photoUrl).then(() => {
 				photoView.classList.remove('loading');
 				photoView.style.backgroundImage = "url(" + photoUrl + ")";
 			});
@@ -142,8 +143,8 @@ Vue.component('photoDetailView', {
 
 	watch: {
 		photo: function(photo, previousPhoto) {
-			var index = this.$parent.imageItems.indexOf(photo);
-			var oldIndex = this.$parent.imageItems.indexOf(previousPhoto);
+			let index = this.$parent.imageItems.indexOf(photo);
+			let oldIndex = this.$parent.imageItems.indexOf(previousPhoto);
 			// preserve left/right button visibility
 			this.showLeft = index < oldIndex;
 			this.showRight = index > oldIndex;
@@ -171,7 +172,7 @@ Vue.component('searchTags', {
 			this.$emit('tags', this.tags);
 		},
 		removeTag: function(tag) {
-			var found = this.tags.indexOf(tag);
+			let found = this.tags.indexOf(tag);
 			if (found > -1) {
 				this.tags.splice(found, 1);
 			}

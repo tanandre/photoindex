@@ -51,7 +51,7 @@ var app = new Vue({
 					}
 				});
 			}, function(err) {
-				console.err(err);
+				console.error(err);
 				this.isBusy = false;
 			});
 		},
