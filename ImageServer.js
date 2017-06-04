@@ -33,6 +33,7 @@ function createHttpDeferred(response) {
 	httpDeferred.then(function(data) {
 		response.end(data);
 	}, function(err) {
+		console.error(err);
 		response.status(500);
 		response.end(err);
 	});
@@ -160,7 +161,7 @@ function setCacheHeaders(response) {
 app.use('/photo/:id/:width', function(request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
 	setCacheHeaders(response);
-
+	let deferred = createHttpDeferred(response);
 	dbIO.readPhotoById(request.params.id).then(function(row) {
 		// TODO if original photo is smaller than requested param don't resize
 		// TODO store exif dimensions in db to optimize calculation?
@@ -176,47 +177,38 @@ app.use('/photo/:id/:width', function(request, response) {
 			.resize(parseInt(request.params.width))
 			.toBuffer()
 			.then((data) => {
-				response.end(new Buffer(data, 'binary'));
+				deferred.resolve(new Buffer(data, 'binary'));
 			}).catch((err) => {
-			console.log('error resizing: ', err);
-			response.status(500);
-			response.end(err);
+			deferred.reject('error resizing: ' + row.path);
 		});
-	}, (err) => {
-		response.status(500);
-		response.end(err);
-	});
+	}, deferred.reject);
 });
 
 app.use('/photo/:id', function(request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
 	setCacheHeaders(response);
 
+	let deferred = createHttpDeferred(response);
 	dbIO.readPhotoById(request.params.id).then((row) => {
 		let file = fs.readFileSync(row.path, 'binary');
-		response.end(new Buffer(file, 'binary'));
-	}, (err) => {
-		console.error(err);
-		response.status(500);
-		response.end(err);
-	});
+		deferred.resolve(file, 'binary');
+	}, deferred.reject);
 });
 
 app.use('/exif/:id', function(request, response) {
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/exif/' + request.params.id;
 	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
-		dbIO.readPhotoById(request.params.id).then((row) => {
+		let promise = dbIO.readPhotoById(request.params.id);
+		promise.then((row) => {
 			getExif(row.path).then((exif) => {
 				delete exif.thumbnail;
 				delete exif.exif.MakerNote;
 				deferred.resolve(JSON.stringify(exif));
-			}).catch((err) => {
-				deferred.reject(JSON.stringify({error: err}));
+			}).catch(() => {
+				deferred.resolve('{}');
 			});
-		}, (err) => {
-			deferred.reject(JSON.stringify({error: err}));
-		});
+		}, deferred.reject);
 	});
 
 });

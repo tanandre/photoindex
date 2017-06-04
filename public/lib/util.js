@@ -44,8 +44,11 @@ class XhrWorker {
 		let deferred = new Deferred();
 		let _this = this;
 		this._http.get(url).then((response) => {
-			_this._isAvailable = true;
+			this._isAvailable = true;
 			deferred.resolve(response.body);
+		}).catch((err) => {
+			this._isAvailable = true;
+			deferred.reject(err);
 		});
 		return deferred;
 	}

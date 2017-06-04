@@ -50,6 +50,8 @@ Vue.component('photoDetails', {
 	watch: {
 		photo: function() {
 			let _this = this;
+			this.exif = {};
+			this.tags = {};
 			let d = new Date(this.photo.date);
 			this.date = d.toLocaleString();
 			jsonLoader.load('/exif/' + this.photo.id)

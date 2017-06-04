@@ -227,8 +227,17 @@ let cache = require('memory-cache');
 	};
 
 	module.exports.readPhotoById = function(id) {
-		return query("SELECT * FROM photo where id = ?", [id]).then((rows) => {
-			return rows[0];
+		let deferred = new Deferred();
+		query("SELECT * FROM photo where id = ?", [id]).then((rows) => {
+			if (rows.length === 0) {
+				deferred.reject(new Error('could not find photo for id' + id));
+				return;
+			}
+			deferred.resolve(rows[0]);
+		}, (err) => {
+			deferred.reject(err);
 		});
+
+		return deferred;
 	};
 }());
