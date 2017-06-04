@@ -31,11 +31,10 @@ function isVideoFile(file) {
 function createHttpDeferred(response) {
 	let httpDeferred = new Deferred();
 	httpDeferred.then(function(data) {
-		response.write(data);
-		response.end();
+		response.end(data);
 	}, function(err) {
-		response.write(err);
-		response.end();
+		response.status(500);
+		response.end(err);
 	});
 	return httpDeferred;
 }
@@ -76,7 +75,7 @@ function readDateFromFile(file, done) {
 let dateUnconfirmedTag = 'dateUnconfirmed';
 function indexPhotos(dir, max) {
 	let count = max;
-	dbIO.readAllPhotosPaths(function(err, rows) {
+	dbIO.readAllPhotosPaths().then(function(rows) {
 		let paths = rows.map(function(row) {
 			return row.path;
 		});
@@ -130,10 +129,12 @@ function indexPhotos(dir, max) {
 			}
 			return true;
 		});
+	}, (err) => {
+		console.error(err);
 	});
 }
 
-dbIO.initialize(function(err, connection) {
+dbIO.initialize((err, connection) => {
 	if (err) {
 		console.error(err);
 		return;
@@ -142,7 +143,7 @@ dbIO.initialize(function(err, connection) {
 	indexPhotos(imageDir, 100);
 });
 
-let server = app.listen(1337, function() {
+let server = app.listen(1337, () => {
 	console.log('photoindex listening on port 1337!')
 });
 
@@ -167,24 +168,23 @@ app.use('/photo/:id/:width', function(request, response) {
 
 		if (request.params.width === undefined) {
 			let file = fs.readFileSync(row.path, 'binary');
-			response.write(file, 'binary');
-			response.end();
+			response.end(new Buffer(file, 'binary'));
 			return;
 		}
 
 		sharp(row.path)
 			.resize(parseInt(request.params.width))
 			.toBuffer()
-			.then(function(data) {
-				response.write(data, 'binary');
-				response.end();
-			}).catch(function(err) {
+			.then((data) => {
+				response.end(new Buffer(data, 'binary'));
+			}).catch((err) => {
 			console.log('error resizing: ', err);
-			response.end();
+			response.status(500);
+			response.end(err);
 		});
-	}, function(err) {
-		response.write(JSON.stringify({error: err}));
-		response.end();
+	}, (err) => {
+		response.status(500);
+		response.end(err);
 	});
 });
 
@@ -192,22 +192,20 @@ app.use('/photo/:id', function(request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
 	setCacheHeaders(response);
 
-	dbIO.readPhotoById(request.params.id).then(function(err, row) {
+	dbIO.readPhotoById(request.params.id).then((row) => {
 		let file = fs.readFileSync(row.path, 'binary');
-		response.write(file, 'binary');
-		response.end();
-	}, function(err) {
-		response.write(JSON.stringify({error: err}));
-		response.end();
+		response.end(new Buffer(file, 'binary'));
+	}, (err) => {
+		console.error(err);
+		response.status(500);
+		response.end(err);
 	});
 });
 
 app.use('/exif/:id', function(request, response) {
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/exif/' + request.params.id;
-	let httpDeferred = createHttpDeferred(response);
-
-	wrapCache(cache, cacheUrl, httpDeferred, function(deferred) {
+	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
 		dbIO.readPhotoById(request.params.id).then((row) => {
 			getExif(row.path).then((exif) => {
 				delete exif.thumbnail;
@@ -226,9 +224,7 @@ app.use('/exif/:id', function(request, response) {
 app.use('/tags/:id', function(request, response) {
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/tags/' + request.params.id;
-	let httpDeferred = createHttpDeferred(response);
-
-	wrapCache(cache, cacheUrl, httpDeferred, function(deferred) {
+	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
 		dbIO.readTagsForPhoto(request.params.id).then((rows) => {
 			let tags = rows.map((row) => row.name);
 			deferred.resolve(JSON.stringify({tags: tags}));
@@ -242,46 +238,20 @@ app.use('/tags/:id', function(request, response) {
 });
 
 app.get("/listing", function(request, response) {
-	// request.query.search
-	console.log(request.query);
-	console.log(JSON.stringify(request.query));
-
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/listing?' + JSON.stringify(request.query);
-	let cachedResponse = cache.get(cacheUrl);
-	if (isCacheEnabled && cachedResponse) {
-		console.log('*** returning cached response ***');
-		response.write(cachedResponse);
-		response.send();
-		return;
-	}
-
-	if (request.query.tag !== undefined && request.query.tag.length > 0) {
+	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
 		dbIO.queryPhotos(request.query.tag).then((rows) => {
-			rows.forEach(function(row) {
+			rows.forEach((row) => {
 				row.dateInMillis = Date.parse(row.date);
 			});
-			cache.put('/listing', JSON.stringify(rows));
-			response.write(JSON.stringify(rows));
-			response.send();
+			deferred.resolve(JSON.stringify(rows));
 		}, (err) => {
-			console.error(err);
-			response.write(JSON.stringify({images: []}));
-			response.send();
+			deferred.reject(JSON.stringify({
+				images: [],
+				error: err
+			}));
 		});
-		return;
-	}
-
-	dbIO.readAllPhotos().then(function(rows) {
-		rows.forEach(function(row) {
-			row.dateInMillis = Date.parse(row.date);
-		});
-		cache.put(cacheUrl, JSON.stringify(rows));
-		response.write(JSON.stringify(rows));
-		response.send();
-	}, function(err) {
-		console.error(err);
-		response.write(JSON.stringify({images: []}));
-		response.send();
 	});
+
 });

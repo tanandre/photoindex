@@ -18,11 +18,11 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="600">
-      <file leaf-file-name="ImageServer.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="ImageServer.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ImageServer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="443">
-              <caret line="78" column="9" lean-forward="false" selection-start-line="78" selection-start-column="9" selection-end-line="78" selection-end-column="9" />
+            <state relative-caret-position="587">
+              <caret line="35" column="29" lean-forward="false" selection-start-line="35" selection-start-column="29" selection-end-line="35" selection-end-column="29" />
               <folding />
             </state>
           </provider>
@@ -88,11 +88,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="DatabaseIO.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="DatabaseIO.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="448">
-              <caret line="145" column="26" lean-forward="false" selection-start-line="145" selection-start-column="26" selection-end-line="145" selection-end-column="26" />
+            <state relative-caret-position="1049">
+              <caret line="228" column="4" lean-forward="false" selection-start-line="228" selection-start-column="4" selection-end-line="228" selection-end-column="4" />
               <folding />
             </state>
           </provider>
@@ -122,8 +122,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>ontags</find>
-      <find>.resolved</find>
       <find>.resolve</find>
       <find>getPhotos</find>
       <find>criteria</find>
@@ -150,8 +148,10 @@
       <find>deferred</find>
       <find>sql</find>
       <find>createDbHandle</find>
-      <find>var</find>
       <find>console.err</find>
+      <find>var</find>
+      <find>err</find>
+      <find>.write</find>
     </findStrings>
     <replaceStrings>
       <replace>photoThumbnailBox</replace>
@@ -166,7 +166,6 @@
         <option value="$PROJECT_DIR$/public/css/scrollbar.css" />
         <option value="$PROJECT_DIR$/public/css/photoindex.css" />
         <option value="$PROJECT_DIR$/public/js/util.js" />
-        <option value="$PROJECT_DIR$/ImageServer.js" />
         <option value="$PROJECT_DIR$/public/index.html" />
         <option value="$PROJECT_DIR$/public/lib/util.js" />
         <option value="$PROJECT_DIR$/public/js/components.js" />
@@ -174,6 +173,7 @@
         <option value="$PROJECT_DIR$/public/lib/Deferred.js" />
         <option value="$PROJECT_DIR$/public/js/photoindex.js" />
         <option value="$PROJECT_DIR$/server/DatabaseIO.js" />
+        <option value="$PROJECT_DIR$/ImageServer.js" />
       </list>
     </option>
   </component>
@@ -775,14 +775,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ImageServer.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="443">
-          <caret line="78" column="9" lean-forward="false" selection-start-line="78" selection-start-column="9" selection-end-line="78" selection-end-column="9" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/public/lib/Deferred.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="396">
@@ -801,8 +793,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="448">
-          <caret line="145" column="26" lean-forward="false" selection-start-line="145" selection-start-column="26" selection-end-line="145" selection-end-column="26" />
+        <state relative-caret-position="1049">
+          <caret line="228" column="4" lean-forward="false" selection-start-line="228" selection-start-column="4" selection-end-line="228" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ImageServer.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="587">
+          <caret line="35" column="29" lean-forward="false" selection-start-line="35" selection-start-column="29" selection-end-line="35" selection-end-column="29" />
           <folding />
         </state>
       </provider>

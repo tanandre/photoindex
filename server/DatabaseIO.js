@@ -151,9 +151,7 @@ let cache = require('memory-cache');
 			return '';
 		}
 
-		return tagLabels.map(function() {
-			return 't.name like ?';
-		}).join(' OR ');
+		return tagLabels.map(() => 't.name like ?').join(' OR ');
 	}
 
 	function getSqlDateMatch(dateStr, tagLabels) {
@@ -177,7 +175,10 @@ let cache = require('memory-cache');
 		};
 	}
 
-	function getSqlMatchCriteria(tagDates, tagLabels) {
+	function getSqlMatchCriteria(queryTags) {
+		let tagDates = queryTags.filter(isDateTag);
+		let tagLabels = queryTags.filter((tag) => !isDateTag(tag)).map((tag) => '%' + tag + '%');
+
 		if (tagDates.length === 0) {
 			return {
 				sql: getSqlTagMatch(tagLabels),
@@ -185,20 +186,14 @@ let cache = require('memory-cache');
 			};
 		}
 
-		let sqlMatchers = tagDates.map(function(date) {
-			return getSqlDateMatch(date, tagLabels);
-		});
+		let sqlMatchers = tagDates.map((date) => getSqlDateMatch(date, tagLabels));
+		let sqlList = sqlMatchers.map((sqlMatch) => sqlMatch.sql);
+		let values = sqlMatchers.map((sqlMatch) => sqlMatch.values);
 
-		let sqlList = sqlMatchers.map(function(sqlMatch) {
-			return sqlMatch.sql;
-		});
-
-		let values = sqlMatchers.map(function(sqlMatch) {
-			return sqlMatch.values;
-		});
 		return {
 			sql: sqlList.join(' OR '),
-			values: [].concat.apply([], values)
+			values: [].concat.apply([], values),
+			hasTagLabels: tagDates.length > 0
 		}
 	}
 
@@ -207,19 +202,13 @@ let cache = require('memory-cache');
 	}
 
 	module.exports.queryPhotos = function(queryTags) {
-
-		let tagDates = queryTags.filter(isDateTag);
-		let tagLabels = queryTags.filter((tag) => !isDateTag(tag)).map((tag) => '%' + tag + '%');
-
-		let sqlMatch = getSqlMatchCriteria(tagDates, tagLabels);
-		if (sqlMatch === null) {
-			return Deferred.createRejected(
-				new Error('cannot parse date expected search string length of 4,6 or 8'));
+		if (queryTags === undefined || queryTags.length === 0) {
+			return query("SELECT * FROM photo ORDER BY date DESC");
 		}
 
-		let joinTagTable = tagLabels.length === 0 ? '' :
+		let sqlMatch = getSqlMatchCriteria(queryTags);
+		let joinTagTable = sqlMatch.hasTagLabels ? '' :
 			'LEFT JOIN photo_tag pt ON pt.photoId = p.id INNER JOIN tag t ON pt.tagId = t.id';
-
 		let sql = "SELECT p.* FROM photo p " + joinTagTable + " WHERE " + sqlMatch.sql +
 			" ORDER BY p.date DESC";
 
@@ -227,11 +216,8 @@ let cache = require('memory-cache');
 		return query(sql, sqlMatch.values);
 	};
 
-	module.exports.readAllPhotosPaths = function(done) {
-		let sql = "SELECT path FROM photo";
-		connection.query(sql, function(err, rows) {
-			done(err, rows);
-		});
+	module.exports.readAllPhotosPaths = function() {
+		return query("SELECT path FROM photo");
 	};
 
 	module.exports.readTagsForPhoto = function(id) {
