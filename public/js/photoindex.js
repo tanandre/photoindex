@@ -9,6 +9,7 @@ var app = new Vue({
 		imagesPerPage: 100,
 		currentRoute: window.location.pathname,
 		search: '',
+		isBusy: false,
 		millisPerMinute: 60000
 	},
 	mounted: function() {
@@ -22,7 +23,9 @@ var app = new Vue({
 
 	methods: {
 		fetchImages: function(data) {
+			this.isBusy = true;
 			this.$http.get('/listing', {params: data}).then(function(response) {
+				this.isBusy = false;
 				this.images = response.body;
 				this.imageItems = [];
 				var imageItems = this.imageItems;
@@ -47,7 +50,15 @@ var app = new Vue({
 						});
 					}
 				});
+			}, function(err) {
+				console.err(err);
+				this.isBusy = false;
 			});
+		},
+
+		getIndexOf: function(img) {
+			console.log('getIndexOf', this.imageItems.indexOf(img));
+			return this.imageItems.indexOf(img);
 		},
 
 		isThumbnailDisplay: function(img) {

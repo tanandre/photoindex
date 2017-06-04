@@ -32,7 +32,7 @@ Vue.component('thumbnail', {
 });
 
 Vue.component('photoDetails', {
-	props: ['photo', 'index', 'size'],
+	props: ['photo', 'index', 'size', 'indexPosition'],
 	data: function() {
 		return {
 			exif: null,
@@ -40,9 +40,12 @@ Vue.component('photoDetails', {
 			date: null
 		}
 	},
-	template: "<div class='exifView'><div>{{index + 1}} / {{size}}</div><div>Date: {{date}}</div><div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}}</div>" +
+	template: "<div class='exifView'><div v-if='indexPosition != null'>{{indexPosition.image.index + 1}} / {{indexPosition.image.length}}" +
+	" ({{indexPosition.imageItems.index + 1}} / {{indexPosition.imageItems.length}})</div><div>Date: {{date}}</div>" +
+	"<div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}}</div>" +
 	"<b-badge v-for='tag in tags' :key='tag'>{{tag}}</b-badge>" +
-	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody><tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
+	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody>" +
+	"<tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
 	watch: {
 		photo: function() {
 			var _this = this;
@@ -73,11 +76,12 @@ Vue.component('photoSeries', {
 });
 
 Vue.component('photoDetailView', {
-	props: ['photo', 'size'],
+	props: ['photo', 'size', 'sizeImageItems'],
 	data: function() {
 		return {
 			exif: null,
 			index: -1,
+			indexPosition: null,
 			indexSeries: 0,
 			selectedPhoto: null,
 			showLeft: false,
@@ -87,7 +91,7 @@ Vue.component('photoDetailView', {
 	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()' ref='photoView'>" +
 	"<div @click.stop='onNavigate(\"prev\")' class='navigationPane left' title='navigate to previous' @mousemove='showLeft = true' @mouseover='showLeft = true' @mouseleave='showLeft = false'><div v-show='showLeft' class='navigation left'></div></div>" +
 	"<div @click.stop='onNavigate(\"next\")' class='navigationPane right' title='navigate to next' @mousemove='showRight = true' @mouseover='showRight = true' @mouseleave='showRight = false'><div v-show='showRight' class='navigation right'></div></div></div>" +
-	"<photo-details v-bind:photo='selectedPhoto' v-bind:index='index' v-bind:size='size'></photo-details>" +
+	"<photo-details v-bind:photo='selectedPhoto' v-bind:index='index' v-bind:size='size' v-bind:indexPosition='indexPosition'></photo-details>" +
 	"<photo-series v-if='photo.series.length > 1' v-on:select='selectSeriesPhoto' v-bind:photo='photo' v-bind:indexSeries='indexSeries'></photo-series></div>",
 	methods: {
 		onNavigate: function(direction) {
@@ -107,6 +111,16 @@ Vue.component('photoDetailView', {
 			this.selectedPhoto = photoToDisplay;
 
 			this.index = this.$parent.imageItems.indexOf(this.photo);
+			this.indexPosition = {
+				image: {
+					index: this.$parent.images.indexOf(photoToDisplay),
+					length: this.size
+				},
+				imageItems: {
+					index: this.$parent.imageItems.indexOf(this.photo),
+					length: this.sizeImageItems
+				}
+			};
 
 			var photoView = this.$refs['photoView'];
 			photoView.style.backgroundImage = '';
@@ -145,7 +159,7 @@ Vue.component('searchTags', {
 			tags: []
 		}
 	},
-	template: "<div><b-form-input v-model='search' type='text' placeholder='Enter search criteria' v-on:keyup.enter='addSearchString' autofocus></b-form-input>" +
+	template: "<div><b-form-input v-model='search' type='text' class='inputTags' placeholder='Enter search criteria' v-on:keyup.enter='addSearchString' autofocus></b-form-input>" +
 	"<b-badge class='label action' v-for='tag in tags' :key='tag' :title='tag' v-on:click.native='removeTag(tag)'>{{tag}} </b-badge></div>",
 	methods: {
 		addSearchString: function() {

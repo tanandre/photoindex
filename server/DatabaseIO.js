@@ -287,36 +287,16 @@ class Deferred {
 		}
 	}
 
-	/**
-	 *
-	 select *
-	 from photo p
-	 left join photo_tag pt ON pt.photoId = p.id
-	 left join tag t ON pt.tagId = t.id
-	 WHERE
+	function isDateTag(tag) {
+		return /^\d{4,8}$/.test(tag);
+	}
 
-	 (YEAR(date) = '2015'
-	 AND
-	 (t.name like 'Canon EOS 550%' OR t.name like 'HUAWEI P7-L10'))
-	 OR
-
-	 (YEAR(date) = '2014'
-	 AND
-	 (t.name like 'Canon EOS 550%' OR t.name like 'HUAWEI P7-L10'))
-
-	 *
-	 * @param queryTags
-	 * @returns {Deferred.constructor}
-	 */
 	module.exports.queryPhotos = function(queryTags) {
 		var deferred = new Deferred();
 
-		var tagDates = queryTags.filter(function(tag) {
-			return /^\d{4,8}$/.test(tag);
-		});
-
+		var tagDates = queryTags.filter(isDateTag);
 		var tagLabels = queryTags.filter(function(tag) {
-			return !/^\d{4,8}$/.test(tag);
+			return !isDateTag(tag);
 		}).map(function(tag) {
 			return '%' + tag + '%';
 		});
