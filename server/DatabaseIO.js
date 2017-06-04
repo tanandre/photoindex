@@ -197,6 +197,26 @@ class Deferred {
 		return deferred;
 	};
 
+	function queryTag(tags) {
+		var deferred = new Deferred();
+
+		var sqlMatch = tags.map(function() {
+			return 'name like ?';
+		}).join(' OR ');
+
+		connection.query("SELECT id FROM tag WHERE " + sqlMatch, [[tags]], function(err, rows) {
+			if (err) {
+				console.error(err);
+				deferred.reject(err);
+				return;
+			}
+			deferred.resolve(rows);
+		});
+		return deferred;
+	}
+
+	module.exports.queryTag = queryTag;
+
 	module.exports.readAllPhotos = function() {
 		var deferred = new Deferred();
 		var sql = "SELECT * FROM photo ORDER BY date DESC";
@@ -210,41 +230,110 @@ class Deferred {
 		return deferred;
 	};
 
-	function getSqlMatch(dateStr) {
+	function getSqlTagMatch(tagLabels) {
+		if (tagLabels.length === 0) {
+			return '';
+		}
+
+		var sql = tagLabels.map(function() {
+			return 't.name like ?';
+		}).join(' OR ');
+		return sql;
+	}
+
+	function getSqlDateMatch(dateStr, tagLabels) {
+		var tagSqlMatch = tagLabels.length === 0 ? '' : ' AND (' + getSqlTagMatch(tagLabels) + ')';
+
 		if (dateStr.length === 4) {
-			// match year
 			return {
-				sql: 'YEAR(date) = ?',
-				values: [dateStr]
+				sql: 'YEAR(date) = ? ' + tagSqlMatch,
+				values: [dateStr].concat(tagLabels)
 			};
 		}
 		if (dateStr.length === 5 || dateStr.length === 6) {
-			// match year+month
 			return {
-				sql: 'YEAR(date) = ? AND MONTH(date) = ?',
-				values: [dateStr.substring(0, 4), dateStr.substring(4, dateStr.length)]
+				sql: 'YEAR(date) = ? AND MONTH(date) = ? ' + tagSqlMatch,
+				values: [dateStr.substring(0, 4), dateStr.substring(4, dateStr.length)].concat(tagLabels)
 			};
 		}
-		if (dateStr.length === 8) {
-			// match year+month+day
-			return {
-				sql: 'DATE(date) = ?',
-				values: [dateStr]
-			};
-		}
-		return null;
+		return {
+			sql: 'DATE(date) = ? ' + tagSqlMatch,
+			values: [dateStr].concat(tagLabels)
+		};
 	}
 
-	module.exports.getPhotosByDate = function(dateStr) {
+	function getSqlMatchCriteria(tagDates, tagLabels) {
+		if (tagDates.length === 0) {
+			return {
+				sql: getSqlTagMatch(tagLabels),
+				values: tagLabels
+			};
+		}
+
+		var sqlMatchers = tagDates.map(function(date) {
+			return getSqlDateMatch(date, tagLabels);
+		});
+
+		var sqlList = sqlMatchers.map(function(sqlMatch) {
+			return sqlMatch.sql;
+		});
+
+		var values = sqlMatchers.map(function(sqlMatch) {
+			return sqlMatch.values;
+		});
+		return {
+			sql: sqlList.join(' OR '),
+			values: [].concat.apply([], values)
+		}
+	}
+
+	/**
+	 *
+	 select *
+	 from photo p
+	 left join photo_tag pt ON pt.photoId = p.id
+	 left join tag t ON pt.tagId = t.id
+	 WHERE
+
+	 (YEAR(date) = '2015'
+	 AND
+	 (t.name like 'Canon EOS 550%' OR t.name like 'HUAWEI P7-L10'))
+	 OR
+
+	 (YEAR(date) = '2014'
+	 AND
+	 (t.name like 'Canon EOS 550%' OR t.name like 'HUAWEI P7-L10'))
+
+	 *
+	 * @param queryTags
+	 * @returns {Deferred.constructor}
+	 */
+	module.exports.queryPhotos = function(queryTags) {
 		var deferred = new Deferred();
-		var sqlMatch = getSqlMatch(dateStr);
+
+		var tagDates = queryTags.filter(function(tag) {
+			return /^\d{4,8}$/.test(tag);
+		});
+
+		var tagLabels = queryTags.filter(function(tag) {
+			return !/^\d{4,8}$/.test(tag);
+		}).map(function(tag) {
+			return '%' + tag + '%';
+		});
+
+		var sqlMatch = getSqlMatchCriteria(tagDates, tagLabels);
+		console.log('sql query', sqlMatch.sql);
 		if (sqlMatch === null) {
 			deferred.reject(new Error('cannot parse date expected search string length of 4,6 or 8'));
 			return deferred;
 		}
 
-		var sql = "SELECT * FROM photo WHERE " + sqlMatch.sql + " ORDER BY date DESC";
-		console.log('sql query', sql);
+		var joinTagTable = tagLabels.length === 0 ? '' :
+			'LEFT JOIN photo_tag pt ON pt.photoId = p.id INNER JOIN tag t ON pt.tagId = t.id';
+
+		var sql = "SELECT p.* FROM photo p " + joinTagTable + " WHERE " + sqlMatch.sql +
+			" ORDER BY p.date DESC";
+		console.log('query', sql);
 		connection.query(sql, sqlMatch.values, function(err, rows) {
 			if (err) {
 				deferred.reject(err);

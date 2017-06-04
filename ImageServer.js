@@ -247,7 +247,7 @@ app.get("/listing", function(request, response) {
 	}
 
 	if (request.query.tag !== undefined && request.query.tag.length > 0) {
-		dbIO.getPhotosByDate(request.query.tag[0]).then(function(rows) {
+		dbIO.queryPhotos(request.query.tag).then(function(rows) {
 			rows.forEach(function(row) {
 				row.dateInMillis = Date.parse(row.date);
 			});

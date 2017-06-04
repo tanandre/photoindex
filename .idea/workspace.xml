@@ -21,8 +21,8 @@
       <file leaf-file-name="ImageServer.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ImageServer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1379">
-              <caret line="274" column="8" lean-forward="false" selection-start-line="274" selection-start-column="8" selection-end-line="274" selection-end-column="8" />
+            <state relative-caret-position="679">
+              <caret line="249" column="24" lean-forward="false" selection-start-line="249" selection-start-column="24" selection-end-line="249" selection-end-column="24" />
               <folding />
             </state>
           </provider>
@@ -68,7 +68,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="photoindex.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="photoindex.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/public/js/photoindex.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="623">
@@ -88,11 +88,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="DatabaseIO.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="DatabaseIO.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="917">
-              <caret line="247" column="47" lean-forward="false" selection-start-line="247" selection-start-column="47" selection-end-line="247" selection-end-column="47" />
+            <state relative-caret-position="1184">
+              <caret line="320" column="35" lean-forward="false" selection-start-line="320" selection-start-column="35" selection-end-line="320" selection-end-column="35" />
               <folding />
             </state>
           </provider>
@@ -122,10 +122,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>photo_tag</find>
-      <find>indexphoto</find>
-      <find>photoindex</find>
-      <find>createtables</find>
       <find>index</find>
       <find>addPhoto</find>
       <find>indexOf</find>
@@ -152,6 +148,10 @@
       <find>ontags</find>
       <find>.resolved</find>
       <find>.resolve</find>
+      <find>getPhotos</find>
+      <find>criteria</find>
+      <find>getSqlMatchCriteria</find>
+      <find>getSqlTagMatch</find>
     </findStrings>
     <replaceStrings>
       <replace>photoThumbnailBox</replace>
@@ -752,26 +752,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/public/js/photoindex.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="623">
+          <caret line="72" column="14" lean-forward="false" selection-start-line="72" selection-start-column="14" selection-end-line="72" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/ImageServer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1379">
-          <caret line="274" column="8" lean-forward="false" selection-start-line="274" selection-start-column="8" selection-end-line="274" selection-end-column="8" />
+        <state relative-caret-position="679">
+          <caret line="249" column="24" lean-forward="false" selection-start-line="249" selection-start-column="24" selection-end-line="249" selection-end-column="24" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="917">
-          <caret line="247" column="47" lean-forward="false" selection-start-line="247" selection-start-column="47" selection-end-line="247" selection-end-column="47" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/public/js/photoindex.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="623">
-          <caret line="72" column="14" lean-forward="false" selection-start-line="72" selection-start-column="14" selection-end-line="72" selection-end-column="14" />
+        <state relative-caret-position="1184">
+          <caret line="320" column="35" lean-forward="false" selection-start-line="320" selection-start-column="35" selection-end-line="320" selection-end-column="35" />
           <folding />
         </state>
       </provider>
