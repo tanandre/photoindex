@@ -73,7 +73,7 @@ let cache = require('memory-cache');
 
 	module.exports.createTables = createTables;
 
-	module.exports.addPhoto = function(file, date) {
+	module.exports.addPhoto = function(file, date, tags) {
 		return query("INSERT INTO photo (date, path) VALUES ?;", [[[date, file]]]).then((result) => {
 			return result.insertId;
 		});
@@ -96,9 +96,7 @@ let cache = require('memory-cache');
 		}
 
 		let deferred = new Deferred();
-		let sql = "INSERT INTO tag (name) VALUES ?;";
-
-		query(sql, [[[tag]]], true).then((result) => {
+		query("INSERT INTO tag (name) VALUES ?;", [[[tag]]], true).then((result) => {
 			cache.put(cacheUrl, result.insertId);
 			deferred.resolve(result.insertId)
 		}, (err) => {
