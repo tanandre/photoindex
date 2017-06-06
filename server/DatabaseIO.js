@@ -23,11 +23,13 @@ let cache = require('memory-cache');
 		};
 	}
 
-	function query(sql, values) {
+	function query(sql, values, isSuppressErrorLog) {
 		let deferred = new Deferred();
 		connection.query(sql, values, (err, result) => {
 			if (err) {
-				console.error(err);
+				if (!isSuppressErrorLog) {
+					console.error(err);
+				}
 				deferred.reject(err);
 				return;
 			}
@@ -61,76 +63,59 @@ let cache = require('memory-cache');
 	module.exports.initialize = function(done) {
 		connection.connect((err) => {
 			if (err) {
-				done(err);
+				done(err, connection);
+				return;
 			}
-			createTables(connection, done);
-			done();
-
+			done(null, connection);
+			// createTables(connection, done);
 		});
 	};
 
+	module.exports.createTables = createTables;
+
 	module.exports.addPhoto = function(file, date) {
-		//console.log('adding photo exif data to table', file);
-		let sql = "INSERT INTO photo (date, path) VALUES ?;";
-		let deferred = new Deferred();
-		connection.query(sql, [[[date, file]]], (err, result) => {
-			if (err) {
-				console.error(err);
-				deferred.reject(err);
-				return;
-			}
-
-			console.log('photo insertId', result.insertId);
-			deferred.resolve(result.insertId);
+		return query("INSERT INTO photo (date, path) VALUES ?;", [[[date, file]]]).then((result) => {
+			return result.insertId;
 		});
-
-		return deferred;
 	};
 
 	module.exports.addPhotoTag = function(photoId, tagId) {
-		let sql = "INSERT INTO photo_tag (photoId, tagId) VALUES ?;";
-		let deferred = new Deferred();
-		connection.query(sql, [[[photoId, tagId]]], function(err, result) {
-			if (err) {
-				console.error(err);
-				deferred.reject(err);
-				return;
-			}
-			deferred.resolve(result.insertId);
-		});
-		return deferred;
+		return query("INSERT INTO photo_tag (photoId, tagId) VALUES ?;", [[[photoId, tagId]]])
+			.then((result) => {
+				return result.insertId;
+			});
+
 	};
 
 	module.exports.addOrGetTag = function(tag) {
 		let cacheUrl = 'tag/' + tag;
 		let cachedResponse = cache.get(cacheUrl);
 		if (cachedResponse) {
-			console.log('reading tag from cache');
+			// console.log('reading tag from cache');
 			return Deferred.createResolved(cachedResponse);
 		}
 
 		let deferred = new Deferred();
 		let sql = "INSERT INTO tag (name) VALUES ?;";
-		connection.query(sql, [[[tag]]], function(err, result) {
-			if (err) {
-				//console.error('tag already exists', tag);
-				connection.query("SELECT id FROM tag WHERE name = ?", [[[tag]]], function(err, row) {
-					if (err) {
-						console.error(err);
-						deferred.reject(err);
-						return;
-					}
-					console.log('using existing tag id', tag, row[0].id);
-					cache.put(cacheUrl, row[0].id);
-					deferred.resolve(row[0].id);
-				});
+
+		query(sql, [[[tag]]], true).then((result) => {
+			cache.put(cacheUrl, result.insertId);
+			deferred.resolve(result.insertId)
+		}, (err) => {
+			if (err.code !== 'ER_DUP_ENTRY') {
+				console.error('error while trying to insert tag: ', tag, err);
+				deferred.reject(err);
 				return;
 			}
-
-			console.log('tag inserted', result.insertId);
-			cache.put(cacheUrl, result.insertId);
-			deferred.resolve(result.insertId);
+			//console.error('tag already exists will query', tag, err);
+			query("SELECT id FROM tag WHERE name = ?", [[[tag]]]).then((row) => {
+				cache.put(cacheUrl, row[0].id);
+				deferred.resolve(row[0].id);
+			}, (err) => {
+				deferred.reject(err);
+			})
 		});
+
 		return deferred;
 	};
 
@@ -142,8 +127,7 @@ let cache = require('memory-cache');
 	module.exports.queryTag = queryTag;
 
 	module.exports.readAllPhotos = function() {
-		let sql = "SELECT * FROM photo ORDER BY date DESC";
-		return query(sql);
+		return query("SELECT * FROM photo ORDER BY date DESC");
 	};
 
 	function getSqlTagMatch(tagLabels) {

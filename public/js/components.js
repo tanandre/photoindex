@@ -1,4 +1,5 @@
-let thumbnailLoader = LoaderFactory.createImageLoader(1);
+let thumbnailLoader = LoaderFactory.createImageLoader(4);
+let imageLoader = LoaderFactory.createImageLoader(1);
 let jsonLoader = LoaderFactory.createJsonLoader(1);
 
 function getPhotoUrl(photo, width) {
@@ -41,8 +42,8 @@ Vue.component('photoDetails', {
 			date: null
 		}
 	},
-	template: "<div class='exifView'><div v-if='indexPosition != null'>{{indexPosition.image.index + 1}} / {{indexPosition.image.length}}" +
-	" ({{indexPosition.imageItems.index + 1}} / {{indexPosition.imageItems.length}})</div><div>Date: {{date}}</div>" +
+	template: "<div class='exifView'><div v-if='indexPosition != null'><span>{{indexPosition.image.index + 1}} / {{indexPosition.image.length}}</span>" +
+	" <small>({{indexPosition.imageItems.index + 1}} / {{indexPosition.imageItems.length}})</small></div><div>Date: {{date}}</div>" +
 	"<div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}}</div>" +
 	"<b-badge v-for='tag in tags' :key='tag'>{{tag}}</b-badge>" +
 	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody>" +
@@ -130,7 +131,7 @@ Vue.component('photoDetailView', {
 			photoView.classList.add('loading');
 			let photoUrl = getPhotoUrl(photoToDisplay, 1000);
 
-			thumbnailLoader.load(photoUrl).then(() => {
+			imageLoader.load(photoUrl).then(() => {
 				photoView.classList.remove('loading');
 				photoView.style.backgroundImage = "url(" + photoUrl + ")";
 			});

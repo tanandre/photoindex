@@ -24,6 +24,10 @@ class ImageWorker {
 			// console.log('ImageWorker onload', url);
 			deferred.resolve(url);
 		};
+		this.img.onerror = function() {
+			_this._isAvailable = true;
+			deferred.reject(url);
+		};
 		this.img.src = url;
 		return deferred;
 	}

@@ -37,9 +37,27 @@ class Deferred {
 	}
 
 	resolve(data) {
+		if (this.isResolved) {
+			throw new Error('Cannot resolve, deferred already resolved');
+		}
+		if (this.isRejected) {
+			throw new Error('Cannot resolve, Deferred already rejected');
+		}
 		this.isResolved = true;
 		this.data = data;
 		this.signalListeners(data, 0);
+	}
+
+	reject(data) {
+		if (this.isResolved) {
+			throw new Error('Cannot reject, deferred already resolved');
+		}
+		if (this.isRejected) {
+			throw new Error('Cannot reject, Deferred already rejected');
+		}
+		this.isRejected = true;
+		this.data = data;
+		this.signalListeners(data, 1);
 	}
 
 	signalListeners(data, index) {
@@ -53,12 +71,6 @@ class Deferred {
 				}
 			}
 		});
-	}
-
-	reject(data) {
-		this.isRejected = true;
-		this.data = data;
-		this.signalListeners(data, 1);
 	}
 
 	/**

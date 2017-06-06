@@ -6,10 +6,11 @@ let cache = require('memory-cache');
 let sharp = require('sharp');
 let util = require('./public/lib/util');
 let Deferred = require('./public/lib/Deferred');
+let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 let photoCrawler = require('./server/PhotoCrawler');
 
-let isCacheEnabled = true;
+let isCacheEnabled = false;
 let imageDir = "c:\\andre\\afdruk\\";
 let tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
 let nfsimageDir = "\\\\kanji\\photo\\2006\\2006-03-11 Eerste date\\";
@@ -17,16 +18,9 @@ let nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
 let nfsimageDir2016 = "\\\\kanji\\photo\\2016\\";
 let nfsimageDirOldPhone = "\\\\kanji\\photo\\phone\\phonedata";
 //let nfsimageDir = "\\\\kanji\\photo\\collage\\";
+log('Starting');
 
 let app = express();
-
-function isImageFile(file) {
-	return file.toLowerCase().indexOf('.jpg') !== -1 || file.toLowerCase().indexOf('.jpeg') !== -1;
-}
-
-function isVideoFile(file) {
-	return file.toLowerCase().indexOf('.mp4') !== -1 || file.toLowerCase().indexOf('.avi') !== -1;
-}
 
 function createHttpDeferred(response) {
 	let httpDeferred = new Deferred();
@@ -53,99 +47,15 @@ function wrapCache(cache, cacheId, deferred, fnc) {
 	fnc(deferred);
 }
 
-function readDateFromFile(file, done) {
-	fs.stat(file, function(err, stats) {
-		if (err) {
-			console.error(err);
-			return;
-		}
-		let fileName = path.basename(file);
-		let dates = [stats.ctime, stats.mtime];
-		if (fileName.match(/(19|20)\d{6}/)) {
-			let dateStr = /((?:19|20)\d{6})/.exec(fileName)[1];
-			// TODO add time parsing to improve precision of date
-			//console.log(dateStr.slice(0, 4) + "-" + dateStr.slice(4, 6) + "-" + dateStr.slice(6), fileName);
-			dates.push(new Date(Date.parse(
-				dateStr.slice(0, 4) + "-" + dateStr.slice(4, 6) + "-" + dateStr.slice(8))));
-		}
-
-		dates.sort();
-		done(dates[0]);
-	});
-}
-let dateUnconfirmedTag = 'dateUnconfirmed';
-function indexPhotos(dir, max) {
-	let count = max;
-	dbIO.readAllPhotosPaths().then(function(rows) {
-		let paths = rows.map(function(row) {
-			return row.path;
-		});
-
-		photoCrawler.indexPhotosInFolder(dir, function(file) {
-			if (isImageFile(file)) {
-				if (paths.indexOf((file)) > -1) {
-					// console.log('already indexed: ');
-					return true;
-				}
-				if (count-- === 0) {
-					console.log('stopping indexing of files, exceeded max count: ', max, count);
-					return false;
-				}
-				getExif(file).then(function(exif) {
-					process.stdout.write(".");
-					let deviceTag = exif.image.Model;
-					if (exif.exif.CreateDate) {
-						dbIO.addPhoto(file, exif.exif.CreateDate).then(function(photoId) {
-							dbIO.addOrGetTag(deviceTag).then(function(tagId) {
-								dbIO.addPhotoTag(photoId, tagId);
-							});
-						});
-					} else {
-						console.error(
-							'exif header present but no CreateDate attribute, reading date from file',
-							file);
-						readDateFromFile(file, function(date) {
-							dbIO.addPhoto(file, date).then(function(photoId) {
-								console.log('----- adding 2 tags for photo ', file, photoId);
-								dbIO.addOrGetTag(deviceTag).then(function(tagId) {
-									dbIO.addPhotoTag(photoId, tagId);
-								});
-								dbIO.addOrGetTag(dateUnconfirmedTag).then(function(tagId) {
-									dbIO.addPhotoTag(photoId, tagId);
-								});
-							});
-						});
-					}
-
-				}, function(err) {
-					console.error('no exif header found reading date from file', file);
-					readDateFromFile(file, function(date) {
-						dbIO.addPhoto(file, date).then(function(photoId) {
-							dbIO.addOrGetTag(dateUnconfirmedTag).then(function(tagId) {
-								dbIO.addPhotoTag(photoId, tagId);
-							});
-						});
-					});
-				});
-			}
-			return true;
-		});
-	}, (err) => {
-		console.error(err);
-	});
-}
-
 dbIO.initialize((err, connection) => {
 	if (err) {
 		console.error(err);
 		return;
 	}
-
-	indexPhotos(imageDir, 100);
 });
 
 let server = app.listen(1337, () => {
-	console.log('photoindex listening on port 1337!')
+	log('photoindex listening on port 1337!')
 });
 
 app.use(express.static('public'));
@@ -181,7 +91,9 @@ app.use('/photo/:id/:width', function(request, response) {
 			}).catch((err) => {
 			deferred.reject('error resizing: ' + row.path);
 		});
-	}, deferred.reject);
+	}, (err) => {
+		deferred.reject(JSON.stringify(err));
+	});
 });
 
 app.use('/photo/:id', function(request, response) {
@@ -192,7 +104,9 @@ app.use('/photo/:id', function(request, response) {
 	dbIO.readPhotoById(request.params.id).then((row) => {
 		let file = fs.readFileSync(row.path, 'binary');
 		deferred.resolve(file, 'binary');
-	}, deferred.reject);
+	}, (err) => {
+		deferred.reject(JSON.stringify(err));
+	});
 });
 
 app.use('/exif/:id', function(request, response) {
@@ -208,7 +122,9 @@ app.use('/exif/:id', function(request, response) {
 			}).catch(() => {
 				deferred.resolve('{}');
 			});
-		}, deferred.reject);
+		}, (err) => {
+			deferred.reject(JSON.stringify(err));
+		});
 	});
 
 });
