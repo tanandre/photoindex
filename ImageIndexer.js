@@ -7,7 +7,7 @@ let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 let photoCrawler = require('./server/PhotoCrawler');
 // let imageDir = "c:\\andre\\afdruk\\";
-let imageDir = "\\\\kanji\\photo\\phone\\dre\\galaxys1\\";
+let imageDir = "\\\\kanji\\photo\\phone\\dre\\galaxys1\\andre\\";
 let tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
 let nfsimageDir = "\\\\kanji\\photo\\2006\\2006-03-11 Eerste date\\";
 let nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
@@ -25,9 +25,40 @@ function isVideoFile(file) {
 	return file.toLowerCase().indexOf('.mp4') !== -1 || file.toLowerCase().indexOf('.avi') !== -1;
 }
 
+// '2013:05:28 21:26:28'.replace(':', '-').replace(':', '-')
+function parseDate(dateStr) {
+	return new Date(Date.parse(dateStr.replace(':', '-').replace(':', '-')));
+}
+
+function getLatestDate(dates) {
+	return new Date(Math.max.apply(null, dates));
+}
+
 function getOldestDate(dates) {
-	dates.sort();
-	return dates[0];
+	console.log('sorting:', new Date(Math.min.apply(null, dates)), dates);
+	return new Date(Math.min.apply(null, dates));
+}
+
+function parseDateFileName(fileNamePart) {
+	return fileNamePart.slice(0, 4) + "-" + fileNamePart.slice(4, 6) + "-" + fileNamePart.slice(6);
+}
+
+function parseTimeFileName(fileNamePart) {
+	return fileNamePart.slice(0, 2) + ":" + fileNamePart.slice(2, 4) + ":" + fileNamePart.slice(4);
+}
+
+function getDateTimeFromFileName(fileName) {
+	if (/(19|20)\d{6}.\d{6}/.test(fileName)) {
+		let regex = /((?:19|20)\d{6}).{0,1}?(\d{6})/.exec(fileName);
+		let dateStr = parseDateFileName(regex[1]);
+		let timeStr = parseTimeFileName(regex[2]);
+
+		let date = new Date(Date.parse(dateStr + ' ' + timeStr));
+		console.log('parsed date time: ', dateStr + ' ' + timeStr, date);
+		return date;
+	}
+	let dateStr = /((?:19|20)\d{6})/.exec(fileName)[1];
+	return new Date(Date.parse(parseDateFileName(dateStr)));
 }
 
 function readDateFromFile(file, done) {
@@ -39,11 +70,15 @@ function readDateFromFile(file, done) {
 		let fileName = path.basename(file);
 		let dates = [stats.ctime, stats.mtime];
 		if (/(19|20)\d{6}/.test(fileName)) {
-			let dateStr = /((?:19|20)\d{6})/.exec(fileName)[1];
-			// TODO add time parsing to improve precision of date
-			//console.log(dateStr.slice(0, 4) + "-" + dateStr.slice(4, 6) + "-" + dateStr.slice(6), fileName);
-			dates.push(new Date(Date.parse(
-				dateStr.slice(0, 4) + "-" + dateStr.slice(4, 6) + "-" + dateStr.slice(8))));
+			// let dateStr = /((?:19|20)\d{6})/.exec(fileName)[1];
+			// // TODO add time parsing to improve precision of date
+			// //console.log(dateStr.slice(0, 4) + "-" + dateStr.slice(4, 6) + "-" + dateStr.slice(6), fileName);
+			// let dateString = dateStr.slice(0, 4) + "-" + dateStr.slice(4, 6) + "-" + dateStr.slice(6);
+			// let date = new Date(Date.parse(dateString));
+			// console.log('parsed date: ', dateString, date);
+			// dates.push(date);
+
+			dates.push(getDateTimeFromFileName(fileName));
 		}
 
 		done(getOldestDate(dates));
@@ -84,7 +119,7 @@ function indexPhotos(dir, max) {
 							log('done indexing');
 						}
 						process.stdout.write(".");
-						let deviceTag = exif.image.Model.replace(/\0/g, '');
+						let deviceTag = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
 						let exifDate = exif.exif.CreateDate;
 						if (exifDate) {
 							dbIO.addPhoto(file, exifDate).then((photoId) => {
@@ -102,8 +137,12 @@ function indexPhotos(dir, max) {
 							// 	file);
 							readDateFromFile(file, function(date) {
 								let estimateDate = date;
-								if (exif.exif.ModifyDate) {
-									estimateDate = getOldestDate([date, exif.exif.ModifyDate]);
+								if (exif.image.ModifyDate) {
+									console.log('sorting for file: ', file);
+									estimateDate =
+										getOldestDate([date, parseDate(exif.image.ModifyDate)]);
+								} else {
+									console.log('')
 								}
 
 								dbIO.addPhoto(file, estimateDate).then((photoId) => {
@@ -124,6 +163,7 @@ function indexPhotos(dir, max) {
 
 					}, (err) => {
 						if (--exifLoadCount === 0 && isIndexingDone) {
+							console.log('');
 							log('done indexing');
 						}
 						// console.error('no exif header found reading date from file', file);
@@ -153,8 +193,9 @@ dbIO.initialize((err, connection) => {
 
 	dbIO.createTables(connection, () => {
 		console.log('done creating tables');
-		// indexPhotos(imageDir, 500);
+		indexPhotos(imageDir, 500);
 	});
+	// indexPhotos(imageDir, 500);
 
 });
 
