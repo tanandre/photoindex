@@ -11,11 +11,13 @@
 <script src="node_modules/babel-polyfill/dist/polyfill.min.js"></script>
 <script src="node_modules/tether/dist/js/tether.min.js"></script>
 <!--<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>-->
+<link rel="stylesheet" href="node_modules/vue-material/dist/vue-material.css">
+<script src="node_modules/vue-material/dist/vue-material.js"></script>
 <script src="node_modules/bootstrap-vue/dist/bootstrap-vue.js"></script>
 <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
 <link rel="stylesheet" href="node_modules/bootstrap-vue/dist/bootstrap-vue.css">
 <link rel="stylesheet" href="css/photoindex.css">
-<body class="dark">
+<body class="dark photoindex">
 
 <div id="app" class="mainDiv"
      :class="selectedImage === null ? 'mainThumbnailView' : 'mainPhotoView'">
@@ -24,19 +26,21 @@
                        v-bind:size-image-items="imageItems.length"
                        @keyup.right="selectNext()" v-on:next="selectNext"
                        v-on:prev="selectPrevious"></photo-detail-view>
-    <b-navbar toggleable type="dark">
-        <b-link class="navbar-brand" to="#">
-            <span>{{ title }}</span> <span
-                class="badge">({{images.length}} | {{imageItems.length}})</span>
-        </b-link>
+    <md-toolbar>
+        <md-button class="md-icon-button">
+            <md-icon>menu</md-icon>
+        </md-button>
+
+        <h2 class="md-title">{{ title }}</h2>
+        <div class="imageCount">({{images.length}} | {{imageItems.length}})</div>
+
         <search-tags v-on:tags="onTagsChanged"></search-tags>
-        <div v-if="isBusy" class="busyDiv loading"></div>
-    </b-navbar>
-    <!--<p>-->
-    <!--<router-link to="/album">Go to album</router-link>-->
-    <!--<router-link to="/bar">Go to Bar</router-link>-->
-    <!--</p>-->
-    <!--<router-view></router-view>-->
+        <md-spinner v-show="isBusy" class="md-warn" md-indeterminate></md-spinner>
+
+        <md-select v-model="groupRange">
+            <md-option v-for="option in groupRangeOptions" :value="option">{{option}}</md-option>
+        </md-select>
+    </md-toolbar>
 
     <b-pagination v-if="imagesPerPage < imageItems.length" size="sm" :total-rows="imageItems.length"
                   v-model="currentPage" :per-page="imagesPerPage" :limit="6"></b-pagination>

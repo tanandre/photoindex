@@ -24,7 +24,7 @@ Vue.component('thumbnail', {
 	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:photo='photo.key'>" + /*"<b-popover  :triggers='[\"click\"]' :placement='\"bottom\"' v-if='photo.series.length > 1'><div class='popoverContent' slot='content'>" +
 	 "<thumbnail-photo v-for='img in photo.series' :key='img.id' v-bind:photo='img' class='seriesThumbnail'></thumbnail-photo></div>" +
 	 "<b-badge>{{photo.series.length}}</b-badge></b-popover>" +*/
-	"<b-badge v-if='photo.series.length > 1'>{{photo.series.length}}</b-badge>" + "</thumbnail-photo>" +
+	"<md-chip v-if='photo.series.length > 1'>{{photo.series.length}}</md-chip>" + "</thumbnail-photo>" +
 	"</div>",
 	methods: {
 		onClick: function() {
@@ -45,7 +45,7 @@ Vue.component('photoDetails', {
 	template: "<div class='exifView'><div v-if='indexPosition != null'><span>{{indexPosition.image.index + 1}} / {{indexPosition.image.length}}</span>" +
 	" <small>({{indexPosition.imageItems.index + 1}} / {{indexPosition.imageItems.length}})</small></div><div>Date: {{date}}</div>" +
 	"<div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}}</div>" +
-	"<b-badge v-for='tag in tags' :key='tag'>{{tag}}</b-badge>" +
+	"<md-chip v-for='tag in tags' :key='tag'>{{tag}}</md-chip>" +
 	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody>" +
 	"<tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
 	watch: {
@@ -163,8 +163,8 @@ Vue.component('searchTags', {
 			tags: []
 		}
 	},
-	template: "<div><b-form-input v-model='search' type='text' class='inputTags' placeholder='Enter search criteria' v-on:keyup.enter='addSearchString' autofocus></b-form-input>" +
-	"<b-badge class='label action' v-for='tag in tags' :key='tag' :title='tag' v-on:click.native='removeTag(tag)'>{{tag}} </b-badge></div>",
+	template: "<div><input class='searchToolbar' v-model='search' placeholder='Enter search criteria' v-on:keyup.enter='addSearchString' autofocus></input>" +
+	"<md-chip class='label action' v-for='tag in tags' :key='tag' :title='tag' v-on:click.native='removeTag(tag)'>{{tag}} </md-chip></div>",
 	methods: {
 		addSearchString: function() {
 			if (this.tags === undefined) {

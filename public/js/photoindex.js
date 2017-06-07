@@ -1,4 +1,42 @@
-var app = new Vue({
+Vue.use(VueMaterial);
+
+const RANGE = {
+	OFF: 'Off',
+	MINUTE: 'Minute',
+	DAY: 'Day',
+	MONTH: 'MONTH',
+	SEASON: 'SEASON',
+	YEAR: 'YEAR'
+};
+
+function createRangeFnc(range) {
+	if (range === RANGE.DAY) {
+		return function(imgA, imgB) {
+			return imgA.date.substring(0, 10) === imgB.date.substring(0, 10);
+		}
+	}
+	if (range === RANGE.MONTH) {
+		return function(imgA, imgB) {
+			return imgA.date.substring(0, 7) === imgB.date.substring(0, 7);
+		}
+	}
+	if (range === RANGE.YEAR) {
+		return function(imgA, imgB) {
+			return imgA.date.substring(0, 4) === imgB.date.substring(0, 4);
+		}
+	}
+	if (range === RANGE.YEAR) {
+		return function(imgA, imgB) {
+			return (imgA.dateInMillis - imgB.dateInMillis) < range.value;
+		}
+	}
+
+	return function() {
+		return false;
+	}
+}
+
+let app = new Vue({
 	el: '#app',
 	data: {
 		title: 'dre\'s album',
@@ -10,7 +48,9 @@ var app = new Vue({
 		currentRoute: window.location.pathname,
 		search: '',
 		isBusy: false,
-		millisPerMinute: 60000
+		millisPerMinute: 60000,
+		groupRange: RANGE.MINUTE,
+		groupRangeOptions: [RANGE.MINUTE, RANGE.DAY, RANGE.MONTH, RANGE.YEAR]
 	},
 	mounted: function() {
 		this.fetchImages({});
@@ -19,6 +59,14 @@ var app = new Vue({
 			// TODO use arrow keys to navigate
 			console.log('key', key)
 		};
+		this.$material.setCurrentTheme('dark');
+	},
+
+	watch: {
+		groupRange: function(value) {
+			console.log('onGroupRangeChange');
+			this.groupImageItems(value);
+		}
 	},
 
 	methods: {
@@ -27,50 +75,54 @@ var app = new Vue({
 			this.$http.get('/listing', {params: data}).then(function(response) {
 				this.isBusy = false;
 				this.images = response.body;
-				this.imageItems = [];
-				var imageItems = this.imageItems;
-				var _this = this;
-				var index = 0;
-				this.images.forEach(function(img) {
-					if (index++ === 0) {
-						imageItems.push({
-							key: img,
-							series: [img]
-						});
-						return;
-					}
-					var previousItem = imageItems[imageItems.length - 1];
-					var datePrevious = previousItem.series[previousItem.series.length - 1].dateInMillis;
-					if ((datePrevious - img.dateInMillis) < _this.millisPerMinute) {
-						previousItem.series.push(img);
-					} else {
-						imageItems.push({
-							key: img,
-							series: [img]
-						});
-					}
-				});
+
+				this.groupImageItems(this.groupRange);
 			}, function(err) {
 				console.error(err);
 				this.isBusy = false;
 			});
 		},
 
+		groupImageItems: function(range) {
+			let isWithinRange = createRangeFnc(range);
+			let imageItems = [];
+			let index = 0;
+			this.images.forEach((img) => {
+				if (index++ === 0) {
+					imageItems.push({
+						key: img,
+						series: [img]
+					});
+					return;
+				}
+
+				let previousItem = imageItems[imageItems.length - 1];
+				let previousImg = previousItem.series[previousItem.series.length - 1];
+				if (isWithinRange(previousImg, img)) {
+					previousItem.series.push(img);
+				} else {
+					imageItems.push({
+						key: img,
+						series: [img]
+					});
+				}
+			});
+			this.imageItems = imageItems;
+		},
+
 		getIndexOf: function(img) {
-			console.log('getIndexOf', this.imageItems.indexOf(img));
 			return this.imageItems.indexOf(img);
 		},
 
 		isThumbnailDisplay: function(img) {
-			var index = this.images.indexOf(img);
-			console.log('isThumbnailDisplay', index);
+			let index = this.images.indexOf(img);
 			if (index === 0) {
 				return true;
 			}
 
-			var date1 = this.images[index - 1].dateInMillis;
-			var date2 = this.images[index].dateInMillis;
-			var millisPerMinute = 60000;
+			let date1 = this.images[index - 1].dateInMillis;
+			let date2 = this.images[index].dateInMillis;
+			let millisPerMinute = 60000;
 			console.log(date1 - date2);
 			return (date1 - date2) > millisPerMinute;
 		},
@@ -98,21 +150,19 @@ var app = new Vue({
 		},
 
 		getImagesForPage: function(currentPage) {
-			var startIndex = (currentPage - 1) * this.imagesPerPage;
+			let startIndex = (currentPage - 1) * this.imagesPerPage;
 			return this.imageItems.slice(startIndex, startIndex + this.imagesPerPage);
 		},
 
 		selectPrevious: function(item) {
-			var index = this.imageItems.indexOf(item);
-			console.log('index', index);
+			let index = this.imageItems.indexOf(item);
 			if (index > 0) {
 				this.selectedImage = this.imageItems[index - 1];
 			}
 		},
 
 		selectNext: function(item) {
-			var index = this.imageItems.indexOf(item);
-			console.log('index', index);
+			let index = this.imageItems.indexOf(item);
 			if (index < (this.imageItems.length - 1)) {
 				this.selectedImage = this.imageItems[index + 1];
 			}
