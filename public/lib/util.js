@@ -84,21 +84,27 @@ class QueuedLoader {
 		return deferred;
 	}
 
+	clear() {
+		console.log('cleared the queue');
+		this.queue = [];
+	}
+
 	start() {
-		function loadNext(worker, queue) {
-			let item = queue.shift();
+		let _this = this;
+		function loadNext(worker) {
+			console.log('loading next items left: ', _this.queue.length);
+			let item = _this.queue.shift();
 			if (item !== undefined) {
 				let promise = worker.execute(item.url);
 				promise.then((data) => {
 					item.fnc(data);
-					loadNext(worker, queue);
+					loadNext(worker, _this.queue);
 				});
 			}
 		}
 
-		let queue = this.queue;
 		this.workers.filter((worker) => worker.isAvailable()).forEach((worker) => {
-			loadNext(worker, queue);
+			loadNext(worker);
 		});
 	}
 }
@@ -117,6 +123,10 @@ class CachedLoader {
 		return this.loader.load(url).then((data) => {
 			cache[url] = data;
 		});
+	}
+
+	clear() {
+		this.loader.clear();
 	}
 }
 

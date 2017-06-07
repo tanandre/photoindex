@@ -1,5 +1,9 @@
 Vue.use(VueMaterial);
 
+let thumbnailLoader = LoaderFactory.createImageLoader(4);
+let imageLoader = LoaderFactory.createImageLoader(1);
+let jsonLoader = LoaderFactory.createJsonLoader(1);
+
 const RANGE = {
 	OFF: 'Off',
 	MINUTE: 'Minute',
@@ -44,7 +48,7 @@ let app = new Vue({
 		imageItems: [],
 		selectedImage: null,
 		currentPage: 1,
-		imagesPerPage: 100,
+		imagesPerPage: 25,
 		currentRoute: window.location.pathname,
 		search: '',
 		isBusy: false,
@@ -59,18 +63,29 @@ let app = new Vue({
 			// TODO use arrow keys to navigate
 			console.log('key', key)
 		};
-		this.$material.setCurrentTheme('dark');
 	},
 
 	watch: {
 		groupRange: function(value) {
+			// TODO stop loaders and clear queues when a navigation event is thrown.
 			console.log('onGroupRangeChange');
 			this.groupImageItems(value);
+		},
+
+		currentPage: function() {
+			this.clearQueues();
 		}
 	},
 
 	methods: {
+		clearQueues: function() {
+			thumbnailLoader.clear();
+			imageLoader.clear();
+			jsonLoader.clear();
+		},
+
 		fetchImages: function(data) {
+			this.clearQueues();
 			this.isBusy = true;
 			this.$http.get('/listing', {params: data}).then(function(response) {
 				this.isBusy = false;
@@ -84,6 +99,7 @@ let app = new Vue({
 		},
 
 		groupImageItems: function(range) {
+			this.clearQueues();
 			let isWithinRange = createRangeFnc(range);
 			let imageItems = [];
 			let index = 0;
@@ -137,6 +153,7 @@ let app = new Vue({
 		},
 
 		onClickThumbnail: function(img) {
+			this.clearQueues();
 			this.displayPhoto(img);
 		},
 
@@ -146,6 +163,7 @@ let app = new Vue({
 		},
 
 		clearSelection: function() {
+			this.clearQueues();
 			this.selectedImage = null;
 		},
 
@@ -155,6 +173,7 @@ let app = new Vue({
 		},
 
 		selectPrevious: function(item) {
+			this.clearQueues();
 			let index = this.imageItems.indexOf(item);
 			if (index > 0) {
 				this.selectedImage = this.imageItems[index - 1];
@@ -162,6 +181,7 @@ let app = new Vue({
 		},
 
 		selectNext: function(item) {
+			this.clearQueues();
 			let index = this.imageItems.indexOf(item);
 			if (index < (this.imageItems.length - 1)) {
 				this.selectedImage = this.imageItems[index + 1];

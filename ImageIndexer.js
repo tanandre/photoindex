@@ -7,7 +7,11 @@ let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 let photoCrawler = require('./server/PhotoCrawler');
 // let imageDir = "c:\\andre\\afdruk\\";
+<<<<<<< HEAD
 let imageDir = "\\\\kanji\\photo\\phone\\jq\\galaxysii_1\\";
+=======
+let imageDir = "\\\\kanji\\photo\\phone\\dre\\galaxys1\\andre\\";
+>>>>>>> efc7f4a37a7f286a3a5b14b199b05e1257afa465
 let tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
 let nfsimageDir = "\\\\kanji\\photo\\2006\\2006-03-11 Eerste date\\";
 let nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";

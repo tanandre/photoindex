@@ -1,6 +1,4 @@
-let thumbnailLoader = LoaderFactory.createImageLoader(4);
-let imageLoader = LoaderFactory.createImageLoader(1);
-let jsonLoader = LoaderFactory.createJsonLoader(1);
+//let thumbnailLoader = LoaderFactory.createImageLoader(4);
 
 function getPhotoUrl(photo, width) {
 	return "/photo/" + photo.id + (width === undefined ? '' : '/' + width);
@@ -164,7 +162,7 @@ Vue.component('searchTags', {
 		}
 	},
 	template: "<div><input class='searchToolbar' v-model='search' placeholder='Enter search criteria' v-on:keyup.enter='addSearchString' autofocus></input>" +
-	"<md-chip class='label action' v-for='tag in tags' :key='tag' :title='tag' v-on:click.native='removeTag(tag)'>{{tag}} </md-chip></div>",
+	"<md-chip class='label action' v-for='tag in tags' :key='tag' :title='tag' v-on:click.native='removeTag(tag)' md-deletable>{{tag}}</md-chip></div>",
 	methods: {
 		addSearchString: function() {
 			if (this.tags === undefined) {

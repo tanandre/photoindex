@@ -227,6 +227,7 @@ body.dark.dark.photoindex {
 .searchToolbar {
 	border: 1px solid #aaa;
 	border-radius: 5px;
+	padding: 5px 10px;
 }
 
 .imageCount {
