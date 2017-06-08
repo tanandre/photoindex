@@ -8,14 +8,16 @@ Vue.component('thumbnailPhoto', {
 	props: ['photo', 'loaderId'],
 	data: function() {
 		return {
-			isLoading: false
+			isLoading: false,
+			promise: null
 		};
 	},
 	template: "<div ref='thumbnail' :class='{ loading: isLoading }'><slot></slot></div>",
 	mounted: function() {
+		// TODO only start loading when inside viewport
 		let photoUrl = getPhotoUrl(this.photo, 300);
 		let thumbnail = this.$refs['thumbnail'];
-		getThumbnailLoader(this.loaderId).load(photoUrl).then(() => {
+		this.promise = getThumbnailLoader(this.loaderId).load(photoUrl).then(() => {
 			this.isLoading = false;
 			thumbnail.style.backgroundImage = 'url(' + photoUrl + ')';
 		}, (err) => {
@@ -23,6 +25,9 @@ Vue.component('thumbnailPhoto', {
 		}, (progress) => {
 			this.isLoading = true;
 		});
+	},
+	beforeDestroy: function() {
+		this.promise.cancel();
 	}
 });
 
@@ -47,7 +52,8 @@ Vue.component('photoDetails', {
 		return {
 			exif: null,
 			tags: [],
-			date: null
+			date: null,
+			promise: null
 		}
 	},
 	template: "<div class='exifView'><div v-if='indexPosition != null'><span>{{indexPosition.image.index + 1}} / {{indexPosition.image.length}}</span>" +
@@ -63,15 +69,20 @@ Vue.component('photoDetails', {
 			this.tags = {};
 			let d = new Date(this.photo.date);
 			this.date = d.toLocaleString();
-			jsonLoader.load('/exif/' + this.photo.id)
+			this.promise = jsonLoader.load('/exif/' + this.photo.id)
 				.then((data) => {
 					_this.exif = data;
 				});
-			jsonLoader.load('/tags/' + this.photo.id)
+			this.promise = jsonLoader.load('/tags/' + this.photo.id)
 				.then((data) => {
 					console.log('tags', data);
 					_this.tags = data.tags;
 				});
+		},
+	},
+	beforeDestroy: function() {
+		if (this.promise) {
+			this.promise.cancel();
 		}
 	}
 });
@@ -122,6 +133,7 @@ Vue.component('photoDetailView', {
 		},
 
 		loadPhoto: function(photoToDisplay) {
+			this.isLoading = false;
 			if (this.promise && !this.promise.isDone()) {
 				this.promise.cancel();
 			}
@@ -172,7 +184,13 @@ Vue.component('photoDetailView', {
 			this.showRight = index > oldIndex;
 			this.loadPhoto(this.photo.key);
 		}
+	},
+	beforeDestroy: function() {
+		if (this.promise) {
+			this.promise.cancel();
+		}
 	}
+
 });
 
 Vue.component('searchTags', {

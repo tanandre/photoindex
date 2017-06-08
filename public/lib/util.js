@@ -60,18 +60,11 @@ class XhrWorker {
 }
 
 class QueuedLoader {
-	static create(fnc, workerCount) {
-		let workers = [];
-		for (let i = 0; i < workerCount; i++) {
-			workers.push(fnc());
-		}
-		return new QueuedLoader(workers);
-	}
-
-	constructor(workers) {
+	constructor(workers, isFifo) {
 		this.queue = [];
 		this.workers = workers;
 		this._stop = false;
+		this.isFifo = isFifo;
 	}
 
 	load(url) {
@@ -96,39 +89,36 @@ class QueuedLoader {
 		this._stop = false;
 		let _this = this;
 
-		function loadNext(worker) {
-			if (_this._stop) {
-				return;
-			}
-
-			let item = _this.queue.shift();
-			if (item === undefined) {
-				return;
-			}
-
-			if (item.deferred.isCanceled) {
-				loadNext(worker);
-				return;
-			}
-
-			item.deferred.progress(1);
-			let promise = worker.execute(item.url);
-			promise.then((data) => {
-				item.deferred.resolve(data);
-				loadNext(worker, _this.queue);
-			}, (err) => {
-				item.deferred.reject(err);
-				loadNext(worker, _this.queue);
-			}, (progress) => {
-				item.deferred.progress(progress);
-			});
-		}
-
 		setTimeout(() => {
-			this
-				.workers
-				.filter((worker) => worker
-					.isAvailable()).forEach((worker) => {
+			function loadNext(worker) {
+				if (_this._stop) {
+					return;
+				}
+
+				let item = _this.isFifo ? _this.queue.shift() : _this.queue.pop();
+				if (item === undefined) {
+					return;
+				}
+
+				if (item.deferred.isCanceled) {
+					loadNext(worker);
+					return;
+				}
+
+				item.deferred.progress(1);
+				let promise = worker.execute(item.url);
+				promise.then((data) => {
+					item.deferred.resolve(data);
+					loadNext(worker, _this.queue);
+				}, (err) => {
+					item.deferred.reject(err);
+					loadNext(worker, _this.queue);
+				}, (progress) => {
+					item.deferred.progress(progress);
+				});
+			}
+
+			this.workers.filter((worker) => worker.isAvailable()).forEach((worker) => {
 				loadNext(worker);
 			});
 		});
@@ -136,15 +126,17 @@ class QueuedLoader {
 }
 
 class CachedLoader {
-	constructor(loader) {
+	constructor(cache, loader) {
 		this.loader = loader;
-		this.cache = [];
+		this.cache = cache;
 	}
 
 	load(url) {
 		let cache = this.cache;
 		if (cache[url] !== undefined) {
-			return Deferred.createResolved(cache[url]);
+			let resolved = Deferred.createResolved(cache[url]);
+			resolved.progress(1);
+			return resolved;
 		}
 		return this.loader.load(url).then((data) => {
 			cache[url] = data;
@@ -164,17 +156,37 @@ class CachedLoader {
 	}
 }
 
+let jsonCache = [];
+let imageCache = [];
+
 class LoaderFactory {
+	static createWorkers(fnc, workerCount) {
+		let workers = [];
+		for (let i = 0; i < workerCount; i++) {
+			workers.push(fnc());
+		}
+		return workers;
+	}
 
 	static createJsonLoader(workerCount) {
-		return new CachedLoader(QueuedLoader.create(() => {
+		let workers = LoaderFactory.createWorkers(() => {
 			return new XhrWorker(Vue.http);
-		}, workerCount));
+		}, workerCount);
+
+		return new CachedLoader(jsonCache, new QueuedLoader(workers, true));
 	}
 
 	static createImageLoader(workerCount) {
-		return new CachedLoader(QueuedLoader.create(() => {
+		let workers = LoaderFactory.createWorkers(() => {
 			return new ImageWorker();
-		}, workerCount));
+		}, workerCount);
+		return new CachedLoader(imageCache, new QueuedLoader(workers, true));
+	}
+
+	static createReversedImageLoader(workerCount) {
+		let workers = LoaderFactory.createWorkers(() => {
+			return new ImageWorker();
+		}, workerCount);
+		return new CachedLoader(imageCache, new QueuedLoader(workers, false));
 	}
 }

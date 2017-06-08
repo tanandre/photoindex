@@ -2,16 +2,14 @@ Vue.use(VueMaterial);
 
 function getThumbnailLoader(id) {
 	if (id === 0) {
-		console.log('getting loader 0');
 		return thumbnailLoader0;
 	}
-	console.log('getting loader 1');
 	return thumbnailLoader1;
 
 }
 let thumbnailLoader0 = LoaderFactory.createImageLoader(4);
 let thumbnailLoader1 = LoaderFactory.createImageLoader(4);
-let imageLoader = LoaderFactory.createImageLoader(1);
+let imageLoader = LoaderFactory.createReversedImageLoader(1);
 let jsonLoader = LoaderFactory.createJsonLoader(1);
 
 const RANGE = {
@@ -39,9 +37,9 @@ function createRangeFnc(range) {
 			return imgA.date.substring(0, 4) === imgB.date.substring(0, 4);
 		}
 	}
-	if (range === RANGE.YEAR) {
+	if (range === RANGE.MINUTE) {
 		return function(imgA, imgB) {
-			return (imgA.dateInMillis - imgB.dateInMillis) < range.value;
+			return (imgA.dateInMillis - imgB.dateInMillis) < 60000;
 		}
 	}
 
@@ -64,7 +62,7 @@ let app = new Vue({
 		isBusy: false,
 		millisPerMinute: 60000,
 		groupRange: RANGE.MINUTE,
-		groupRangeOptions: [RANGE.MINUTE, RANGE.DAY, RANGE.MONTH, RANGE.YEAR]
+		groupRangeOptions: [RANGE.OFF, RANGE.MINUTE, RANGE.DAY, RANGE.MONTH, RANGE.YEAR]
 	},
 	mounted: function() {
 		this.fetchImages({});
@@ -77,37 +75,22 @@ let app = new Vue({
 
 	watch: {
 		groupRange: function(value) {
-			console.log('onGroupRangeChange');
 			this.groupImageItems(value);
-		},
-
-		currentPage: function() {
-			this.clearQueues();
 		}
 	},
 
 	methods: {
-		clearQueues: function() {
-			thumbnailLoader0.clear();
-			thumbnailLoader1.clear();
-			imageLoader.clear();
-			jsonLoader.clear();
-		},
-
-		clearAndPauseQueues: function() {
-			// TODO images that were queued are no longer loaded when navigating back to thumbanil view.
+		pauseThumbnailView: function() {
 			thumbnailLoader0.stop();
-			thumbnailLoader1.clear();
-			imageLoader.clear();
-			jsonLoader.clear();
-		},
-
-		resumeThumbnailQueue: function() {
 			thumbnailLoader0.start();
 		},
 
+		pauseDetailedView: function() {
+			thumbnailLoader0.start();
+			thumbnailLoader0.stop();
+		},
+
 		fetchImages: function(data) {
-			this.clearQueues();
 			this.isBusy = true;
 			this.$http.get('/listing', {params: data}).then(function(response) {
 				this.isBusy = false;
@@ -121,7 +104,6 @@ let app = new Vue({
 		},
 
 		groupImageItems: function(range) {
-			this.clearQueues();
 			let isWithinRange = createRangeFnc(range);
 			let imageItems = [];
 			let index = 0;
@@ -175,18 +157,17 @@ let app = new Vue({
 		},
 
 		onClickThumbnail: function(img) {
-			this.clearAndPauseQueues();
+			this.pauseThumbnailView();
 			this.displayPhoto(img);
 		},
 
 		displayPhoto: function(img) {
+			this.pauseDetailedView();
 			this.selectedImage = img;
-			// console.log('selected image', img);
 		},
 
 		clearSelection: function() {
-			this.clearAndPauseQueues();
-			this.resumeThumbnailQueue();
+			this.pauseThumbnailView();
 			this.selectedImage = null;
 		},
 
@@ -196,7 +177,7 @@ let app = new Vue({
 		},
 
 		selectPrevious: function(item) {
-			this.clearAndPauseQueues();
+			this.pauseThumbnailView();
 			let index = this.imageItems.indexOf(item);
 			if (index > 0) {
 				this.selectedImage = this.imageItems[index - 1];
@@ -204,7 +185,7 @@ let app = new Vue({
 		},
 
 		selectNext: function(item) {
-			this.clearAndPauseQueues();
+			this.pauseThumbnailView();
 			let index = this.imageItems.indexOf(item);
 			if (index < (this.imageItems.length - 1)) {
 				this.selectedImage = this.imageItems[index + 1];

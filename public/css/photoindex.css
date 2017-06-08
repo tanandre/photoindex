@@ -116,7 +116,7 @@ body.dark.dark.photoindex {
 	background-repeat: no-repeat;
 }
 
-.loading {
+.photoindex .mainDiv .loading {
 	background-size: auto;
 	background-image: url("../img/loading.svg");
 	background-repeat: no-repeat;
