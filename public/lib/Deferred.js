@@ -17,6 +17,7 @@ class Deferred {
 	constructor() {
 		this.isResolved = false;
 		this.isRejected = false;
+		this.isCanceled = false;
 		this.listeners = [];
 	}
 
@@ -30,6 +31,10 @@ class Deferred {
 			onError(this.data);
 		}
 		return this;
+	}
+
+	isDone() {
+		return this.isResolved || this.isRejected || this.isCanceled;
 	}
 
 	progress(data) {
@@ -60,7 +65,15 @@ class Deferred {
 		this.signalListeners(data, 1);
 	}
 
+	cancel() {
+		this.isCanceled = true;
+	}
+
 	signalListeners(data, index) {
+		if (this.isCanceled) {
+			return;
+		}
+
 		let dataChained = data;
 		this.listeners.forEach((listener) => {
 			let callback = listener[index];

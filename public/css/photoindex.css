@@ -48,6 +48,7 @@ body.dark.dark.photoindex {
 	height: 100%;
 	background-size: cover;
 	background-position: center;
+	background-color: #222;
 }
 
 .photoText {
@@ -116,7 +117,10 @@ body.dark.dark.photoindex {
 }
 
 .loading {
+	background-size: auto;
 	background-image: url("../img/loading.svg");
+	background-repeat: no-repeat;
+	background-position: center;
 }
 
 .busyDiv.loading {

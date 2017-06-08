@@ -5,13 +5,23 @@ function getPhotoUrl(photo, width) {
 }
 
 Vue.component('thumbnailPhoto', {
-	props: ['photo'],
-	template: "<div ref='thumbnail'><slot></slot></div>",
+	props: ['photo', 'loaderId'],
+	data: function() {
+		return {
+			isLoading: false
+		};
+	},
+	template: "<div ref='thumbnail' :class='{ loading: isLoading }'><slot></slot></div>",
 	mounted: function() {
 		let photoUrl = getPhotoUrl(this.photo, 300);
 		let thumbnail = this.$refs['thumbnail'];
-		thumbnailLoader.load(photoUrl).then(() => {
+		getThumbnailLoader(this.loaderId).load(photoUrl).then(() => {
+			this.isLoading = false;
 			thumbnail.style.backgroundImage = 'url(' + photoUrl + ')';
+		}, (err) => {
+			this.isLoading = false;
+		}, (progress) => {
+			this.isLoading = true;
 		});
 	}
 });
@@ -19,7 +29,7 @@ Vue.component('thumbnailPhoto', {
 Vue.component('thumbnail', {
 	props: ['photo'],
 	template: "<div class='photoThumbnailBox action' :title='photo.key.date' >" +
-	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:photo='photo.key'>" + /*"<b-popover  :triggers='[\"click\"]' :placement='\"bottom\"' v-if='photo.series.length > 1'><div class='popoverContent' slot='content'>" +
+	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:loader-id='0' v-bind:photo='photo.key'>" + /*"<b-popover  :triggers='[\"click\"]' :placement='\"bottom\"' v-if='photo.series.length > 1'><div class='popoverContent' slot='content'>" +
 	 "<thumbnail-photo v-for='img in photo.series' :key='img.id' v-bind:photo='img' class='seriesThumbnail'></thumbnail-photo></div>" +
 	 "<b-badge>{{photo.series.length}}</b-badge></b-popover>" +*/
 	"<md-chip v-if='photo.series.length > 1'>{{photo.series.length}}</md-chip>" + "</thumbnail-photo>" +
@@ -69,7 +79,7 @@ Vue.component('photoDetails', {
 Vue.component('photoSeries', {
 	props: ['photo', 'indexSeries'],
 	template: "<div class='photoSeries'><div class='seriesContainer'><thumbnail-photo class='seriesThumbnail action' v-for='(img, index) in photo.series' :key='img.id' " +
-	"@click.native='select(img, index)' :class='[indexSeries == index ? \"selected\" : \"\" ]' v-bind:photo='img'></thumbnail-photo></div></div>",
+	"@click.native='select(img, index)' :class='[indexSeries == index ? \"selected\" : \"\" ]' v-bind:loader-id='1' v-bind:photo='img'></thumbnail-photo></div></div>",
 	methods: {
 		select: function(img, index) {
 			this.$emit('select', img, index);
@@ -87,10 +97,12 @@ Vue.component('photoDetailView', {
 			indexSeries: 0,
 			selectedPhoto: null,
 			showLeft: false,
-			showRight: false
+			showRight: false,
+			isLoading: false,
+			promise: null
 		};
 	},
-	template: "<div class='photoDetailView'><div class='photoView action loading' @click='onClick()' ref='photoView'>" +
+	template: "<div class='photoDetailView'><div class='photoView action' @click='onClick()' :class='{ loading: isLoading }' ref='photoView'>" +
 	"<div @click.stop='onNavigate(\"prev\")' class='navigationPane left' title='navigate to previous' @mousemove='showLeft = true' @mouseover='showLeft = true' @mouseleave='showLeft = false'><div v-show='showLeft' class='navigation left'></div></div>" +
 	"<div @click.stop='onNavigate(\"next\")' class='navigationPane right' title='navigate to next' @mousemove='showRight = true' @mouseover='showRight = true' @mouseleave='showRight = false'><div v-show='showRight' class='navigation right'></div></div></div>" +
 	"<photo-details v-bind:photo='selectedPhoto' v-bind:index='index' v-bind:size='size' v-bind:indexPosition='indexPosition'></photo-details>" +
@@ -110,6 +122,9 @@ Vue.component('photoDetailView', {
 		},
 
 		loadPhoto: function(photoToDisplay) {
+			if (this.promise && !this.promise.isDone()) {
+				this.promise.cancel();
+			}
 			this.selectedPhoto = photoToDisplay;
 
 			this.index = this.$parent.imageItems.indexOf(this.photo);
@@ -126,12 +141,18 @@ Vue.component('photoDetailView', {
 
 			let photoView = this.$refs['photoView'];
 			photoView.style.backgroundImage = '';
-			photoView.classList.add('loading');
 			let photoUrl = getPhotoUrl(photoToDisplay, 1000);
 
-			imageLoader.load(photoUrl).then(() => {
-				photoView.classList.remove('loading');
+			this.promise = imageLoader.load(photoUrl);
+			this.promise.then(() => {
+				this.isLoading = false;
 				photoView.style.backgroundImage = "url(" + photoUrl + ")";
+			}, (err) => {
+				this.isLoading = false;
+				console.error('error loading image', err);
+			}, (progress) => {
+				this.isLoading = true;
+				console.log('started loading', progress);
 			});
 		}
 	},

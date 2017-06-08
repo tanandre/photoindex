@@ -1,6 +1,16 @@
 Vue.use(VueMaterial);
 
-let thumbnailLoader = LoaderFactory.createImageLoader(4);
+function getThumbnailLoader(id) {
+	if (id === 0) {
+		console.log('getting loader 0');
+		return thumbnailLoader0;
+	}
+	console.log('getting loader 1');
+	return thumbnailLoader1;
+
+}
+let thumbnailLoader0 = LoaderFactory.createImageLoader(4);
+let thumbnailLoader1 = LoaderFactory.createImageLoader(4);
 let imageLoader = LoaderFactory.createImageLoader(1);
 let jsonLoader = LoaderFactory.createJsonLoader(1);
 
@@ -67,7 +77,6 @@ let app = new Vue({
 
 	watch: {
 		groupRange: function(value) {
-			// TODO stop loaders and clear queues when a navigation event is thrown.
 			console.log('onGroupRangeChange');
 			this.groupImageItems(value);
 		},
@@ -79,9 +88,22 @@ let app = new Vue({
 
 	methods: {
 		clearQueues: function() {
-			thumbnailLoader.clear();
+			thumbnailLoader0.clear();
+			thumbnailLoader1.clear();
 			imageLoader.clear();
 			jsonLoader.clear();
+		},
+
+		clearAndPauseQueues: function() {
+			// TODO images that were queued are no longer loaded when navigating back to thumbanil view.
+			thumbnailLoader0.stop();
+			thumbnailLoader1.clear();
+			imageLoader.clear();
+			jsonLoader.clear();
+		},
+
+		resumeThumbnailQueue: function() {
+			thumbnailLoader0.start();
 		},
 
 		fetchImages: function(data) {
@@ -153,7 +175,7 @@ let app = new Vue({
 		},
 
 		onClickThumbnail: function(img) {
-			this.clearQueues();
+			this.clearAndPauseQueues();
 			this.displayPhoto(img);
 		},
 
@@ -163,7 +185,8 @@ let app = new Vue({
 		},
 
 		clearSelection: function() {
-			this.clearQueues();
+			this.clearAndPauseQueues();
+			this.resumeThumbnailQueue();
 			this.selectedImage = null;
 		},
 
@@ -173,7 +196,7 @@ let app = new Vue({
 		},
 
 		selectPrevious: function(item) {
-			this.clearQueues();
+			this.clearAndPauseQueues();
 			let index = this.imageItems.indexOf(item);
 			if (index > 0) {
 				this.selectedImage = this.imageItems[index - 1];
@@ -181,7 +204,7 @@ let app = new Vue({
 		},
 
 		selectNext: function(item) {
-			this.clearQueues();
+			this.clearAndPauseQueues();
 			let index = this.imageItems.indexOf(item);
 			if (index < (this.imageItems.length - 1)) {
 				this.selectedImage = this.imageItems[index + 1];

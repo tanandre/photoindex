@@ -1,5 +1,6 @@
 'use strict';
 
+// TODO share the cache of the different loaders;
 class ImageWorker {
 	constructor() {
 		this.img = new Image();
@@ -70,41 +71,66 @@ class QueuedLoader {
 	constructor(workers) {
 		this.queue = [];
 		this.workers = workers;
+		this._stop = false;
 	}
 
 	load(url) {
 		let deferred = new Deferred();
 		this.queue.push({
 			url: url,
-			fnc: function(data) {
-				deferred.resolve(data);
-			}
+			deferred: deferred
 		});
 		this.start();
 		return deferred;
 	}
 
 	clear() {
-		console.log('cleared the queue');
 		this.queue = [];
 	}
 
+	stop() {
+		this._stop = true;
+	}
+
 	start() {
+		this._stop = false;
 		let _this = this;
+
 		function loadNext(worker) {
-			console.log('loading next items left: ', _this.queue.length);
-			let item = _this.queue.shift();
-			if (item !== undefined) {
-				let promise = worker.execute(item.url);
-				promise.then((data) => {
-					item.fnc(data);
-					loadNext(worker, _this.queue);
-				});
+			if (_this._stop) {
+				return;
 			}
+
+			let item = _this.queue.shift();
+			if (item === undefined) {
+				return;
+			}
+
+			if (item.deferred.isCanceled) {
+				loadNext(worker);
+				return;
+			}
+
+			item.deferred.progress(1);
+			let promise = worker.execute(item.url);
+			promise.then((data) => {
+				item.deferred.resolve(data);
+				loadNext(worker, _this.queue);
+			}, (err) => {
+				item.deferred.reject(err);
+				loadNext(worker, _this.queue);
+			}, (progress) => {
+				item.deferred.progress(progress);
+			});
 		}
 
-		this.workers.filter((worker) => worker.isAvailable()).forEach((worker) => {
-			loadNext(worker);
+		setTimeout(() => {
+			this
+				.workers
+				.filter((worker) => worker
+					.isAvailable()).forEach((worker) => {
+				loadNext(worker);
+			});
 		});
 	}
 }
@@ -127,6 +153,14 @@ class CachedLoader {
 
 	clear() {
 		this.loader.clear();
+	}
+
+	stop() {
+		this.loader.stop();
+	}
+
+	start() {
+		this.loader.start();
 	}
 }
 
