@@ -1,6 +1,55 @@
 'use strict';
 
-// TODO share the cache of the different loaders;
+class ImageXhrWorker {
+	constructor() {
+		this.xmlHTTP = new XMLHttpRequest();
+		this._isAvailable = true;
+	}
+
+	isAvailable() {
+		return this._isAvailable;
+	}
+
+	execute(url) {
+		if (!this._isAvailable) {
+			throw new Error('should not be called when not available');
+		}
+		this._isAvailable = false;
+
+		let deferred = new Deferred();
+		let xmlHTTP = this.xmlHTTP;
+		this.xmlHTTP.open('GET', url, true);
+		this.xmlHTTP.responseType = 'arraybuffer';
+
+		let _this = this;
+
+		xmlHTTP.onload = function(e) {
+			_this._isAvailable = true;
+			let h = xmlHTTP.getAllResponseHeaders();
+			let m = h.match(/^Content-Type\:\s*(.*?)$/mi), mimeType = m[1] || 'image/png';
+
+			let blob = new Blob([this.response], {type: mimeType});
+			let src = window.URL.createObjectURL(blob);
+			deferred.resolve(src);
+		};
+
+		xmlHTTP.onprogress = function(event) {
+			let progress = parseInt(( event.loaded / event.total ) * 100);
+			deferred.progress(progress);
+		};
+
+		xmlHTTP.onerror = function(err) {
+			_this._isAvailable = true;
+			deferred.reject(err);
+		};
+
+		xmlHTTP.send();
+
+		return deferred;
+	}
+
+}
+
 class ImageWorker {
 	constructor() {
 		this.img = new Image();
@@ -180,7 +229,7 @@ class LoaderFactory {
 
 	static createImageLoader(workerCount, isReverse) {
 		let workers = LoaderFactory.createWorkers(() => {
-			return new ImageWorker();
+			return new ImageXhrWorker();
 		}, workerCount);
 		return new CachedLoader(imageCache, new QueuedLoader(workers, !isReverse));
 	}

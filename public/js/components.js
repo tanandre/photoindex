@@ -27,10 +27,12 @@ Vue.component('thumbnailPhoto', {
 			status: 'idle',
 			isLoading: false,
 			isInLoadQueue: false,
-			promise: null
+			promise: null,
+			progress: 0,
 		};
 	},
-	template: "<div ref='thumbnail' :class='{ loading: isLoading }'><slot></slot>{{status}}</div>",
+	template: "<div ref='thumbnail' :class='{ loading: isLoading }'><slot></slot>{{status}}</div>", //
+	// template: "<div ref='thumbnail'><slot></slot>{{status}}<md-spinner v-if='isLoading' :md-progress='progress' md-indeterminate></md-spinner></div>",
 	mounted: function() {
 
 		['DOMContentLoaded', 'load', 'scroll', 'resize'].forEach((event) => {
@@ -59,14 +61,15 @@ Vue.component('thumbnailPhoto', {
 			let photoUrl = getPhotoUrl(this.photo, 300);
 			let thumbnail = this.$refs['thumbnail'];
 
-			this.promise = getThumbnailLoader(this.loaderId).load(photoUrl).then(() => {
+			this.promise = getThumbnailLoader(this.loaderId).load(photoUrl).then((data) => {
 				this.status = 'done';
 				this.isLoading = false;
-				thumbnail.style.backgroundImage = 'url(' + photoUrl + ')';
+				thumbnail.style.backgroundImage = 'url(' + data + ')';
 			}, (err) => {
 				this.status = 'error';
 				this.isLoading = false;
 			}, (progress) => {
+				this.progress = progress;
 				this.status = 'loading';
 				this.isLoading = true;
 			});
@@ -159,7 +162,8 @@ Vue.component('photoDetailView', {
 			showLeft: false,
 			showRight: false,
 			isLoading: false,
-			promise: null
+			promise: null,
+			progress: 0,
 		};
 	},
 	template: "<div class='photoDetailView'><div class='photoView action' @click='onClick()' :class='{ loading: isLoading }' ref='photoView'>" +
@@ -187,6 +191,7 @@ Vue.component('photoDetailView', {
 				this.promise.cancel();
 			}
 
+			this.progress = 0;
 			this.selectedPhoto = photoToDisplay;
 			this.index = this.$parent.imageItems.indexOf(this.photo);
 			this.indexPosition = {
@@ -211,6 +216,7 @@ Vue.component('photoDetailView', {
 				this.isLoading = false;
 				console.error('error loading image', err);
 			}, (progress) => {
+				this.progress = progress;
 				this.isLoading = true;
 				console.log('started loading', progress);
 			});

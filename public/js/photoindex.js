@@ -18,7 +18,6 @@ const RANGE = {
 	HOUR: 'Hour',
 	DAY: 'Day',
 	MONTH: 'MONTH',
-	SEASON: 'SEASON',
 	YEAR: 'YEAR'
 };
 
