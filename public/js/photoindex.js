@@ -10,11 +10,12 @@ function getThumbnailLoader(id) {
 let thumbnailLoader0 = LoaderFactory.createImageLoader(4);
 let thumbnailLoader1 = LoaderFactory.createImageLoader(4);
 let imageLoader = LoaderFactory.createReversedImageLoader(1);
-let jsonLoader = LoaderFactory.createJsonLoader(1);
+let jsonLoader = LoaderFactory.createReversedJsonLoader(2);
 
 const RANGE = {
 	OFF: 'Off',
 	MINUTE: 'Minute',
+	HOUR: 'Hour',
 	DAY: 'Day',
 	MONTH: 'MONTH',
 	SEASON: 'SEASON',
@@ -22,6 +23,11 @@ const RANGE = {
 };
 
 function createRangeFnc(range) {
+	if (range === RANGE.HOUR) {
+		return function(imgA, imgB) {
+			return imgA.date.substring(0, 13) === imgB.date.substring(0, 13);
+		}
+	}
 	if (range === RANGE.DAY) {
 		return function(imgA, imgB) {
 			return imgA.date.substring(0, 10) === imgB.date.substring(0, 10);
@@ -62,7 +68,7 @@ let app = new Vue({
 		isBusy: false,
 		millisPerMinute: 60000,
 		groupRange: RANGE.MINUTE,
-		groupRangeOptions: [RANGE.OFF, RANGE.MINUTE, RANGE.DAY, RANGE.MONTH, RANGE.YEAR]
+		groupRangeOptions: RANGE
 	},
 	mounted: function() {
 		this.fetchImages({});

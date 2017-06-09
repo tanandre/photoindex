@@ -47,8 +47,10 @@ class XhrWorker {
 	execute(url) {
 		this._isAvailable = false;
 		let deferred = new Deferred();
-		let _this = this;
-		this._http.get(url).then((response) => {
+
+		let promise = this._http.get(url);
+		console.log(promise);
+		promise.then((response) => {
 			this._isAvailable = true;
 			deferred.resolve(response.body);
 		}).catch((err) => {
@@ -168,25 +170,26 @@ class LoaderFactory {
 		return workers;
 	}
 
-	static createJsonLoader(workerCount) {
+	static createJsonLoader(workerCount, isReverse) {
 		let workers = LoaderFactory.createWorkers(() => {
 			return new XhrWorker(Vue.http);
 		}, workerCount);
 
-		return new CachedLoader(jsonCache, new QueuedLoader(workers, true));
+		return new CachedLoader(jsonCache, new QueuedLoader(workers, !isReverse));
 	}
 
-	static createImageLoader(workerCount) {
+	static createImageLoader(workerCount, isReverse) {
 		let workers = LoaderFactory.createWorkers(() => {
 			return new ImageWorker();
 		}, workerCount);
-		return new CachedLoader(imageCache, new QueuedLoader(workers, true));
+		return new CachedLoader(imageCache, new QueuedLoader(workers, !isReverse));
 	}
 
 	static createReversedImageLoader(workerCount) {
-		let workers = LoaderFactory.createWorkers(() => {
-			return new ImageWorker();
-		}, workerCount);
-		return new CachedLoader(imageCache, new QueuedLoader(workers, false));
+		return this.createImageLoader(workerCount, false);
+	}
+
+	static createReversedJsonLoader(workerCount) {
+		return this.createJsonLoader(workerCount, false);
 	}
 }
