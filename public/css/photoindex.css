@@ -49,6 +49,7 @@ body.dark.dark.photoindex {
 	background-size: cover;
 	background-position: center;
 	background-color: #222;
+	position: relative;
 }
 
 .photoText {
@@ -245,4 +246,17 @@ body.dark.dark.photoindex {
 
 .photoindex .md-select.md-theme-default {
 	width: auto;
+}
+
+.photoInfo {
+	font-size: smaller;
+	background-color: rgba(0, 0, 0, 0.4);
+	position: absolute;
+	width: 100%;
+	text-align: center;
+	bottom: 0;
+}
+
+.thumbnailDate {
+	margin: 0 5px;
 }

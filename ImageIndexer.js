@@ -7,11 +7,7 @@ let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 let photoCrawler = require('./server/PhotoCrawler');
 // let imageDir = "c:\\andre\\afdruk\\";
-<<<<<<< HEAD
-let imageDir = "\\\\kanji\\photo\\phone\\jq\\galaxysii_1\\";
-=======
-let imageDir = "\\\\kanji\\photo\\phone\\dre\\galaxys1\\andre\\";
->>>>>>> efc7f4a37a7f286a3a5b14b199b05e1257afa465
+let imageDir = "\\\\kanji\\photo\\phone\\dre\\";
 let tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
 let nfsimageDir = "\\\\kanji\\photo\\2006\\2006-03-11 Eerste date\\";
 let nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
@@ -39,7 +35,6 @@ function getLatestDate(dates) {
 }
 
 function getOldestDate(dates) {
-	console.log('sorting:', new Date(Math.min.apply(null, dates)), dates);
 	return new Date(Math.min.apply(null, dates));
 }
 
@@ -58,7 +53,6 @@ function getDateTimeFromFileName(fileName) {
 		let timeStr = parseTimeFileName(regex[2]);
 
 		let date = new Date(Date.parse(dateStr + ' ' + timeStr));
-		console.log('parsed date time: ', dateStr + ' ' + timeStr, date);
 		return date;
 	}
 	let dateStr = /((?:19|20)\d{6})/.exec(fileName)[1];
@@ -131,8 +125,6 @@ function indexPhotos(dir, max) {
 									dbIO.addOrGetTag(deviceTag).then((tagId) => {
 										dbIO.addPhotoTag(photoId, tagId);
 									});
-								} else {
-									console.log('photo has no deviceTag', file);
 								}
 							});
 						} else {
@@ -142,11 +134,8 @@ function indexPhotos(dir, max) {
 							readDateFromFile(file, function(date) {
 								let estimateDate = date;
 								if (exif.image.ModifyDate) {
-									console.log('sorting for file: ', file);
 									estimateDate =
 										getOldestDate([date, parseDate(exif.image.ModifyDate)]);
-								} else {
-									console.log('')
 								}
 
 								dbIO.addPhoto(file, estimateDate).then((photoId) => {
@@ -155,8 +144,6 @@ function indexPhotos(dir, max) {
 										dbIO.addOrGetTag(deviceTag).then((tagId) => {
 											dbIO.addPhotoTag(photoId, tagId);
 										});
-									} else {
-										console.log('photo has no deviceTag', file);
 									}
 									dbIO.addOrGetTag(dateUnconfirmedTag).then((tagId) => {
 										dbIO.addPhotoTag(photoId, tagId);
@@ -195,11 +182,14 @@ dbIO.initialize((err, connection) => {
 		return;
 	}
 
-	dbIO.createTables(connection, () => {
-		console.log('done creating tables');
-		indexPhotos(imageDir, 500);
-	});
-	// indexPhotos(imageDir, 500);
+	// dbIO.createTables(connection, () => {
+	// 	console.log('done creating tables');
+	// 	indexPhotos(imageDir, 500);
+	// });
+	indexPhotos(imageDir, 1000);
+	indexPhotos(imageDir, 1000);
+	indexPhotos(imageDir, 1000);
+	indexPhotos(imageDir, 1000);
 
 });
 

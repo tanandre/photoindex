@@ -26,12 +26,12 @@ Vue.component('thumbnailPhoto', {
 		return {
 			status: 'idle',
 			isLoading: false,
-			isInLoadQueue: false,
+			isDone: false,
 			promise: null,
 			progress: 0,
 		};
 	},
-	template: "<div ref='thumbnail' :class='{ loading: isLoading }'><slot></slot>{{status}}</div>", //
+	template: "<div ref='thumbnail' :class='{ loading: isLoading }'><slot></slot></div>", //
 	// template: "<div ref='thumbnail'><slot></slot>{{status}}<md-spinner v-if='isLoading' :md-progress='progress' md-indeterminate></md-spinner></div>",
 	mounted: function() {
 
@@ -44,19 +44,25 @@ Vue.component('thumbnailPhoto', {
 	},
 	methods: {
 		loadImageIfInViewport: function() {
+			if (this.isDone) {
+				return;
+			}
+
 			if (!isElementInViewport(this.$el)) {
-				if (this.isInLoadQueue && !this.isLoading) {
+				// cancel queued items that have not been started
+				if (this.promise && !this.promise.hasProgress()) {
 					this.status = 'canceled';
 					this.promise.cancel();
+					this.promise = null;
 				}
 				return;
 			}
 
-			if (this.isInLoadQueue) {
+			// already on the queue
+			if (this.promise) {
 				return;
 			}
 
-			this.isInLoadQueue = true;
 			this.status = 'in queue';
 			let photoUrl = getPhotoUrl(this.photo, 300);
 			let thumbnail = this.$refs['thumbnail'];
@@ -64,10 +70,12 @@ Vue.component('thumbnailPhoto', {
 			this.promise = getThumbnailLoader(this.loaderId).load(photoUrl).then((data) => {
 				this.status = 'done';
 				this.isLoading = false;
+				this.isDone = true;
 				thumbnail.style.backgroundImage = 'url(' + data + ')';
 			}, (err) => {
 				this.status = 'error';
 				this.isLoading = false;
+				this.isDone = true;
 			}, (progress) => {
 				this.progress = progress;
 				this.status = 'loading';
@@ -81,14 +89,49 @@ Vue.component('thumbnailPhoto', {
 	}
 });
 
+let monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+	'October', 'November', 'December'];
+
+let dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function getDateDisplay(date, dateRange) {
+	if (dateRange === RANGE.YEAR) {
+		return date.substring(0, 4);
+	}
+
+	if (dateRange === RANGE.MONTH) {
+		return monthNames[parseInt(date.substring(5, 7)) - 1] + ' \'' + date.substring(2, 4);
+	}
+
+	if (dateRange === RANGE.HOUR) {
+		let beginHour = parseInt(date.substring(11, 13));
+		let endHour = beginHour === 23 ? 0 : beginHour + 1;
+		return beginHour + ':00-' + endHour + ':00';
+	}
+
+	if (dateRange === RANGE.DAY) {
+		// return dayNames[new Date(date).getDay()];
+		return new Date(date).toDateString();
+	}
+
+	return '';
+}
+
 Vue.component('thumbnail', {
-	props: ['photo'],
+	props: ['photo', 'dateRange'],
 	template: "<div class='photoThumbnailBox action' :title='photo.key.date' >" +
 	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:loader-id='0' v-bind:photo='photo.key'>" +
-	"<md-chip v-if='photo.series.length > 1'>{{photo.series.length}}</md-chip>" + "</thumbnail-photo>" +
+	"<md-chip v-if='photo.series.length > 1'>{{photo.series.length}}</md-chip>" +
+	"<div class='photoInfo' v-if='dateRange !== \"Minute\" && dateRange !== \"Off\"'><span class='thumbnailDate'>{{dateToDisplay}}</span></div></thumbnail-photo>" +
 	"</div>",
+	computed: {
+		dateToDisplay: function() {
+			return getDateDisplay(this.photo.key.date, this.dateRange);
+		}
+	},
 	methods: {
-		onClick: function() {
+		onClick: function(event) {
+			console.log('event', event.ctrlKey);
 			this.$emit('select', this.photo);
 		}
 	}

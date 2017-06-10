@@ -45,7 +45,7 @@ class ImageXhrWorker {
 
 		xmlHTTP.send();
 
-		return deferred;
+		return deferred.promise;
 	}
 
 }
@@ -79,7 +79,7 @@ class ImageWorker {
 			deferred.reject(url);
 		};
 		this.img.src = url;
-		return deferred;
+		return deferred.promise;
 	}
 }
 
@@ -97,16 +97,14 @@ class XhrWorker {
 		this._isAvailable = false;
 		let deferred = new Deferred();
 
-		let promise = this._http.get(url);
-		console.log(promise);
-		promise.then((response) => {
+		this._http.get(url).then((response) => {
 			this._isAvailable = true;
 			deferred.resolve(response.body);
 		}).catch((err) => {
 			this._isAvailable = true;
 			deferred.reject(err);
 		});
-		return deferred;
+		return deferred.promise;
 	}
 }
 
@@ -125,7 +123,7 @@ class QueuedLoader {
 			deferred: deferred
 		});
 		this.start();
-		return deferred;
+		return deferred.promise;
 	}
 
 	clear() {
@@ -151,7 +149,7 @@ class QueuedLoader {
 					return;
 				}
 
-				if (item.deferred.isCanceled) {
+				if (item.deferred.isCanceled()) {
 					loadNext(worker);
 					return;
 				}
@@ -187,7 +185,7 @@ class CachedLoader {
 		if (cache[url] !== undefined) {
 			let resolved = Deferred.createResolved(cache[url]);
 			resolved.progress(1);
-			return resolved;
+			return resolved.promise;
 		}
 		return this.loader.load(url).then((data) => {
 			cache[url] = data;
@@ -223,7 +221,6 @@ class LoaderFactory {
 		let workers = LoaderFactory.createWorkers(() => {
 			return new XhrWorker(Vue.http);
 		}, workerCount);
-
 		return new CachedLoader(jsonCache, new QueuedLoader(workers, !isReverse));
 	}
 

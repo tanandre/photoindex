@@ -46,7 +46,7 @@
 
     <b-pagination v-if="imagesPerPage < imageItems.length" size="sm" :total-rows="imageItems.length"
                   v-model="currentPage" :per-page="imagesPerPage" :limit="6"></b-pagination>
-    <thumbnail v-for="(img, index) in getImagesForPage(currentPage)" v-bind:photo="img"
+    <thumbnail v-for="(img, index) in getImagesForPage(currentPage)" v-bind:photo="img" v-bind:date-range="groupRange"
                :key="img.key.id" v-on:select="onClickThumbnail"></thumbnail>
 </div>
 

@@ -85,6 +85,7 @@ app.use('/photo/:id/:width', function(request, response) {
 
 		sharp(row.path)
 			.resize(parseInt(request.params.width))
+			.rotate()
 			.toBuffer()
 			.then((data) => {
 				deferred.resolve(new Buffer(data, 'binary'));

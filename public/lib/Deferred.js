@@ -1,5 +1,8 @@
 'use strict';
 
+/**
+ * TODO add promise api that allows a limited api
+ */
 class Deferred {
 
 	static createResolved(data) {
@@ -15,62 +18,90 @@ class Deferred {
 	}
 
 	constructor() {
-		this.isResolved = false;
-		this.isRejected = false;
-		this.isCanceled = false;
+		this._isResolved = false;
+		this._isRejected = false;
+		this._isCanceled = false;
+		this._hasProgress = false;
 		this.listeners = [];
+		let _parent = this;
+		this.promise = {
+			then: _parent.then.bind(_parent),
+			cancel: _parent.cancel.bind(_parent),
+			isDone: _parent.isDone.bind(_parent),
+			isResolved: _parent.isResolved.bind(_parent),
+			isRejected: _parent.isRejected.bind(_parent),
+			isCanceled: _parent.isCanceled.bind(_parent),
+			hasProgress: _parent.hasProgress.bind(_parent)
+		};
+	}
+
+	isResolved() {
+		return this._isResolved;
+	}
+
+	isRejected() {
+		return this._isRejected;
+	}
+
+	isCanceled() {
+		return this._isCanceled;
+	}
+
+	hasProgress() {
+		return this._hasProgress;
 	}
 
 	then(onOk, onError, onProgress) {
 		let listener = [onOk, onError, onProgress];
 		this.listeners.push(listener);
 
-		if (this.isResolved) {
+		if (this._isResolved) {
 			onOk(this.data);
-		} else if (this.isRejected) {
+		} else if (this._isRejected) {
 			onError(this.data);
 		}
 		return this;
 	}
 
 	isDone() {
-		return this.isResolved || this.isRejected || this.isCanceled;
+		return this._isResolved || this._isRejected || this._isCanceled;
 	}
 
 	progress(data) {
+		this._hasProgress = true;
 		this.signalListeners(data, 2);
 	}
 
 	resolve(data) {
-		if (this.isResolved) {
+		if (this._isResolved) {
 			throw new Error('Cannot resolve, deferred already resolved');
 		}
-		if (this.isRejected) {
+		if (this._isRejected) {
 			throw new Error('Cannot resolve, Deferred already rejected');
 		}
-		this.isResolved = true;
+		this._isResolved = true;
 		this.data = data;
 		this.signalListeners(data, 0);
 	}
 
 	reject(data) {
-		if (this.isResolved) {
+		if (this._isResolved) {
 			throw new Error('Cannot reject, deferred already resolved');
 		}
-		if (this.isRejected) {
+		if (this._isRejected) {
 			throw new Error('Cannot reject, Deferred already rejected');
 		}
-		this.isRejected = true;
+		this._isRejected = true;
 		this.data = data;
 		this.signalListeners(data, 1);
 	}
 
 	cancel() {
-		this.isCanceled = true;
+		this._isCanceled = true;
 	}
 
 	signalListeners(data, index) {
-		if (this.isCanceled) {
+		if (this._isCanceled) {
 			return;
 		}
 
@@ -87,7 +118,8 @@ class Deferred {
 	}
 
 	/**
-	 * wait for all promises to complete. Does not signal reject yet...
+	 * wait for all promises to complete.
+	 * TODO add progress update for each deferred that is complete.
 	 * @param deferredList
 	 * @returns {Deferred.constructor}
 	 */
@@ -97,14 +129,14 @@ class Deferred {
 			function onComplete(data) {
 				deferred.__data = data;
 
-				let isAllComplete = deferredList.every((d) => d.isResolved || d.isRejected);
+				let isAllComplete = deferredList.every(d => d._isResolved || d._isRejected);
 
 				if (isAllComplete) {
-					let isRejected = deferredList.some((d) => d.isRejected);
+					let isRejected = deferredList.some(d => d._isRejected);
 					if (isRejected) {
-						globalDeferred.reject(deferredList.map((d) => d.__data));
+						globalDeferred.reject(deferredList.map(d => d.__data));
 					} else {
-						globalDeferred.resolve(deferredList.map((d) => d.__data));
+						globalDeferred.resolve(deferredList.map(d => d.__data));
 					}
 				}
 			}
