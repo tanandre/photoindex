@@ -100,7 +100,7 @@ function getDateDisplay(date, dateRange) {
 	}
 
 	if (dateRange === RANGE.MONTH) {
-		return monthNames[parseInt(date.substring(5, 7)) - 1] + ' \'' + date.substring(2, 4);
+		return monthNames[new Date(date).getMonth()] + ' \'' + date.substring(2, 4);
 	}
 
 	if (dateRange === RANGE.HOUR) {
@@ -149,7 +149,7 @@ Vue.component('photoDetails', {
 		}
 	},
 	template: "<div class='exifView'><div v-if='indexPosition != null'><span>{{indexPosition.image.index + 1}} / {{indexPosition.image.length}}</span>" +
-	"<small> ({{indexPosition.imageItems.index + 1}} / {{indexPosition.imageItems.length}})</small></div><div>Date: {{date}}</div>" +
+	"<small> ({{indexPosition.imageItems.index + 1}} / {{indexPosition.imageItems.length}})</small></div><div :title='photo ? photo.date:\"\"'>Date: {{date}}</div>" +
 	"<div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}}</div>" +
 	"<md-chip v-for='tag in tags' :key='tag'>{{tag}}</md-chip>" +
 	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody>" +

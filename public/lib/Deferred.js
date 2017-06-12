@@ -125,7 +125,7 @@ class Deferred {
 	 */
 	static all(deferredList) {
 		let globalDeferred = new Deferred();
-		deferredList.forEach(function(deferred) {
+		deferredList.forEach(deferred => {
 			function onComplete(data) {
 				deferred.__data = data;
 

@@ -26,7 +26,7 @@
 						}, fnc);
 					} else {
 						results.push(file);
-						fnc(file);
+						fnc(file, stat);
 						if (!--pending) {
 							done(null, results);
 						}
@@ -57,7 +57,10 @@
 							next();
 						});
 					} else {
-						results.push(file);
+						results.push({
+							file: file,
+							stats: stat
+						});
 						next();
 					}
 				});

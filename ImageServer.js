@@ -10,7 +10,8 @@ let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 let photoCrawler = require('./server/PhotoCrawler');
 
-let isCacheEnabled = false;
+let isCacheEnabled = true;
+let cacheDir = "c:\\temp\\photoindex\\cache\\";
 let imageDir = "c:\\andre\\afdruk\\";
 let tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
 let nfsimageDir = "\\\\kanji\\photo\\2006\\2006-03-11 Eerste date\\";
@@ -72,6 +73,18 @@ app.use('/photo/:id/:width', function(request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
 	setCacheHeaders(response);
 	let deferred = createHttpDeferred(response);
+
+	let subDir = Math.floor(parseInt(request.params.id) / 1000);
+	let cacheSubDir = cacheDir + subDir;
+	let cachedFile = cacheSubDir + '\\cache-' + request.params.id + '_' + request.params.width + '.jpg';
+
+	if (fs.existsSync(cachedFile)) {
+		let file = fs.readFileSync(cachedFile, 'binary');
+		response.end(new Buffer(file, 'binary'));
+		console.log('reading file from cache!');
+		return;
+	}
+
 	dbIO.readPhotoById(request.params.id).then(function(row) {
 		// TODO if original photo is smaller than requested param don't resize
 		// TODO store exif dimensions in db to optimize calculation?
@@ -83,12 +96,24 @@ app.use('/photo/:id/:width', function(request, response) {
 			return;
 		}
 
+		let maxSize = parseInt(request.params.width);
 		sharp(row.path)
-			.resize(parseInt(request.params.width))
+			.resize(maxSize, maxSize)
+			.max()
 			.rotate()
 			.toBuffer()
 			.then((data) => {
 				deferred.resolve(new Buffer(data, 'binary'));
+
+				fs.access('/etc/passwd', fs.constants.R_OK | fs.constants.W_OK, (err) => {
+					console.log(err ? 'no access!' : 'can read/write');
+				});
+
+				if (!fs.existsSync(cacheSubDir)) {
+					fs.mkdirSync(cacheSubDir);
+				}
+				fs.writeFile(cachedFile, data, 'binary');
+
 			}).catch((err) => {
 			deferred.reject('error resizing: ' + row.path);
 		});
@@ -153,6 +178,7 @@ app.get("/listing", function(request, response) {
 		dbIO.queryPhotos(request.query.tag).then((rows) => {
 			rows.forEach((row) => {
 				row.dateInMillis = Date.parse(row.date);
+				row.dateObject = new Date(row.dateInMillis);
 			});
 			deferred.resolve(JSON.stringify(rows));
 		}, (err) => {

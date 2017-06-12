@@ -10,7 +10,7 @@ let cache = require('memory-cache');
 		host: 'kanji',
 		user: 'photoindex',
 		password: 'dc0b5jjF7bNjarkA',
-		database: 'photoindex2'
+		database: 'photoindex'
 	});
 
 	function createDbHandle(logMessage, callback) {
@@ -28,7 +28,7 @@ let cache = require('memory-cache');
 		connection.query(sql, values, (err, result) => {
 			if (err) {
 				if (!isSuppressErrorLog) {
-					console.error(err);
+					console.error(sql, err);
 				}
 				deferred.reject(err);
 				return;
@@ -73,8 +73,19 @@ let cache = require('memory-cache');
 
 	module.exports.createTables = createTables;
 
-	module.exports.addPhoto = function(file, date, tags) {
-		return query("INSERT INTO photo (date, path) VALUES ?;", [[[date, file]]]).then((result) => {
+	module.exports.addPhotoBatch = function(rows) {
+		return query("INSERT INTO photo (date, path) VALUES ?;", [rows]).then((result) => {
+			console.log('batch inserted: ', rows.length);
+		});
+	};
+
+	module.exports.updatePhoto = function(row) {
+		return query("update INTO photo (date, path) VALUES ?;", [[row]]).then((result) => {
+			return result.insertId;
+		});
+	};
+	module.exports.addPhoto = function(row) {
+		return query("INSERT INTO photo (date, path) VALUES ?;", [[row]]).then((result) => {
 			return result.insertId;
 		});
 	};

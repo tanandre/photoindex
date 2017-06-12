@@ -241,7 +241,7 @@ body.dark.dark.photoindex {
 }
 
 .photoindex .md-theme-default.md-chip {
-	background-color: rgba(0, 0, 0, 0.4);
+	background-color: rgba(22, 22, 22, 0.5);
 }
 
 .photoindex .md-select.md-theme-default {
@@ -250,7 +250,7 @@ body.dark.dark.photoindex {
 
 .photoInfo {
 	font-size: smaller;
-	background-color: rgba(0, 0, 0, 0.4);
+	background-color: rgba(22, 22, 22, 0.5);
 	position: absolute;
 	width: 100%;
 	text-align: center;

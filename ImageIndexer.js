@@ -7,7 +7,7 @@ let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 let photoCrawler = require('./server/PhotoCrawler');
 // let imageDir = "c:\\andre\\afdruk\\";
-let imageDir = "\\\\kanji\\photo\\phone\\dre\\";
+let imageDir = "\\\\kanji\\photo\\";
 let tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
 let nfsimageDir = "\\\\kanji\\photo\\2006\\2006-03-11 Eerste date\\";
 let nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
@@ -83,96 +83,202 @@ function readDateFromFile(file, done) {
 	});
 }
 let dateUnconfirmedTag = 'dateUnconfirmed';
-function indexPhotos(dir, max) {
 
-	let count = max;
-	dbIO.readAllPhotosPaths().then(function(rows) {
-		let paths = rows.map(function(row) {
-			return row.path;
-		});
-
-		photoCrawler.indexPhotosInFolder(dir).then(function(results) {
-			log('starting to index');
-			let exifLoadCount = 0;
-			let isIndexingDone = false;
-
-			results.forEach((file) => {
-				if (isImageFile(file)) {
-					if (paths.indexOf((file)) > -1) {
-						// console.log('already indexed: ');
-						return;
-					}
-
-					if (count-- < 1) {
-						if (count === 0) {
-							log('stopping indexing of files, max reached: ' + max);
-						}
-						return;
-					}
-
-					process.stdout.write("+");
-					exifLoadCount++;
-					getExif(file).then((exif) => {
-						if (--exifLoadCount === 0 && isIndexingDone) {
-							log('done indexing');
-						}
-						process.stdout.write(".");
-						let deviceTag = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
-						let exifDate = exif.exif.CreateDate;
-						if (exifDate) {
-							dbIO.addPhoto(file, exifDate).then((photoId) => {
-								if (deviceTag) {
-									dbIO.addOrGetTag(deviceTag).then((tagId) => {
-										dbIO.addPhotoTag(photoId, tagId);
-									});
-								}
-							});
-						} else {
-							// console.error(
-							// 	'exif header present but no CreateDate attribute, reading date from file',
-							// 	file);
-							readDateFromFile(file, function(date) {
-								let estimateDate = date;
-								if (exif.image.ModifyDate) {
-									estimateDate =
-										getOldestDate([date, parseDate(exif.image.ModifyDate)]);
-								}
-
-								dbIO.addPhoto(file, estimateDate).then((photoId) => {
-									// console.log('----- adding 2 tags for photo ', file, photoId);
-									if (deviceTag) {
-										dbIO.addOrGetTag(deviceTag).then((tagId) => {
-											dbIO.addPhotoTag(photoId, tagId);
-										});
-									}
-									dbIO.addOrGetTag(dateUnconfirmedTag).then((tagId) => {
-										dbIO.addPhotoTag(photoId, tagId);
-									});
-								});
+function updatePhotoInfoUsingExif(max) {
+	dbIO.readAllPhotosPaths().then((rows) => {
+		let paths = rows.map(row => row.path);
+		paths.forEach(path => {
+			getExif(file).then((exif) => {
+				process.stdout.write(".");
+				let deviceTag = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
+				let exifDate = exif.exif.CreateDate;
+				if (exifDate) {
+					dbIO.updatePhoto([exifDate, path]).then((photoId) => {
+						if (deviceTag) {
+							dbIO.addOrGetTag(deviceTag).then((tagId) => {
+								dbIO.addPhotoTag(photoId, tagId);
 							});
 						}
-
-					}, (err) => {
-						if (--exifLoadCount === 0 && isIndexingDone) {
-							console.log('');
-							log('done indexing');
+					});
+				} else {
+					// console.error(
+					// 	'exif header present but no CreateDate attribute, reading date from file',
+					// 	file);
+					readDateFromFile(file, function(date) {
+						let estimateDate = date;
+						if (exif.image.ModifyDate) {
+							estimateDate = getOldestDate([date, parseDate(exif.image.ModifyDate)]);
 						}
-						// console.error('no exif header found reading date from file', file);
-						readDateFromFile(file, function(date) {
-							dbIO.addPhoto(file, date).then((photoId) => {
-								dbIO.addOrGetTag(dateUnconfirmedTag).then((tagId) => {
+
+						dbIO.updatePhoto([estimateDate, path]).then((photoId) => {
+							// console.log('----- adding 2 tags for photo ', file, photoId);
+							if (deviceTag) {
+								dbIO.addOrGetTag(deviceTag).then((tagId) => {
 									dbIO.addPhotoTag(photoId, tagId);
 								});
+							}
+							dbIO.addOrGetTag(dateUnconfirmedTag).then((tagId) => {
+								dbIO.addPhotoTag(photoId, tagId);
 							});
 						});
 					});
 				}
+
+			}, (err) => {
+				if (--exifLoadCount === 0 && isIndexingDone) {
+					console.log('');
+					log('done indexing');
+				}
+				// console.error('no exif header found reading date from file', file);
+				readDateFromFile(file, function(date) {
+					dbIO.addPhoto(file, date).then((photoId) => {
+						dbIO.addOrGetTag(dateUnconfirmedTag).then((tagId) => {
+							dbIO.addPhotoTag(photoId, tagId);
+						});
+					});
+				});
 			});
-			isIndexingDone = true;
+
+		});
+	});
+
+}
+
+function indexPhotos(dir, max) {
+	let deferred = new Deferred();
+
+	let count = max;
+	dbIO.readAllPhotosPaths().then((rows) => {
+		let paths = rows.map(row => row.path);
+
+		photoCrawler.indexPhotosInFolder(dir).then((results) => {
+			log('starting to index');
+			let exifLoadCount = 0;
+			let isIndexingDone = false;
+			let rows = results.filter(fileItem => paths.indexOf((fileItem.file)) === -1)
+				.filter((fileItem) => isImageFile(fileItem.file))
+				.map((fileItem) => {
+					return [fileItem.stats.ctime, fileItem.file];
+				});
+			// console.log(rows);
+			if (rows.length === 0) {
+				console.log('nothing to add');
+				deferred.resolve();
+				return;
+			}
+
+			let batchSize = 1000;
+			if (rows.length < batchSize) {
+				dbIO.addPhotoBatch(rows).then(() => {
+					deferred.resolve();
+				});
+				return;
+			}
+
+			let promiseList = [];
+			let batchCount = Math.floor(rows.length / batchSize);
+
+			for (let i = 0; i < batchCount; i++) {
+				let promise = dbIO.addPhotoBatch(rows.slice(i * batchSize, (i + 1) * batchSize));
+				promiseList.push(promise);
+			}
+
+			if (rows.length % batchSize !== 0) {
+				let promise = dbIO.addPhotoBatch(rows.slice(batchCount * batchSize, rows.length));
+				promiseList.push(promise);
+			}
+			let deferredAll = Deferred.all(promiseList);
+			deferredAll.then((result) => {
+				deferred.resolve(result);
+			}, error => {
+				deferred.reject(error);
+			});
+
+			/*
+			 results.forEach((fileItem) => {
+			 let file = fileItem.file;
+			 let stats = fileItem.stats;
+			 if (paths.indexOf((file)) > -1) {
+			 // console.log('already indexed: ');
+			 return;
+			 }
+
+			 // if (count-- < 1) {
+			 // 	if (count === 0) {
+			 // 		log('stopping indexing of files, max reached: ' + max);
+			 // 	}
+			 // 	return;
+			 // }
+
+			 process.stdout.write("+");
+			 exifLoadCount++;
+
+			 dbIO.addPhoto([getOldestDate([stats.ctime, stats.mtime]), file]);
+
+			 // getExif(file).then((exif) => {
+			 // 	if (--exifLoadCount === 0 && isIndexingDone) {
+			 // 		log('done indexing');
+			 // 	}
+			 // 	process.stdout.write(".");
+			 // 	let deviceTag = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
+			 // 	let exifDate = exif.exif.CreateDate;
+			 // 	if (exifDate) {
+			 // 		dbIO.addPhoto(file, exifDate).then((photoId) => {
+			 // 			if (deviceTag) {
+			 // 				dbIO.addOrGetTag(deviceTag).then((tagId) => {
+			 // 					dbIO.addPhotoTag(photoId, tagId);
+			 // 				});
+			 // 			}
+			 // 		});
+			 // 	} else {
+			 // 		// console.error(
+			 // 		// 	'exif header present but no CreateDate attribute, reading date from file',
+			 // 		// 	file);
+			 // 		readDateFromFile(file, function(date) {
+			 // 			let estimateDate = date;
+			 // 			if (exif.image.ModifyDate) {
+			 // 				estimateDate =
+			 // 					getOldestDate([date, parseDate(exif.image.ModifyDate)]);
+			 // 			}
+			 //
+			 // 			dbIO.addPhoto(file, estimateDate).then((photoId) => {
+			 // 				// console.log('----- adding 2 tags for photo ', file, photoId);
+			 // 				if (deviceTag) {
+			 // 					dbIO.addOrGetTag(deviceTag).then((tagId) => {
+			 // 						dbIO.addPhotoTag(photoId, tagId);
+			 // 					});
+			 // 				}
+			 // 				dbIO.addOrGetTag(dateUnconfirmedTag).then((tagId) => {
+			 // 					dbIO.addPhotoTag(photoId, tagId);
+			 // 				});
+			 // 			});
+			 // 		});
+			 // 	}
+			 //
+			 // }, (err) => {
+			 // 	if (--exifLoadCount === 0 && isIndexingDone) {
+			 // 		console.log('');
+			 // 		log('done indexing');
+			 // 	}
+			 // 	// console.error('no exif header found reading date from file', file);
+			 // 	readDateFromFile(file, function(date) {
+			 // 		dbIO.addPhoto(file, date).then((photoId) => {
+			 // 			dbIO.addOrGetTag(dateUnconfirmedTag).then((tagId) => {
+			 // 				dbIO.addPhotoTag(photoId, tagId);
+			 // 			});
+			 // 		});
+			 // 	});
+			 // });
+			 });
+			 isIndexingDone = true;
+			 */
 		});
 	}, (err) => {
 		console.error(err);
+		deferred.reject(err);
 	});
+
+	return deferred.promise;
 
 }
 
@@ -184,12 +290,16 @@ dbIO.initialize((err, connection) => {
 
 	// dbIO.createTables(connection, () => {
 	// 	console.log('done creating tables');
-	// 	indexPhotos(imageDir, 500);
+	// 	indexPhotos(imageDir, 100);
 	// });
-	indexPhotos(imageDir, 1000);
-	indexPhotos(imageDir, 1000);
-	indexPhotos(imageDir, 1000);
-	indexPhotos(imageDir, 1000);
-
+	// indexPhotos(imageDir + '2001\\', 100).then(data => {
+	// 	console.log('done 2001')
+	// });
+	indexPhotos(imageDir + '2017\\', 100);
+	// indexPhotos(imageDir + '2003\\', 100);
+	// indexPhotos(imageDir + '2002\\', 100);
+	// indexPhotos(imageDir + '2005\\', 100);
+	// indexPhotos(imageDir + '2016\\', 100);
+	// indexPhotos(imageDir + '2015\\', 100);
 });
 
