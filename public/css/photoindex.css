@@ -50,7 +50,13 @@ body.dark.dark.photoindex {
 	background-position: center;
 	background-color: #222;
 	position: relative;
+	opacity: 0.8;
 }
+
+.photoThumbnail:hover {
+	opacity: 1;
+}
+
 
 .photoText {
 	background-color: rgba(0, 0, 0, 0.3);
@@ -248,6 +254,10 @@ body.dark.dark.photoindex {
 	width: auto;
 }
 
+.photoInfo:hover {
+	font-weight: bold;
+}
+
 .photoInfo {
 	font-size: smaller;
 	background-color: rgba(22, 22, 22, 0.5);
@@ -259,4 +269,9 @@ body.dark.dark.photoindex {
 
 .thumbnailDate {
 	margin: 0 5px;
+}
+
+.photoThumbnail .md-chip {
+	border-radius: 0;
+	border-bottom-right-radius: 10px;
 }

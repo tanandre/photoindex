@@ -67,7 +67,8 @@ let app = new Vue({
 		isBusy: false,
 		millisPerMinute: 60000,
 		groupRange: RANGE.MINUTE,
-		groupRangeOptions: RANGE
+		groupRangeOptions: RANGE,
+		tags: [],
 	},
 	mounted: function() {
 		this.fetchImages({});
@@ -81,10 +82,21 @@ let app = new Vue({
 	watch: {
 		groupRange: function(value) {
 			this.groupImageItems(value);
+		},
+
+		tags: function(tags) {
+			console.log('onTagsChanged', tags);
+			this.fetchImages({tag: tags});
 		}
+
 	},
 
 	methods: {
+		onTagsChanged: function(tags) {
+			console.log('onTagsChanged', tags);
+			this.fetchImages({tag: tags});
+		},
+
 		pauseThumbnailView: function() {
 			thumbnailLoader0.stop();
 			thumbnailLoader0.start();
@@ -97,6 +109,8 @@ let app = new Vue({
 
 		fetchImages: function(data) {
 			this.isBusy = true;
+			this.images = [];
+			this.imageItems = [];
 			this.$http.get('/listing', {params: data}).then(function(response) {
 				this.isBusy = false;
 				this.images = response.body;
@@ -156,9 +170,18 @@ let app = new Vue({
 			console.log('onMouseOverthumb', thumb);
 		},
 
-		onTagsChanged: function(tags) {
-			console.log('onTagsChanged', tags);
-			this.fetchImages({tag: tags});
+		addTag: function(tag) {
+			let found = this.tags.indexOf(tag);
+			if (found === -1) {
+				this.tags.push(tag);
+			}
+		},
+
+		removeTag: function(tag) {
+			let found = this.tags.indexOf(tag);
+			if (found > -1) {
+				this.tags.splice(found, 1);
+			}
 		},
 
 		onClickThumbnail: function(img) {

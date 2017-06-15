@@ -28,7 +28,11 @@ let cache = require('memory-cache');
 		connection.query(sql, values, (err, result) => {
 			if (err) {
 				if (!isSuppressErrorLog) {
-					console.error(sql, err);
+					if (err.code === 'ER_DUP_ENTRY') {
+						console.error('-- duplicate entry');
+					} else {
+						console.error(sql, values, err);
+					}
 				}
 				deferred.reject(err);
 				return;
@@ -50,7 +54,7 @@ let cache = require('memory-cache');
 			"PRIMARY KEY (id), INDEX IX_DATE (date), UNIQUE(path))";
 		let sqlCreateTagTable = "CREATE TABLE if not exists tag ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL , PRIMARY KEY (id), UNIQUE(name) )";
 		let sqlCreateLinkTable = "CREATE TABLE if not exists photo_tag ( photoid INT NOT NULL , tagid INT NOT NULL, " +
-			"INDEX IX_PHOTO_ID (photoid), INDEX IX_TAG_ID (tagid), FOREIGN KEY (photoid) REFERENCES photo(id), FOREIGN KEY (tagid) REFERENCES tag(id))";
+			"INDEX IX_PHOTO_ID (photoid), INDEX IX_TAG_ID (tagid), UNIQUE(photoid, tagid), FOREIGN KEY (photoid) REFERENCES photo(id), FOREIGN KEY (tagid) REFERENCES tag(id))";
 		connection.query(sqlCreatePhotoTable, createDbHandle('table photo created', () => {
 			connection.query(sqlCreateTagTable, createDbHandle('table tag created', () => {
 				connection.query(sqlCreateLinkTable, createDbHandle('table photo_tag created', () => {
@@ -80,7 +84,7 @@ let cache = require('memory-cache');
 	};
 
 	module.exports.updatePhoto = function(row) {
-		return query("update INTO photo (date, path) VALUES ?;", [[row]]).then((result) => {
+		return query("UPDATE photo SET date = ? WHERE id = ?;", row).then((result) => {
 			return result.insertId;
 		});
 	};
@@ -175,7 +179,8 @@ let cache = require('memory-cache');
 		if (tagDates.length === 0) {
 			return {
 				sql: getSqlTagMatch(tagLabels),
-				values: tagLabels
+				values: tagLabels,
+				hasTagLabels: false
 			};
 		}
 
@@ -186,7 +191,7 @@ let cache = require('memory-cache');
 		return {
 			sql: sqlList.join(' OR '),
 			values: [].concat.apply([], values),
-			hasTagLabels: tagDates.length > 0
+			hasTagLabels: tagLabels.length > 0
 		}
 	}
 
@@ -200,17 +205,18 @@ let cache = require('memory-cache');
 		}
 
 		let sqlMatch = getSqlMatchCriteria(queryTags);
-		let joinTagTable = sqlMatch.hasTagLabels ? '' :
+		let joinTagTable = !sqlMatch.hasTagLabels ? '' :
+		// let joinTagTable =
 			'LEFT JOIN photo_tag pt ON pt.photoId = p.id INNER JOIN tag t ON pt.tagId = t.id';
 		let sql = "SELECT p.* FROM photo p " + joinTagTable + " WHERE " + sqlMatch.sql +
 			" ORDER BY p.date DESC";
 
-		console.log('query', sql);
+		console.log(sql, queryTags);
 		return query(sql, sqlMatch.values);
 	};
 
 	module.exports.readAllPhotosPaths = function() {
-		return query("SELECT path FROM photo");
+		return query("SELECT id, path FROM photo");
 	};
 
 	module.exports.readTagsForPhoto = function(id) {

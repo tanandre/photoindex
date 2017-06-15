@@ -36,7 +36,8 @@
         <h2 class="md-title">{{ title }}</h2>
         <div class="imageCount">({{images.length}} | {{imageItems.length}})</div>
 
-        <search-tags v-on:tags="onTagsChanged"></search-tags>
+        <search-tags v-on:add-tag="addTag"></search-tags>
+        <selected-tags v-on:remove-tag="removeTag" v-bind:tags="tags"></selected-tags>
         <md-spinner v-show="isBusy" class="md-warn" md-indeterminate></md-spinner>
 
         <md-select v-model="groupRange">
@@ -47,7 +48,7 @@
     <b-pagination v-if="imagesPerPage < imageItems.length" size="sm" :total-rows="imageItems.length"
                   v-model="currentPage" :per-page="imagesPerPage" :limit="6"></b-pagination>
     <thumbnail v-for="(img, index) in getImagesForPage(currentPage)" v-bind:photo="img" v-bind:date-range="groupRange"
-               :key="img.key.id" v-on:select="onClickThumbnail"></thumbnail>
+               :key="img.key.id" v-on:select="onClickThumbnail" v-on:add-tag="addTag"></thumbnail>
 </div>
 
 <script src="lib/Deferred.js"></script>

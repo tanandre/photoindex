@@ -69,6 +69,19 @@ function setCacheHeaders(response) {
 	}
 }
 
+function optimizedImage(path, maxSize) {
+	let deferred = new Deferred();
+	sharp(path)
+		.resize(maxSize, maxSize)
+		.max()
+		.rotate()
+		.toBuffer()
+		.then(data => deferred.resolve(data)).catch((err) => {
+		deferred.reject('error resizing: ' + path);
+	});
+	return deferred;
+}
+
 app.use('/photo/:id/:width', function(request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
 	setCacheHeaders(response);
@@ -97,26 +110,31 @@ app.use('/photo/:id/:width', function(request, response) {
 		}
 
 		let maxSize = parseInt(request.params.width);
-		sharp(row.path)
-			.resize(maxSize, maxSize)
-			.max()
-			.rotate()
-			.toBuffer()
-			.then((data) => {
+		optimizedImage(row.path, maxSize)
+			.then(data => {
 				deferred.resolve(new Buffer(data, 'binary'));
-
-				fs.access('/etc/passwd', fs.constants.R_OK | fs.constants.W_OK, (err) => {
-					console.log(err ? 'no access!' : 'can read/write');
-				});
-
 				if (!fs.existsSync(cacheSubDir)) {
 					fs.mkdirSync(cacheSubDir);
 				}
 				fs.writeFile(cachedFile, data, 'binary');
 
-			}).catch((err) => {
-			deferred.reject('error resizing: ' + row.path);
-		});
+			}, err => deferred.reject(err));
+		// sharp(row.path)
+		// 	.resize(maxSize, maxSize)
+		// 	.max()
+		// 	.rotate()
+		// 	.toBuffer()
+		// 	.then((data) => {
+		// 		deferred.resolve(new Buffer(data, 'binary'));
+		//
+		// 		if (!fs.existsSync(cacheSubDir)) {
+		// 			fs.mkdirSync(cacheSubDir);
+		// 		}
+		// 		fs.writeFile(cachedFile, data, 'binary');
+		//
+		// 	}).catch((err) => {
+		// 	deferred.reject('error resizing: ' + row.path);
+		// });
 	}, (err) => {
 		deferred.reject(JSON.stringify(err));
 	});

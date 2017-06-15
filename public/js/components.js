@@ -94,6 +94,22 @@ let monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July'
 
 let dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+function getDateTag(date, dateRange) {
+	if (dateRange === RANGE.YEAR) {
+		return date.substring(0, 4);
+	}
+
+	if (dateRange === RANGE.MONTH) {
+		return date.substring(0, 4) + date.substring(5, 7);
+	}
+
+	if (dateRange === RANGE.DAY) {
+		return date.substring(0, 4) + date.substring(5, 7) + date.substring(8, 10);
+	}
+
+	return null;
+}
+
 function getDateDisplay(date, dateRange) {
 	if (dateRange === RANGE.YEAR) {
 		return date.substring(0, 4);
@@ -122,7 +138,7 @@ Vue.component('thumbnail', {
 	template: "<div class='photoThumbnailBox action' :title='photo.key.date' >" +
 	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:loader-id='0' v-bind:photo='photo.key'>" +
 	"<md-chip v-if='photo.series.length > 1'>{{photo.series.length}}</md-chip>" +
-	"<div class='photoInfo' v-if='dateRange !== \"Minute\" && dateRange !== \"Off\"'><span class='thumbnailDate'>{{dateToDisplay}}</span></div></thumbnail-photo>" +
+	"<div class='photoInfo' v-on:click.stop='onClickInfo' v-if='dateRange !== \"Minute\" && dateRange !== \"Off\"'><span class='thumbnailDate'>{{dateToDisplay}}</span></div></thumbnail-photo>" +
 	"</div>",
 	computed: {
 		dateToDisplay: function() {
@@ -131,8 +147,18 @@ Vue.component('thumbnail', {
 	},
 	methods: {
 		onClick: function(event) {
-			console.log('event', event.ctrlKey);
+			console.log('event', event);
 			this.$emit('select', this.photo);
+		},
+
+		onClickInfo: function(event) {
+			let dateTag = getDateTag(this.photo.key.date, this.dateRange);
+			if (dateTag !== null) {
+			console.log('dateTag', dateTag);
+				this.$emit('add-tag', dateTag);
+			}
+
+			// this.$emit('select', this.photo);
 		}
 	}
 });
@@ -292,27 +318,25 @@ Vue.component('searchTags', {
 	data: function() {
 		return {
 			search: '',
-			tags: []
 		}
 	},
-	template: "<div><input class='searchToolbar' v-model='search' placeholder='Enter search criteria' v-on:keyup.enter='addSearchString' autofocus></input>" +
-	"<md-chip class='label action' v-for='tag in tags' :key='tag' :title='tag' v-on:click.native='removeTag(tag)' md-deletable>{{tag}}</md-chip></div>",
+	template: "<div><input class='searchToolbar' v-model='search' placeholder='Enter search criteria' " +
+	"v-on:keyup.enter='addSearchString' autofocus></input></div>",
 	methods: {
 		addSearchString: function() {
-			if (this.tags === undefined) {
-				this.tags = [];
-			}
-			this.tags.push(this.search);
+			this.$emit('add-tag', this.search);
 			this.search = '';
-			this.$emit('tags', this.tags);
-		},
-		removeTag: function(tag) {
-			let found = this.tags.indexOf(tag);
-			if (found > -1) {
-				this.tags.splice(found, 1);
-			}
-			this.$emit('tags', this.tags);
 		}
 	}
 });
 
+Vue.component('selectedTags', {
+	props: ['tags'],
+	template: "<div><md-chip class='label action' v-for='tag in tags' :key='tag' :title='tag' " +
+	"v-on:click.native='removeTag(tag)' md-deletable>{{tag}}</md-chip></div>",
+	methods: {
+		removeTag: function(tag) {
+			this.$emit('remove-tag', tag);
+		}
+	}
+});
