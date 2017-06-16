@@ -182,6 +182,7 @@ Vue.component('photoDetails', {
 	"<tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
 	watch: {
 		photo: function() {
+			console.log('photo changed, loading exif/tag');
 			safeCancel([this.promise, this.promiseTags]);
 			this.exif = {};
 			this.tags = {};
@@ -261,6 +262,7 @@ Vue.component('photoDetailView', {
 			}
 
 			this.progress = 0;
+			console.log('set selectedOhoto');
 			this.selectedPhoto = photoToDisplay;
 			this.index = this.$parent.imageItems.indexOf(this.photo);
 			this.indexPosition = {
@@ -287,7 +289,6 @@ Vue.component('photoDetailView', {
 			}, (progress) => {
 				this.progress = progress;
 				this.isLoading = true;
-				console.log('started loading', progress);
 			});
 		}
 	},

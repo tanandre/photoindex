@@ -243,13 +243,39 @@ function readExif(row) {
 	return deferred;
 }
 
+function splitArray(arr, size) {
+	if (arr.length <= size) {
+		return [arr];
+	}
+
+	let chunks = [];
+	for (let i = 0; i < arr.length; i += size) {
+		chunks.push(arr.slice(i, i + size));
+	}
+	return chunks;
+}
+
+function readExifForPhotoBatch(batch) {
+	let deferred = new Deferred();
+	let deferredList = batch.map(row => {
+		process.stdout.write("+");
+		return readExif(row);
+	});
+
+	Deferred.all(deferredList).then(() => {
+		deferred.resolve();
+	}, () => {
+		deferred.reject();
+	});
+	return deferred.promise;
+}
+
 function indexPhotos() {
 	let deferred = new Deferred();
 
 	dbIO.readAllPhotosPaths().then(rows => {
-
 		log('starting to index photos');
-		let filteredRows = rows.slice(5000, 6000);
+		let filteredRows = rows.slice(6100, 6200);
 
 		if (filteredRows.length === 0) {
 			console.log('nothing to index');
@@ -257,16 +283,21 @@ function indexPhotos() {
 			return;
 		}
 
-		let deferredList = filteredRows.map(row => {
-			process.stdout.write("+");
-			return readExif(row);
-		});
+		let rowInChunks = splitArray(filteredRows, 1000);
 
-		Deferred.all(deferredList).then(() => {
-			deferred.resolve();
-		}, () => {
-			deferred.reject();
-		});
+		function readExifRecursive(chunks, index, deferred) {
+			console.log('reading exif for batch:', index, '/', chunks.length);
+			readExifForPhotoBatch(chunks[index]).then(() => {
+				if (++index >= chunks.length) {
+					console.log('done reading chunks', index, chunks.length);
+					deferred.resolve();
+					return;
+				}
+				readExifRecursive(chunks, index, deferred);
+			})
+		}
+
+		readExifRecursive(rowInChunks, 0, deferred);
 	}, (err) => {
 		console.error(err);
 		deferred.reject(err);
@@ -293,6 +324,7 @@ dbIO.initialize((err, connection) => {
 		log('--');
 		log('done indexing')
 	});
+
 	// searchPhotos(imageDir + '2003\\', 100);
 	// searchPhotos(imageDir + '2002\\', 100);
 	// searchPhotos(imageDir + '2005\\', 100);

@@ -61,7 +61,7 @@ let app = new Vue({
 		imageItems: [],
 		selectedImage: null,
 		currentPage: 1,
-		imagesPerPage: 28,
+		imagesPerPage: 140,
 		currentRoute: window.location.pathname,
 		search: '',
 		isBusy: false,
