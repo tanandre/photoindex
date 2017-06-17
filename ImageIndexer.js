@@ -60,9 +60,11 @@ function getDateTimeFromFileName(fileName) {
 }
 
 function readDateFromFile(file, done) {
+	let deferred = new Deferred();
 	fs.stat(file, function(err, stats) {
 		if (err) {
 			console.error(err);
+			deferred.reject(err);
 			return;
 		}
 		let fileName = path.basename(file);
@@ -79,8 +81,10 @@ function readDateFromFile(file, done) {
 			dates.push(getDateTimeFromFileName(fileName));
 		}
 
-		done(getOldestDate(dates));
+		//done(getOldestDate(dates));
+		deferred.resolve(getOldestDate(dates));
 	});
+	return deferred.promise;
 }
 let dateUnconfirmedTag = 'dateUnconfirmed';
 
@@ -101,7 +105,7 @@ function updatePhotoInfoUsingExif(max) {
 						}
 					});
 				} else {
-					readDateFromFile(file, function(date) {
+					readDateFromFile(file).then((date) => {
 						let estimateDate = date;
 						if (exif.image.ModifyDate) {
 							estimateDate = getOldestDate([date, parseDate(exif.image.ModifyDate)]);
@@ -123,7 +127,7 @@ function updatePhotoInfoUsingExif(max) {
 
 			}, (err) => {
 				// console.error('no exif header found reading date from file', file);
-				readDateFromFile(file, function(date) {
+				readDateFromFile(file).then(date => {
 					dbIO.addPhoto(file, date).then((photoId) => {
 						dbIO.addOrGetTag(dateUnconfirmedTag).then((tagId) => {
 							dbIO.addPhotoTag(photoId, tagId);
@@ -198,7 +202,7 @@ function searchPhotos(dir, max) {
 
 function readExif(row) {
 	let deferred = new Deferred();
-	let file = row.path;
+	let file = row.path.replace(/\\/g, '/').replace('//kanji', '/volume1');
 	let photoId = row.id;
 	getExif(file).then((exif) => {
 		process.stdout.write(".");
@@ -212,7 +216,7 @@ function readExif(row) {
 				});
 			}
 		} else {
-			readDateFromFile(file, function(date) {
+			readDateFromFile(file).then(date => {
 				let estimateDate = date;
 				if (exif.image.ModifyDate) {
 					estimateDate = getOldestDate([date, parseDate(exif.image.ModifyDate)]);
@@ -232,7 +236,7 @@ function readExif(row) {
 		deferred.resolve();
 
 	}, (err) => {
-		readDateFromFile(file, function(date) {
+		readDateFromFile(file).then(date => {
 			dbIO.updatePhoto([date, photoId]);
 			dbIO.addOrGetTag(dateUnconfirmedTag).then((tagId) => {
 				dbIO.addPhotoTag(photoId, tagId);
@@ -275,7 +279,7 @@ function indexPhotos() {
 
 	dbIO.readAllPhotosPaths().then(rows => {
 		log('starting to index photos');
-		let filteredRows = rows.slice(6100, 6200);
+		let filteredRows = rows.slice(11100);
 
 		if (filteredRows.length === 0) {
 			console.log('nothing to index');
@@ -293,7 +297,9 @@ function indexPhotos() {
 					deferred.resolve();
 					return;
 				}
-				readExifRecursive(chunks, index, deferred);
+				setTimeout(() => {
+					readExifRecursive(chunks, index, deferred);
+				});
 			})
 		}
 

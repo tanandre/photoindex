@@ -39,7 +39,7 @@
         <search-tags v-on:add-tag="addTag"></search-tags>
         <selected-tags v-on:remove-tag="removeTag" v-bind:tags="tags"></selected-tags>
         <md-spinner v-show="isBusy" class="md-warn" md-indeterminate></md-spinner>
-
+        <span>Group:</span>
         <md-select v-model="groupRange">
             <md-option v-for="option in groupRangeOptions" :value="option" :key="option">{{option}}</md-option>
         </md-select>

@@ -2,11 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6260fa26-7525-44cc-a911-94464ff29be1" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ImageIndexer.js" afterPath="$PROJECT_DIR$/ImageIndexer.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/css/photoindex.css" afterPath="$PROJECT_DIR$/public/css/photoindex.css" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/index.html" afterPath="$PROJECT_DIR$/public/index.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/components.js" afterPath="$PROJECT_DIR$/public/js/components.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/photoindex.js" afterPath="$PROJECT_DIR$/public/js/photoindex.js" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -37,8 +35,8 @@
       <file leaf-file-name="ImageIndexer.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ImageIndexer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2207">
-              <caret line="300" column="0" lean-forward="false" selection-start-line="300" selection-start-column="0" selection-end-line="300" selection-end-column="0" />
+            <state relative-caret-position="557">
+              <caret line="281" column="43" lean-forward="false" selection-start-line="281" selection-start-column="43" selection-end-line="281" selection-end-column="43" />
               <folding />
             </state>
           </provider>
@@ -58,7 +56,7 @@
         <entry file="file://$PROJECT_DIR$/public/css/photoindex.css">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="443">
-              <caret line="205" column="18" lean-forward="true" selection-start-line="205" selection-start-column="18" selection-end-line="205" selection-end-column="18" />
+              <caret line="205" column="18" lean-forward="false" selection-start-line="205" selection-start-column="18" selection-end-line="205" selection-end-column="18" />
               <folding />
             </state>
           </provider>
@@ -67,8 +65,8 @@
       <file leaf-file-name="index.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/public/index.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="904">
-              <caret line="50" column="85" lean-forward="false" selection-start-line="50" selection-start-column="85" selection-end-line="50" selection-end-column="85" />
+            <state relative-caret-position="871">
+              <caret line="49" column="57" lean-forward="false" selection-start-line="49" selection-start-column="57" selection-end-line="49" selection-end-column="57" />
               <folding />
             </state>
           </provider>
@@ -108,7 +106,7 @@
         <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="851">
-              <caret line="212" column="0" lean-forward="true" selection-start-line="212" selection-start-column="0" selection-end-line="212" selection-end-column="0" />
+              <caret line="212" column="0" lean-forward="false" selection-start-line="212" selection-start-column="0" selection-end-line="212" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -117,8 +115,8 @@
       <file leaf-file-name="components.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/public/js/components.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="557">
-              <caret line="264" column="45" lean-forward="false" selection-start-line="264" selection-start-column="45" selection-end-line="264" selection-end-column="45" />
+            <state relative-caret-position="481">
+              <caret line="285" column="23" lean-forward="false" selection-start-line="285" selection-start-column="16" selection-end-line="285" selection-end-column="23" />
               <folding />
             </state>
           </provider>
@@ -128,12 +126,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>dateUnconfirmedTag</find>
-      <find>results</find>
-      <find>addphoto</find>
-      <find>createtab</find>
-      <find>code</find>
-      <find>slice</find>
       <find>photoinfo</find>
       <find>$emit</find>
       <find>onclick</find>
@@ -158,6 +150,12 @@
       <find>map</find>
       <find>readExifForPhotoBatchreadExifForPhotoBatch</find>
       <find>readExifForPhotoBatch</find>
+      <find>.path</find>
+      <find>console</find>
+      <find>fs.rea</find>
+      <find>fs.</find>
+      <find>readDateFromFile</find>
+      <find>99</find>
     </findStrings>
     <replaceStrings>
       <replace>photoThumbnailBox</replace>
@@ -179,12 +177,12 @@
         <option value="$PROJECT_DIR$/server/PhotoCrawler.js" />
         <option value="$PROJECT_DIR$/public/lib/Deferred.js" />
         <option value="$PROJECT_DIR$/ImageServer.js" />
-        <option value="$PROJECT_DIR$/public/index.html" />
         <option value="$PROJECT_DIR$/server/DatabaseIO.js" />
         <option value="$PROJECT_DIR$/public/js/photoindex.js" />
         <option value="$PROJECT_DIR$/public/lib/util.js" />
         <option value="$PROJECT_DIR$/public/css/photoindex.css" />
         <option value="$PROJECT_DIR$/public/js/components.js" />
+        <option value="$PROJECT_DIR$/public/index.html" />
         <option value="$PROJECT_DIR$/ImageIndexer.js" />
       </list>
     </option>
@@ -767,18 +765,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/public/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="904">
-          <caret line="50" column="85" lean-forward="false" selection-start-line="50" selection-start-column="85" selection-end-line="50" selection-end-column="85" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="851">
-          <caret line="212" column="0" lean-forward="true" selection-start-line="212" selection-start-column="0" selection-end-line="212" selection-end-column="0" />
+          <caret line="212" column="0" lean-forward="false" selection-start-line="212" selection-start-column="0" selection-end-line="212" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -794,7 +784,7 @@
     <entry file="file://$PROJECT_DIR$/public/css/photoindex.css">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="443">
-          <caret line="205" column="18" lean-forward="true" selection-start-line="205" selection-start-column="18" selection-end-line="205" selection-end-column="18" />
+          <caret line="205" column="18" lean-forward="false" selection-start-line="205" selection-start-column="18" selection-end-line="205" selection-end-column="18" />
           <folding />
         </state>
       </provider>
@@ -809,16 +799,24 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/public/js/components.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="557">
-          <caret line="264" column="45" lean-forward="false" selection-start-line="264" selection-start-column="45" selection-end-line="264" selection-end-column="45" />
+        <state relative-caret-position="481">
+          <caret line="285" column="23" lean-forward="false" selection-start-line="285" selection-start-column="16" selection-end-line="285" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/public/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="871">
+          <caret line="49" column="57" lean-forward="false" selection-start-line="49" selection-start-column="57" selection-end-line="49" selection-end-column="57" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ImageIndexer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2207">
-          <caret line="300" column="0" lean-forward="false" selection-start-line="300" selection-start-column="0" selection-end-line="300" selection-end-column="0" />
+        <state relative-caret-position="557">
+          <caret line="281" column="43" lean-forward="false" selection-start-line="281" selection-start-column="43" selection-end-line="281" selection-end-column="43" />
           <folding />
         </state>
       </provider>
