@@ -2,7 +2,7 @@
 
 let Deferred = require('../public/lib/Deferred');
 let cache = require('memory-cache');
-let isLocalhost = false;
+let isLocalhost = true;
 
 (function() {
 	let mysql = require('mysql');
@@ -248,7 +248,7 @@ let isLocalhost = false;
 				return;
 			}
 			if (isLocalhost) {
-				deferred.resolve(fixPhotoPathsForLocalhost(rows));
+				deferred.resolve(fixPhotoPathsForLocalhost(rows)[0]);
 			} else {
 				deferred.resolve(rows[0]);
 			}

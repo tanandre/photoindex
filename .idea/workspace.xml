@@ -21,11 +21,11 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="600">
-      <file leaf-file-name="ImageServer.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="ImageServer.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ImageServer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="491">
-              <caret line="76" column="25" lean-forward="false" selection-start-line="76" selection-start-column="25" selection-end-line="76" selection-end-column="25" />
+            <state relative-caret-position="429">
+              <caret line="13" column="26" lean-forward="false" selection-start-line="13" selection-start-column="26" selection-end-line="13" selection-end-column="26" />
               <folding />
             </state>
           </provider>
@@ -101,11 +101,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="DatabaseIO.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="DatabaseIO.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="165">
-              <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+            <state relative-caret-position="132">
+              <caret line="4" column="22" lean-forward="false" selection-start-line="4" selection-start-column="22" selection-end-line="4" selection-end-column="22" />
               <folding />
             </state>
           </provider>
@@ -181,8 +181,8 @@
         <option value="$PROJECT_DIR$/public/js/components.js" />
         <option value="$PROJECT_DIR$/public/index.html" />
         <option value="$PROJECT_DIR$/ImageIndexer.js" />
-        <option value="$PROJECT_DIR$/server/DatabaseIO.js" />
         <option value="$PROJECT_DIR$/ImageServer.js" />
+        <option value="$PROJECT_DIR$/server/DatabaseIO.js" />
       </list>
     </option>
   </component>
@@ -750,18 +750,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
+    <entry file="file://$PROJECT_DIR$/ImageServer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+        <state relative-caret-position="429">
+          <caret line="13" column="26" lean-forward="false" selection-start-line="13" selection-start-column="26" selection-end-line="13" selection-end-column="26" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ImageServer.js">
+    <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="491">
-          <caret line="76" column="25" lean-forward="false" selection-start-line="76" selection-start-column="25" selection-end-line="76" selection-end-column="25" />
+        <state relative-caret-position="132">
+          <caret line="4" column="22" lean-forward="false" selection-start-line="4" selection-start-column="22" selection-end-line="4" selection-end-column="22" />
           <folding />
         </state>
       </provider>

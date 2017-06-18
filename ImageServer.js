@@ -11,7 +11,7 @@ let Deferred = require('./public/lib/Deferred');
 let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 
-let isCacheEnabled = true;
+let isCacheEnabled = false;
 let cacheDir = "c:\\temp\\photoindex\\cache\\";
 log('Starting');
 
