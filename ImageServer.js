@@ -1,3 +1,5 @@
+"use strict";
+
 let fs = require('fs');
 let path = require('path');
 let getExif = require('exif-async');
@@ -72,7 +74,6 @@ function optimizedImage(path, maxSize) {
 	// 	deferred.reject('error resizing: ' + path);
 	// });
 	let file = fs.readFileSync(path, 'binary');
-	console.log('read optimized image');
 	deferred.resolve(new Buffer(file, 'binary'));
 	return deferred;
 }

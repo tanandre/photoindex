@@ -2,6 +2,7 @@
 
 let Deferred = require('../public/lib/Deferred');
 let cache = require('memory-cache');
+let isLocalhost = false;
 
 (function() {
 	let mysql = require('mysql');
@@ -199,24 +200,38 @@ let cache = require('memory-cache');
 		return /^\d{4,8}$/.test(tag);
 	}
 
+	function fixPhotoPathsForLocalhost(rows) {
+		return rows.map(row => {
+			row.path = row.path.replace(/\\/g, '/').replace('//kanji', '/volume1');
+			return row;
+		});
+	}
+
 	module.exports.queryPhotos = function(queryTags) {
 		if (queryTags === undefined || queryTags.length === 0) {
 			return query("SELECT * FROM photo ORDER BY date DESC");
 		}
 
 		let sqlMatch = getSqlMatchCriteria(queryTags);
-		let joinTagTable = !sqlMatch.hasTagLabels ? '' :
-		// let joinTagTable =
+		let joinTagTable = !sqlMatch.hasTagLabels ? '' : // let joinTagTable =
 			'LEFT JOIN photo_tag pt ON pt.photoId = p.id INNER JOIN tag t ON pt.tagId = t.id';
 		let sql = "SELECT p.* FROM photo p " + joinTagTable + " WHERE " + sqlMatch.sql +
 			" ORDER BY p.date DESC";
 
 		console.log(sql, queryTags);
-		return query(sql, sqlMatch.values);
+		return query(sql, sqlMatch.values).then(rows => {
+			if (isLocalhost) {
+				return fixPhotoPathsForLocalhost(rows);
+			}
+		});
 	};
 
 	module.exports.readAllPhotosPaths = function() {
-		return query("SELECT id, path FROM photo");
+		return query("SELECT id, path FROM photo").then(rows => {
+			if (isLocalhost) {
+				return fixPhotoPathsForLocalhost(rows);
+			}
+		});
 	};
 
 	module.exports.readTagsForPhoto = function(id) {
@@ -232,7 +247,11 @@ let cache = require('memory-cache');
 				deferred.reject(new Error('could not find photo for id' + id));
 				return;
 			}
-			deferred.resolve(rows[0]);
+			if (isLocalhost) {
+				deferred.resolve(fixPhotoPathsForLocalhost(rows));
+			} else {
+				deferred.resolve(rows[0]);
+			}
 		}, (err) => {
 			deferred.reject(err);
 		});
