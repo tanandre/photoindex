@@ -1,6 +1,7 @@
 'use strict';
 
 let Deferred = require('../public/lib/Deferred');
+let Timer = require('../public/lib/Timer');
 let cache = require('memory-cache');
 let isLocalhost = true;
 
@@ -25,6 +26,7 @@ let isLocalhost = true;
 	}
 
 	function query(sql, values, isSuppressErrorLog) {
+		let timer = new Timer();
 		let deferred = new Deferred();
 		connection.query(sql, values, (err, result) => {
 			if (err) {
@@ -38,13 +40,14 @@ let isLocalhost = true;
 				deferred.reject(err);
 				return;
 			}
+			console.log(timer.stamp());
 			deferred.resolve(result);
 		});
 		return deferred;
 	}
 
 	function createTables(connection, done) {
-		console.log("Connnection with DB established");
+		console.log("Connection with DB established");
 		// drop all tables
 		connection.query("DROP TABLE IF EXISTS photo_tag");
 		connection.query("DROP TABLE IF EXISTS tag");
