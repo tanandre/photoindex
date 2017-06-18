@@ -3,22 +3,14 @@ let path = require('path');
 let getExif = require('exif-async');
 let express = require("express");
 let cache = require('memory-cache');
-let sharp = require('sharp');
+// let sharp = require('sharp');
 let util = require('./public/lib/util');
 let Deferred = require('./public/lib/Deferred');
 let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
-let photoCrawler = require('./server/PhotoCrawler');
 
 let isCacheEnabled = true;
 let cacheDir = "c:\\temp\\photoindex\\cache\\";
-let imageDir = "c:\\andre\\afdruk\\";
-let tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
-let nfsimageDir = "\\\\kanji\\photo\\2006\\2006-03-11 Eerste date\\";
-let nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
-let nfsimageDir2016 = "\\\\kanji\\photo\\2016\\";
-let nfsimageDirOldPhone = "\\\\kanji\\photo\\phone\\phonedata";
-//let nfsimageDir = "\\\\kanji\\photo\\collage\\";
 log('Starting');
 
 let app = express();
@@ -71,14 +63,17 @@ function setCacheHeaders(response) {
 
 function optimizedImage(path, maxSize) {
 	let deferred = new Deferred();
-	sharp(path)
-		.resize(maxSize, maxSize)
-		.max()
-		.rotate()
-		.toBuffer()
-		.then(data => deferred.resolve(data)).catch((err) => {
-		deferred.reject('error resizing: ' + path);
-	});
+	// sharp(path)
+	// 	.resize(maxSize, maxSize)
+	// 	.max()
+	// 	.rotate()
+	// 	.toBuffer()
+	// 	.then(data => deferred.resolve(data)).catch((err) => {
+	// 	deferred.reject('error resizing: ' + path);
+	// });
+	let file = fs.readFileSync(path, 'binary');
+	console.log('read optimized image');
+	deferred.resolve(new Buffer(file, 'binary'));
 	return deferred;
 }
 
@@ -94,7 +89,6 @@ app.use('/photo/:id/:width', function(request, response) {
 	if (fs.existsSync(cachedFile)) {
 		let file = fs.readFileSync(cachedFile, 'binary');
 		response.end(new Buffer(file, 'binary'));
-		console.log('reading file from cache!');
 		return;
 	}
 
@@ -119,22 +113,6 @@ app.use('/photo/:id/:width', function(request, response) {
 				fs.writeFile(cachedFile, data, 'binary');
 
 			}, err => deferred.reject(err));
-		// sharp(row.path)
-		// 	.resize(maxSize, maxSize)
-		// 	.max()
-		// 	.rotate()
-		// 	.toBuffer()
-		// 	.then((data) => {
-		// 		deferred.resolve(new Buffer(data, 'binary'));
-		//
-		// 		if (!fs.existsSync(cacheSubDir)) {
-		// 			fs.mkdirSync(cacheSubDir);
-		// 		}
-		// 		fs.writeFile(cachedFile, data, 'binary');
-		//
-		// 	}).catch((err) => {
-		// 	deferred.reject('error resizing: ' + row.path);
-		// });
 	}, (err) => {
 		deferred.reject(JSON.stringify(err));
 	});
@@ -147,7 +125,7 @@ app.use('/photo/:id', function(request, response) {
 	let deferred = createHttpDeferred(response);
 	dbIO.readPhotoById(request.params.id).then((row) => {
 		let file = fs.readFileSync(row.path, 'binary');
-		deferred.resolve(file, 'binary');
+		deferred.resolve(new Buffer(file, 'binary'));
 	}, (err) => {
 		deferred.reject(JSON.stringify(err));
 	});
