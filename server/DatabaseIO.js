@@ -40,7 +40,7 @@ let isLocalhost = true;
 				deferred.reject(err);
 				return;
 			}
-			console.log(timer.stamp());
+			console.log('sql time:', timer.stamp());
 			deferred.resolve(result);
 		});
 		return deferred;

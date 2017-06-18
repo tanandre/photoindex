@@ -8,6 +8,7 @@ let cache = require('memory-cache');
 // let sharp = require('sharp');
 let util = require('./public/lib/util');
 let Deferred = require('./public/lib/Deferred');
+let Timer = require('./public/lib/Timer');
 let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 
@@ -169,14 +170,18 @@ app.use('/tags/:id', function(request, response) {
 });
 
 app.get("/listing", function(request, response) {
+	let alltimer = new Timer();
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/listing?' + JSON.stringify(request.query);
 	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
 		dbIO.queryPhotos(request.query.tag).then((rows) => {
+			let timer = new Timer();
 			rows.forEach((row) => {
 				row.dateInMillis = Date.parse(row.date);
 				row.dateObject = new Date(row.dateInMillis);
 			});
+			console.log('patch date', timer.stamp());
+			console.log('all', alltimer.stamp());
 			deferred.resolve(JSON.stringify(rows));
 		}, (err) => {
 			deferred.reject(JSON.stringify({
