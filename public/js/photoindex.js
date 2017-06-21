@@ -61,7 +61,7 @@ let app = new Vue({
 		imageItems: [],
 		selectedImage: null,
 		currentPage: 1,
-		imagesPerPage: 140,
+		imagesPerPage: 28,
 		currentRoute: window.location.pathname,
 		search: '',
 		isBusy: false,
@@ -71,7 +71,9 @@ let app = new Vue({
 		tags: [],
 	},
 	mounted: function() {
-		this.fetchImages({});
+		setTimeout(() => {
+			this.fetchImages({});
+		});
 		document.onkeypress = function(key) {
 			// TODO close image on escape
 			// TODO use arrow keys to navigate

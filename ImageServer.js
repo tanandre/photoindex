@@ -1,18 +1,19 @@
 "use strict";
 
+global.isOnKanji = require('os').hostname() === 'kanji';
 let fs = require('fs');
+let os = require('os');
 let path = require('path');
 let getExif = require('exif-async');
 let express = require("express");
 let cache = require('memory-cache');
-// let sharp = require('sharp');
-// let Jimp = require("jimp");
 let util = require('./public/lib/util');
 let Deferred = require('./public/lib/Deferred');
 let Timer = require('./public/lib/Timer');
 let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 let photoOptimizer = require('./server/PhotoOptimizer');
+
 
 let isCacheEnabled = false;
 let cacheDir = "c:\\temp\\photoindex\\cache\\";
@@ -53,7 +54,8 @@ dbIO.initialize((err, connection) => {
 });
 
 let server = app.listen(1337, () => {
-	log('photoindex listening on port 1337!')
+
+	log('photoindex listening on port 1337!!!');
 });
 
 app.use(express.static('public'));

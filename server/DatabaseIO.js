@@ -3,7 +3,6 @@
 let Deferred = require('../public/lib/Deferred');
 let Timer = require('../public/lib/Timer');
 let cache = require('memory-cache');
-let isLocalhost = false;
 
 (function() {
 	let mysql = require('mysql');
@@ -223,7 +222,7 @@ let isLocalhost = false;
 
 		console.log(sql, queryTags);
 		return query(sql, sqlMatch.values).then(rows => {
-			if (isLocalhost) {
+			if (isOnKanji) {
 				return fixPhotoPathsForLocalhost(rows);
 			}
 		});
@@ -231,7 +230,7 @@ let isLocalhost = false;
 
 	module.exports.readAllPhotosPaths = function() {
 		return query("SELECT id, path FROM photo").then(rows => {
-			if (isLocalhost) {
+			if (isOnKanji) {
 				return fixPhotoPathsForLocalhost(rows);
 			}
 		});
@@ -250,7 +249,7 @@ let isLocalhost = false;
 				deferred.reject(new Error('could not find photo for id' + id));
 				return;
 			}
-			if (isLocalhost) {
+			if (isOnKanji) {
 				deferred.resolve(fixPhotoPathsForLocalhost(rows)[0]);
 			} else {
 				deferred.resolve(rows[0]);

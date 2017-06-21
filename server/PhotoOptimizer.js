@@ -1,10 +1,24 @@
 (function() {
 	"use strict";
 
-	// let sharp = require('sharp');
+	let sharp = require('sharp');
 	let Jimp = require("jimp");
 	let Deferred = require('../public/lib/Deferred');
 	let fs = require('fs');
+
+	function getPhotoPathForThumbnail(path) {
+		let index = path.lastIndexOf('/');
+		return path.substring(0, index) + "/@eaDir" + path.substring(index) + '/SYNOPHOTO_THUMB_M.jpg';
+	}
+
+	function optimzeImageUseDsPhotoThumbnail(path, maxSize) {
+		let deferred = new Deferred();
+		let thumbnail = getPhotoPathForThumbnail(path);
+		console.log('thumb', thumbnail);
+		let file = fs.readFileSync(thumbnail, 'binary');
+		deferred.resolve(new Buffer(file, 'binary'));
+		return deferred;
+	}
 
 	function optimzeImageNone(path, maxSize) {
 		let deferred = new Deferred();
@@ -48,5 +62,5 @@
 		return deferred;
 	}
 
-	module.exports.optimizeImage = optimizeImageJimp;
+	module.exports.optimizeImage = isOnKanji ? optimzeImageUseDsPhotoThumbnail : optimzeImageSharp;
 }());
