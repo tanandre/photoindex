@@ -3,8 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="6260fa26-7525-44cc-a911-94464ff29be1" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ImageServer.js" afterPath="$PROJECT_DIR$/ImageServer.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/photoindex.js" afterPath="$PROJECT_DIR$/public/js/photoindex.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server/DatabaseIO.js" afterPath="$PROJECT_DIR$/server/DatabaseIO.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server/PhotoOptimizer.js" afterPath="$PROJECT_DIR$/server/PhotoOptimizer.js" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
@@ -26,8 +24,8 @@
       <file leaf-file-name="ImageServer.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ImageServer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="66">
-              <caret line="2" column="16" lean-forward="true" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="16" />
+            <state relative-caret-position="990">
+              <caret line="30" column="7" lean-forward="true" selection-start-line="30" selection-start-column="7" selection-end-line="30" selection-end-column="7" />
               <folding />
             </state>
           </provider>
@@ -53,11 +51,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="PhotoOptimizer.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="PhotoOptimizer.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server/PhotoOptimizer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="982">
-              <caret line="64" column="44" lean-forward="false" selection-start-line="64" selection-start-column="44" selection-end-line="64" selection-end-column="44" />
+            <state relative-caret-position="132">
+              <caret line="5" column="5" lean-forward="true" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
               <folding />
             </state>
           </provider>
@@ -113,10 +111,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="DatabaseIO.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="DatabaseIO.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="652">
+            <state relative-caret-position="949">
               <caret line="251" column="25" lean-forward="false" selection-start-line="251" selection-start-column="25" selection-end-line="251" selection-end-column="25" />
               <folding />
             </state>
@@ -127,7 +125,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>fs.rea</find>
       <find>fs.</find>
       <find>readDateFromFile</find>
       <find>99</find>
@@ -157,6 +154,7 @@
       <find>console.log</find>
       <find>1337</find>
       <find>islocal</find>
+      <find>wrap</find>
     </findStrings>
     <replaceStrings>
       <replace>photoThumbnailBox</replace>
@@ -185,9 +183,9 @@
         <option value="$PROJECT_DIR$/server/PhotoCrawler.js" />
         <option value="$PROJECT_DIR$/server/PhotoOptimzer.js" />
         <option value="$PROJECT_DIR$/public/js/photoindex.js" />
+        <option value="$PROJECT_DIR$/server/DatabaseIO.js" />
         <option value="$PROJECT_DIR$/ImageServer.js" />
         <option value="$PROJECT_DIR$/server/PhotoOptimizer.js" />
-        <option value="$PROJECT_DIR$/server/DatabaseIO.js" />
       </list>
     </option>
   </component>
@@ -768,26 +766,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="949">
+          <caret line="251" column="25" lean-forward="false" selection-start-line="251" selection-start-column="25" selection-end-line="251" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/ImageServer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="66">
-          <caret line="2" column="16" lean-forward="true" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="16" />
+        <state relative-caret-position="990">
+          <caret line="30" column="7" lean-forward="true" selection-start-line="30" selection-start-column="7" selection-end-line="30" selection-end-column="7" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/server/PhotoOptimizer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="982">
-          <caret line="64" column="44" lean-forward="false" selection-start-line="64" selection-start-column="44" selection-end-line="64" selection-end-column="44" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/server/DatabaseIO.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="652">
-          <caret line="251" column="25" lean-forward="false" selection-start-line="251" selection-start-column="25" selection-end-line="251" selection-end-column="25" />
+        <state relative-caret-position="132">
+          <caret line="5" column="5" lean-forward="true" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
           <folding />
         </state>
       </provider>

@@ -1,19 +1,22 @@
 (function() {
 	"use strict";
 
-	let sharp = require('sharp');
+	if (isOnKanji) {
+		let sharp = require('sharp');
+	}
 	let Jimp = require("jimp");
 	let Deferred = require('../public/lib/Deferred');
 	let fs = require('fs');
 
 	function getPhotoPathForThumbnail(path) {
 		let index = path.lastIndexOf('/');
-		return path.substring(0, index) + "/@eaDir" + path.substring(index) + '/SYNOPHOTO_THUMB_M.jpg';
+		return path.substring(0, index) + "/@eaDir" + path.substring(index) +
+			(maxSize === 300 ? '/SYNOPHOTO_THUMB_M.jpg' : 'SYNOPHOTO_THUMB_XL.jpg');
 	}
 
 	function optimzeImageUseDsPhotoThumbnail(path, maxSize) {
 		let deferred = new Deferred();
-		let thumbnail = getPhotoPathForThumbnail(path);
+		let thumbnail = getPhotoPathForThumbnail(path, maxSize);
 		console.log('thumb', thumbnail);
 		let file = fs.readFileSync(thumbnail, 'binary');
 		deferred.resolve(new Buffer(file, 'binary'));

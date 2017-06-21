@@ -14,7 +14,6 @@ let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 let photoOptimizer = require('./server/PhotoOptimizer');
 
-
 let isCacheEnabled = false;
 let cacheDir = "c:\\temp\\photoindex\\cache\\";
 log('Starting');
@@ -40,9 +39,11 @@ function wrapCache(cache, cacheId, deferred, fnc) {
 		deferred.resolve(cachedResponse);
 		return;
 	}
-	deferred.then((data) => {
-		cache.put(cacheId, data);
-	});
+	if (isCacheEnabled) {
+		deferred.then((data) => {
+			cache.put(cacheId, data);
+		});
+	}
 	fnc(deferred);
 }
 
