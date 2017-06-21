@@ -2,35 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6260fa26-7525-44cc-a911-94464ff29be1" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.delete.27.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.delete.35.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.delete.54.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.12.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.13.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.20.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.29.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.30.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.35.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.41.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.52.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.54.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.64.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.68.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.76.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.78.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.write.35.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.write.52.tlog" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.write.54.tlog" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ImageServer.js" afterPath="$PROJECT_DIR$/ImageServer.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.delete.1.tlog" afterPath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.delete.1.tlog" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.delete.69.tlog" afterPath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.delete.69.tlog" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.1.tlog" afterPath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.1.tlog" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.7.tlog" afterPath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.7.tlog" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.9.tlog" afterPath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.read.9.tlog" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.write.1.tlog" afterPath="$PROJECT_DIR$/node_modules/lwip/build/Release/obj/lwip_image/lwip_image.tlog/link-VCTIP.write.1.tlog" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/package.json" afterPath="$PROJECT_DIR$/package.json" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server/DatabaseIO.js" afterPath="$PROJECT_DIR$/server/DatabaseIO.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server/PhotoOptimizer.js" afterPath="$PROJECT_DIR$/server/PhotoOptimizer.js" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -51,8 +24,8 @@
       <file leaf-file-name="ImageServer.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ImageServer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="363">
-              <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
+            <state relative-caret-position="231">
+              <caret line="7" column="12" lean-forward="false" selection-start-line="7" selection-start-column="7" selection-end-line="7" selection-end-column="12" />
               <folding />
             </state>
           </provider>
@@ -78,11 +51,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="PhotoOptimizer.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="PhotoOptimizer.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server/PhotoOptimizer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="982">
-              <caret line="50" column="52" lean-forward="false" selection-start-line="50" selection-start-column="52" selection-end-line="50" selection-end-column="52" />
+            <state relative-caret-position="693">
+              <caret line="21" column="23" lean-forward="true" selection-start-line="21" selection-start-column="23" selection-end-line="21" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="package.json" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/package.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="66">
+              <caret line="2" column="7" lean-forward="false" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="7" />
               <folding />
             </state>
           </provider>
@@ -93,16 +76,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="1617">
               <caret line="49" column="57" lean-forward="false" selection-start-line="49" selection-start-column="57" selection-end-line="49" selection-end-column="57" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="util.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/public/lib/util.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="6666">
-              <caret line="202" column="9" lean-forward="false" selection-start-line="202" selection-start-column="9" selection-end-line="202" selection-end-column="9" />
               <folding />
             </state>
           </provider>
@@ -177,11 +150,11 @@
       <find>timer</find>
       <find>def</find>
       <find>query</find>
-      <find>sharp</find>
       <find>it worked</find>
       <find>jimp</find>
       <find>optimize</find>
       <find>optimizeI</find>
+      <find>sharp</find>
     </findStrings>
     <replaceStrings>
       <replace>photoThumbnailBox</replace>
@@ -673,13 +646,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/package.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="594">
-          <caret line="18" column="28" lean-forward="false" selection-start-line="18" selection-start-column="28" selection-end-line="18" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ImageServer.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="264">
@@ -770,16 +736,24 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ImageServer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="363">
-          <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
+        <state relative-caret-position="231">
+          <caret line="7" column="12" lean-forward="false" selection-start-line="7" selection-start-column="7" selection-end-line="7" selection-end-column="12" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/server/PhotoOptimizer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="982">
-          <caret line="50" column="52" lean-forward="false" selection-start-line="50" selection-start-column="52" selection-end-line="50" selection-end-column="52" />
+        <state relative-caret-position="693">
+          <caret line="21" column="23" lean-forward="true" selection-start-line="21" selection-start-column="23" selection-end-line="21" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="66">
+          <caret line="2" column="7" lean-forward="false" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="7" />
           <folding />
         </state>
       </provider>

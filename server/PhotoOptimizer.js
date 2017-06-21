@@ -1,7 +1,7 @@
 (function() {
 	"use strict";
 
-	let sharp = require('sharp');
+	// let sharp = require('sharp');
 	let Jimp = require("jimp");
 	let Deferred = require('../public/lib/Deferred');
 	let fs = require('fs');
@@ -48,5 +48,5 @@
 		return deferred;
 	}
 
-	module.exports.optimizeImage = optimzeImageSharp;
+	module.exports.optimizeImage = optimizeImageJimp;
 }());
