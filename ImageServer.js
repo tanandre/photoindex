@@ -6,11 +6,13 @@ let getExif = require('exif-async');
 let express = require("express");
 let cache = require('memory-cache');
 // let sharp = require('sharp');
+// let Jimp = require("jimp");
 let util = require('./public/lib/util');
 let Deferred = require('./public/lib/Deferred');
 let Timer = require('./public/lib/Timer');
 let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
+let photoOptimizer = require('./server/PhotoOptimizer');
 
 let isCacheEnabled = false;
 let cacheDir = "c:\\temp\\photoindex\\cache\\";
@@ -65,18 +67,10 @@ function setCacheHeaders(response) {
 }
 
 function optimizedImage(path, maxSize) {
-	let deferred = new Deferred();
-	// sharp(path)
-	// 	.resize(maxSize, maxSize)
-	// 	.max()
-	// 	.rotate()
-	// 	.toBuffer()
-	// 	.then(data => deferred.resolve(data)).catch((err) => {
-	// 	deferred.reject('error resizing: ' + path);
-	// });
-	let file = fs.readFileSync(path, 'binary');
-	deferred.resolve(new Buffer(file, 'binary'));
-	return deferred;
+	let timer = new Timer();
+	return photoOptimizer.optimizeImage(path, maxSize).then(() => {
+		console.log('image optimization: ', timer.stamp());
+	});
 }
 
 app.use('/photo/:id/:width', function(request, response) {

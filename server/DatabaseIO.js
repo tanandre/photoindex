@@ -3,7 +3,7 @@
 let Deferred = require('../public/lib/Deferred');
 let Timer = require('../public/lib/Timer');
 let cache = require('memory-cache');
-let isLocalhost = true;
+let isLocalhost = false;
 
 (function() {
 	let mysql = require('mysql');
