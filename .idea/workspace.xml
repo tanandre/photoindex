@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6260fa26-7525-44cc-a911-94464ff29be1" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ImageServer.js" afterPath="$PROJECT_DIR$/ImageServer.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server/PhotoOptimizer.js" afterPath="$PROJECT_DIR$/server/PhotoOptimizer.js" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
@@ -54,8 +53,8 @@
       <file leaf-file-name="PhotoOptimizer.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server/PhotoOptimizer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="132">
-              <caret line="5" column="5" lean-forward="true" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
+            <state relative-caret-position="297">
+              <caret line="10" column="51" lean-forward="false" selection-start-line="10" selection-start-column="51" selection-end-line="10" selection-end-column="51" />
               <folding />
             </state>
           </provider>
@@ -784,8 +783,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/server/PhotoOptimizer.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="132">
-          <caret line="5" column="5" lean-forward="true" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
+        <state relative-caret-position="297">
+          <caret line="10" column="51" lean-forward="false" selection-start-line="10" selection-start-column="51" selection-end-line="10" selection-end-column="51" />
           <folding />
         </state>
       </provider>
