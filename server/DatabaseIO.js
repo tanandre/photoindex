@@ -39,7 +39,7 @@ let cache = require('memory-cache');
 				deferred.reject(err);
 				return;
 			}
-			console.log('sql time:', timer.stamp());
+			console.log('sql time:', timer.stamp(), ' - ', sql);
 			deferred.resolve(result);
 		});
 		return deferred;

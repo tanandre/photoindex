@@ -1,3 +1,7 @@
+"use strict";
+
+global.isOnKanji = require('os').hostname() === 'kanji';
+
 let fs = require('fs');
 let path = require('path');
 let getExif = require('exif-async');
@@ -6,14 +10,6 @@ let Deferred = require('./public/lib/Deferred');
 let log = require('./public/lib/log');
 let dbIO = require('./server/DatabaseIO');
 let photoCrawler = require('./server/PhotoCrawler');
-// let imageDir = "c:\\andre\\afdruk\\";
-let imageDir = "\\\\kanji\\photo\\";
-let tempThumbnailDir = "c:\\andre\\afdruk\\temp\\";
-let nfsimageDir = "\\\\kanji\\photo\\2006\\2006-03-11 Eerste date\\";
-let nfsimageDir2009 = "\\\\kanji\\photo\\2009\\";
-let nfsimageDir2016 = "\\\\kanji\\photo\\2016\\";
-let nfsimageDirOldPhone = "\\\\kanji\\photo\\phone\\phonedata";
-//let nfsimageDir = "\\\\kanji\\photo\\collage\\";
 
 log('starting');
 
@@ -279,7 +275,7 @@ function indexPhotos() {
 
 	dbIO.readAllPhotosPaths().then(rows => {
 		log('starting to index photos');
-		let filteredRows = rows.slice(11100);
+		let filteredRows = rows.slice(11100, 15000);
 
 		if (filteredRows.length === 0) {
 			console.log('nothing to index');

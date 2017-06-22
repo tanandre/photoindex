@@ -15,7 +15,8 @@ let dbIO = require('./server/DatabaseIO');
 let photoOptimizer = require('./server/PhotoOptimizer');
 
 let isCacheEnabled = false;
-let cacheDir = "c:\\temp\\photoindex\\cache\\";
+let isCacheHeadersEnabled = true;
+let cacheDir = isOnKanji ? '/tmp/photoindex/' : "c:\\temp\\photoindex\\cache\\";
 log('Starting');
 
 let app = express();
@@ -55,7 +56,6 @@ dbIO.initialize((err, connection) => {
 });
 
 let server = app.listen(1337, () => {
-
 	log('photoindex listening on port 1337!!!');
 });
 
@@ -63,7 +63,7 @@ app.use(express.static('public'));
 app.use('/node_modules', express.static('node_modules'));
 
 function setCacheHeaders(response) {
-	if (isCacheEnabled) {
+	if (isCacheHeadersEnabled) {
 		response.setHeader("Cache-Control", "public, max-age=31536000");
 		response.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
 	}
@@ -81,16 +81,6 @@ app.use('/photo/:id/:width', function(request, response) {
 	setCacheHeaders(response);
 	let deferred = createHttpDeferred(response);
 
-	let subDir = Math.floor(parseInt(request.params.id) / 1000);
-	let cacheSubDir = cacheDir + subDir;
-	let cachedFile = cacheSubDir + '\\cache-' + request.params.id + '_' + request.params.width + '.jpg';
-
-	if (fs.existsSync(cachedFile)) {
-		let file = fs.readFileSync(cachedFile, 'binary');
-		response.end(new Buffer(file, 'binary'));
-		return;
-	}
-
 	dbIO.readPhotoById(request.params.id).then(function(row) {
 		// TODO if original photo is smaller than requested param don't resize
 		// TODO store exif dimensions in db to optimize calculation?
@@ -106,11 +96,6 @@ app.use('/photo/:id/:width', function(request, response) {
 		optimizedImage(row.path, maxSize)
 			.then(data => {
 				deferred.resolve(new Buffer(data, 'binary'));
-				if (!fs.existsSync(cacheSubDir)) {
-					fs.mkdirSync(cacheSubDir);
-				}
-				fs.writeFile(cachedFile, data, 'binary');
-
 			}, err => deferred.reject(err));
 	}, (err) => {
 		deferred.reject(JSON.stringify(err));
