@@ -11,7 +11,7 @@
 	function getPhotoPathForThumbnail(path, maxSize) {
 		let index = path.lastIndexOf('/');
 		return path.substring(0, index) + "/@eaDir" + path.substring(index) +
-			(maxSize === 300 ? '/SYNOPHOTO_THUMB_M.jpg' : 'SYNOPHOTO_THUMB_XL.jpg');
+			(maxSize === 300 ? '/SYNOPHOTO_THUMB_M.jpg' : '/SYNOPHOTO_THUMB_XL.jpg');
 	}
 
 	function optimzeImageUseDsPhotoThumbnail(path, maxSize) {
