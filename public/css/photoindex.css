@@ -193,6 +193,13 @@ body.dark.dark.photoindex {
 	background-image: url('../img/ic_keyboard_arrow_right_white_36px.svg');
 }
 
+.photoindex .photoThumbnail.imgError {
+	background-image: url('../img/ic_do_not_disturb_white_24px.svg');
+	background-size: auto;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
 .photoSeries {
 	z-index: 1001;
 	position: relative;

@@ -64,7 +64,7 @@ let app = new Vue({
 		imagesPerPage: 70,
 		currentRoute: window.location.pathname,
 		search: '',
-		isBusy: false,
+		isBusy: true,
 		millisPerMinute: 60000,
 		groupRange: RANGE.MINUTE,
 		groupRangeOptions: RANGE,

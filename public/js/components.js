@@ -28,10 +28,11 @@ Vue.component('thumbnailPhoto', {
 			isLoading: false,
 			isDone: false,
 			promise: null,
+			isError: false,
 			progress: 0,
 		};
 	},
-	template: "<div ref='thumbnail' :class='{ loading: isLoading }'><slot></slot></div>", //
+	template: "<div ref='thumbnail' :class='{ loading: isLoading, imgError: isError }'><slot></slot></div>", //
 	// template: "<div ref='thumbnail'><slot></slot>{{status}}<md-spinner v-if='isLoading' :md-progress='progress' md-indeterminate></md-spinner></div>",
 	mounted: function() {
 
@@ -76,6 +77,7 @@ Vue.component('thumbnailPhoto', {
 				this.status = 'error';
 				this.isLoading = false;
 				this.isDone = true;
+				this.isError = true;
 			}, (progress) => {
 				this.progress = progress;
 				this.status = 'loading';

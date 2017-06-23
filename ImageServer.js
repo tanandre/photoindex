@@ -21,9 +21,17 @@ log('Starting');
 
 let app = express();
 
+function setCacheHeaders(response) {
+	if (isCacheHeadersEnabled) {
+		response.setHeader("Cache-Control", "public, max-age=31536000");
+		response.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
+	}
+}
+
 function createHttpDeferred(response) {
 	let httpDeferred = new Deferred();
 	httpDeferred.then(function(data) {
+		setCacheHeaders(response);
 		response.end(data);
 	}, function(err) {
 		console.error(err);
@@ -62,13 +70,6 @@ let server = app.listen(1337, () => {
 app.use(express.static('public'));
 app.use('/node_modules', express.static('node_modules'));
 
-function setCacheHeaders(response) {
-	if (isCacheHeadersEnabled) {
-		response.setHeader("Cache-Control", "public, max-age=31536000");
-		response.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
-	}
-}
-
 function optimizedImage(path, maxSize) {
 	let timer = new Timer();
 	return photoOptimizer.optimizeImage(path, maxSize).then(() => {
@@ -78,12 +79,9 @@ function optimizedImage(path, maxSize) {
 
 app.use('/photo/:id/:width', function(request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
-	setCacheHeaders(response);
 	let deferred = createHttpDeferred(response);
 
 	dbIO.readPhotoById(request.params.id).then(function(row) {
-		// TODO if original photo is smaller than requested param don't resize
-		// TODO store exif dimensions in db to optimize calculation?
 		// TODO check if modified since if we are reading the file from the cache
 
 		if (request.params.width === undefined) {
@@ -104,7 +102,6 @@ app.use('/photo/:id/:width', function(request, response) {
 
 app.use('/photo/:id', function(request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
-	setCacheHeaders(response);
 
 	let deferred = createHttpDeferred(response);
 	dbIO.readPhotoById(request.params.id).then((row) => {
@@ -163,8 +160,8 @@ app.get("/listing", function(request, response) {
 				row.dateObject = new Date(row.dateInMillis);
 			});
 			console.log('patch date', timer.stamp());
-			console.log('all', alltimer.stamp());
 			deferred.resolve(JSON.stringify(rows));
+			console.log('all', alltimer.stamp());
 		}, (err) => {
 			deferred.reject(JSON.stringify({
 				images: [],

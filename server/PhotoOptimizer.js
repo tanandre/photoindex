@@ -1,8 +1,8 @@
 (function() {
 	"use strict";
-
+	let sharp = null;
 	if (!isOnKanji) {
-		let sharp = require('sharp');
+		sharp = require('sharp');
 	}
 	let Jimp = require("jimp");
 	let Deferred = require('../public/lib/Deferred');
@@ -38,7 +38,7 @@
 			.rotate()
 			.toBuffer()
 			.then(data => deferred.resolve(data)).catch((err) => {
-			deferred.reject('error resizing: ' + path);
+			deferred.reject('error resizing: [' + path + '] - ' + err);
 		});
 		return deferred;
 	}

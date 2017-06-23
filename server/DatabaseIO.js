@@ -143,7 +143,7 @@ let cache = require('memory-cache');
 	module.exports.queryTag = queryTag;
 
 	module.exports.readAllPhotos = function() {
-		return query("SELECT * FROM photo ORDER BY date DESC");
+		return query("SELECT * FROM photo ORDER BY date DESC LIMIT 1000");
 	};
 
 	function getSqlTagMatch(tagLabels) {
@@ -211,7 +211,7 @@ let cache = require('memory-cache');
 
 	module.exports.queryPhotos = function(queryTags) {
 		if (queryTags === undefined || queryTags.length === 0) {
-			return query("SELECT * FROM photo ORDER BY date DESC");
+			return query("SELECT * FROM photo ORDER BY date DESC LIMIT 1000");
 		}
 
 		let sqlMatch = getSqlMatchCriteria(queryTags);

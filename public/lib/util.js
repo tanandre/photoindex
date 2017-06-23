@@ -25,6 +25,10 @@ class ImageXhrWorker {
 
 		xmlHTTP.onload = function(e) {
 			_this._isAvailable = true;
+			if (e.target.status !== 200) {
+				deferred.reject(new Error(e.target.statusText));
+				return;
+			}
 			let h = xmlHTTP.getAllResponseHeaders();
 			let m = h.match(/^Content-Type\:\s*(.*?)$/mi), mimeType = m[1] || 'image/png';
 
