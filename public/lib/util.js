@@ -97,14 +97,14 @@ class XhrWorker {
 		return this._isAvailable;
 	}
 
-	execute(url) {
+	execute(url, params) {
 		this._isAvailable = false;
 		let deferred = new Deferred();
 
-		this._http.get(url).then((response) => {
+		this._http.get(url, params).then(response => {
 			this._isAvailable = true;
 			deferred.resolve(response.body);
-		}).catch((err) => {
+		}).catch(err => {
 			this._isAvailable = true;
 			deferred.reject(err);
 		});
@@ -120,10 +120,10 @@ class QueuedLoader {
 		this.isFifo = isFifo;
 	}
 
-	load(url) {
+	load() {
 		let deferred = new Deferred();
 		this.queue.push({
-			url: url,
+			args: arguments,
 			deferred: deferred
 		});
 		this.start();
@@ -159,7 +159,7 @@ class QueuedLoader {
 				}
 
 				item.deferred.progress(1);
-				let promise = worker.execute(item.url);
+				let promise = worker.execute.apply(worker, item.args);
 				promise.then((data) => {
 					item.deferred.resolve(data);
 					loadNext(worker, _this.queue);
@@ -184,15 +184,16 @@ class CachedLoader {
 		this.cache = cache;
 	}
 
-	load(url) {
+	load() {
 		let cache = this.cache;
-		if (cache[url] !== undefined) {
-			let resolved = Deferred.createResolved(cache[url]);
+		let cacheKey = JSON.stringify(arguments);
+		if (cache[cacheKey] !== undefined) {
+			let resolved = Deferred.createResolved(cache[cacheKey]);
 			resolved.progress(1);
 			return resolved.promise;
 		}
-		return this.loader.load(url).then((data) => {
-			cache[url] = data;
+		return this.loader.load.apply(this.loader, arguments).then((data) => {
+			cache[cacheKey] = data;
 		});
 	}
 

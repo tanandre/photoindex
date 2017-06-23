@@ -86,9 +86,11 @@ class Deferred {
 
 	reject(data) {
 		if (this._isResolved) {
+			console.error(data);
 			throw new Error('Cannot reject, deferred already resolved');
 		}
 		if (this._isRejected) {
+			console.error(data);
 			throw new Error('Cannot reject, Deferred already rejected');
 		}
 		this._isRejected = true;

@@ -69,6 +69,7 @@ let app = new Vue({
 		groupRange: RANGE.MINUTE,
 		groupRangeOptions: RANGE,
 		tags: [],
+		handle: null
 	},
 	mounted: function() {
 		setTimeout(() => {
@@ -113,15 +114,17 @@ let app = new Vue({
 			this.isBusy = true;
 			this.images = [];
 			this.imageItems = [];
-			this.$http.get('/listing', {params: data}).then(function(response) {
+			// jsonLoader.load('/listing');
+			this.currentHandle = jsonLoader.load('/listing', {params: data}).then(data => {
 				this.isBusy = false;
-				this.images = response.body;
+				this.images = data;
 
 				this.groupImageItems(this.groupRange);
-			}, function(err) {
+			}, err => {
 				console.error(err);
 				this.isBusy = false;
 			});
+			console.log('handle', this.currentHandle.cancel);
 		},
 
 		groupImageItems: function(range) {

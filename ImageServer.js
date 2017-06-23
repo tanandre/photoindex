@@ -64,7 +64,7 @@ dbIO.initialize((err, connection) => {
 });
 
 let server = app.listen(1337, () => {
-	log('photoindex listening on port 1337!!!');
+	log('photoindex listening on port 1337!');
 });
 
 app.use(express.static('public'));
