@@ -69,16 +69,32 @@ let app = new Vue({
 		groupRange: RANGE.MINUTE,
 		groupRangeOptions: RANGE,
 		tags: [],
-		handle: null
+		handle: null,
+		pageCount: 1
 	},
 	mounted: function() {
 		setTimeout(() => {
 			this.fetchImages({});
 		});
-		document.onkeypress = function(key) {
-			// TODO close image on escape
-			// TODO use arrow keys to navigate
-			console.log('key', key)
+		document.onkeydown = (key) => {
+			console.log('key', key);
+
+			if (this.selectedImage !== null) {
+				if (key.keyCode === 27) {
+					this.clearSelection();
+				} else if (key.keyCode === 37) {
+					this.selectPrevious();
+				} else if (key.keyCode === 39) {
+					this.selectNext();
+				}
+			} else {
+				if (key.keyCode === 37) {
+					this.selectPreviousPage();
+				} else if (key.keyCode === 39) {
+					this.selectNextPage();
+				}
+			}
+
 		};
 	},
 
@@ -87,11 +103,27 @@ let app = new Vue({
 			this.groupImageItems(value);
 		},
 
-		tags: function(tags) {
-			this.currentPage = 1;
-			this.fetchImages({tag: tags});
-		}
+		imageItems: function(value) {
+			this.pageCount = Math.ceil(value.length / this.imagesPerPage);
+		},
 
+		pageCount: function(value) {
+			if (this.currentPage > value) {
+				this.currentPage = Math.max(value, 1);
+			}
+		},
+
+		tags: function(tags) {
+			this.fetchImages({tag: tags});
+		},
+
+		selectedImage: function(value) {
+			if (value === null) {
+				document.body.classList.remove("noScroll");
+			} else {
+				document.body.classList.add("noScroll");
+			}
+		}
 	},
 
 	methods: {
@@ -103,10 +135,6 @@ let app = new Vue({
 		pauseDetailedView: function() {
 			thumbnailLoader1.stop();
 			thumbnailLoader0.start();
-		},
-
-		getPageCount: function() {
-			return Math.ceil(this.imageItems.length / this.imagesPerPage);
 		},
 
 		fetchImages: function(data) {
@@ -156,9 +184,9 @@ let app = new Vue({
 			this.imageItems = imageItems;
 		},
 
-		getIndexOf: function(img) {
-			return this.imageItems.indexOf(img);
-		},
+		// getIndexOf: function(img) {
+		// 	return this.imageItems.indexOf(img);
+		// },
 
 		addTag: function(tag) {
 			let found = this.tags.indexOf(tag);
@@ -186,18 +214,31 @@ let app = new Vue({
 			return this.imageItems.slice(startIndex, startIndex + this.imagesPerPage);
 		},
 
-		selectPrevious: function(item) {
-			let index = this.imageItems.indexOf(item);
+		selectPrevious: function() {
+			let index = this.imageItems.indexOf(this.selectedImage);
 			if (index > 0) {
 				this.selectedImage = this.imageItems[index - 1];
 			}
 		},
 
-		selectNext: function(item) {
-			let index = this.imageItems.indexOf(item);
+		selectNext: function() {
+			let index = this.imageItems.indexOf(this.selectedImage);
 			if (index < (this.imageItems.length - 1)) {
 				this.selectedImage = this.imageItems[index + 1];
 			}
+		},
+
+		selectNextPage: function() {
+			if (this.currentPage < this.pageCount) {
+				this.currentPage++;
+			}
+		},
+
+		selectPreviousPage: function() {
+			if (this.currentPage > 1) {
+				this.currentPage--;
+			}
 		}
+
 	}
 });

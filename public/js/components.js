@@ -94,8 +94,6 @@ Vue.component('thumbnailPhoto', {
 let monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
 	'October', 'November', 'December'];
 
-let dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
 function getDateTag(date, dateRange) {
 	if (dateRange === RANGE.YEAR) {
 		return date.substring(0, 4);
@@ -128,7 +126,6 @@ function getDateDisplay(date, dateRange) {
 	}
 
 	if (dateRange === RANGE.DAY) {
-		// return dayNames[new Date(date).getDay()];
 		return new Date(date).toDateString();
 	}
 
@@ -148,19 +145,16 @@ Vue.component('thumbnail', {
 		}
 	},
 	methods: {
-		onClick: function(event) {
-			console.log('event', event);
+		onClick: function() {
 			this.$emit('select', this.photo);
 		},
 
-		onClickInfo: function(event) {
+		onClickInfo: function() {
 			let dateTag = getDateTag(this.photo.key.date, this.dateRange);
 			if (dateTag !== null) {
 				console.log('dateTag', dateTag);
 				this.$emit('add-tag', dateTag);
 			}
-
-			// this.$emit('select', this.photo);
 		}
 	}
 });
@@ -189,11 +183,11 @@ Vue.component('photoDetails', {
 			this.tags = {};
 			this.date = new Date(this.photo.date).toLocaleString();
 			this.promise = jsonLoader.load('/exif/' + this.photo.id)
-				.then((data) => {
+				.then(data => {
 					this.exif = data;
 				});
 			this.promiseTags = jsonLoader.load('/tags/' + this.photo.id)
-				.then((data) => {
+				.then(data => {
 					this.tags = data.tags;
 				});
 		},
@@ -214,7 +208,7 @@ Vue.component('photoSeries', {
 		},
 
 		onScroll: function() {
-			this.$refs['thumbnails'].forEach((thumbnail) => {
+			this.$refs['thumbnails'].forEach(thumbnail => {
 				thumbnail.loadImageIfInViewport();
 			});
 		}
@@ -248,7 +242,6 @@ Vue.component('photoDetailView', {
 		},
 		onClick: function() {
 			this.$emit('close');
-			document.body.classList.remove("noScroll");
 		},
 
 		selectSeriesPhoto: function(img, indexSeries) {
@@ -294,7 +287,6 @@ Vue.component('photoDetailView', {
 	},
 
 	mounted: function() {
-		document.body.classList.add("noScroll");
 		this.indexSeries = 0;
 		this.loadPhoto(this.photo.key);
 	},

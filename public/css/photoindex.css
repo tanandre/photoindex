@@ -283,3 +283,8 @@ body.dark.dark.photoindex {
 	margin-left: 0;
 	margin-right: 0;
 }
+
+.photoindex .md-button.md-icon-button {
+	border-radius: 0;
+	margin: 0;
+}

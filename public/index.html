@@ -18,7 +18,7 @@
     <photo-detail-view v-if="selectedImage !== null" v-on:close="clearSelection"
                        v-bind:photo="selectedImage" v-bind:size="images.length"
                        v-bind:size-image-items="imageItems.length"
-                       @keyup.right="selectNext()" v-on:next="selectNext"
+                       v-on:next="selectNext"
                        v-on:prev="selectPrevious"></photo-detail-view>
     <md-toolbar>
         <md-button class="md-icon-button">
@@ -37,7 +37,7 @@
         </md-select>
     </md-toolbar>
 
-    <pagination v-model="currentPage" :page-count="getPageCount()"></pagination>
+    <pagination v-if="pageCount > 1" v-model="currentPage" :page-count="pageCount"></pagination>
     <thumbnail v-for="(img, index) in getImagesForPage(currentPage)" v-bind:photo="img" v-bind:date-range="groupRange"
                :key="img.key.id" v-on:select="onClickThumbnail" v-on:add-tag="addTag"></thumbnail>
 </div>
