@@ -88,43 +88,45 @@ let app = new Vue({
 		},
 
 		tags: function(tags) {
-			console.log('onTagsChanged', tags);
+			this.currentPage = 1;
 			this.fetchImages({tag: tags});
 		}
 
 	},
 
 	methods: {
-		onTagsChanged: function(tags) {
-			console.log('onTagsChanged', tags);
-			this.fetchImages({tag: tags});
-		},
-
 		pauseThumbnailView: function() {
 			thumbnailLoader0.stop();
-			thumbnailLoader0.start();
+			thumbnailLoader1.start();
 		},
 
 		pauseDetailedView: function() {
+			thumbnailLoader1.stop();
 			thumbnailLoader0.start();
-			thumbnailLoader0.stop();
+		},
+
+		getPageCount: function() {
+			return Math.ceil(this.imageItems.length / this.imagesPerPage);
 		},
 
 		fetchImages: function(data) {
 			this.isBusy = true;
 			this.images = [];
 			this.imageItems = [];
-			// jsonLoader.load('/listing');
+			if (this.currentHandle) {
+				this.currentHandle.cancel();
+			}
 			this.currentHandle = jsonLoader.load('/listing', {params: data}).then(data => {
+				this.currentHandle = null;
 				this.isBusy = false;
 				this.images = data;
 
 				this.groupImageItems(this.groupRange);
 			}, err => {
-				console.error(err);
+				this.currentHandle = null;
 				this.isBusy = false;
+				console.error(err);
 			});
-			console.log('handle', this.currentHandle.cancel);
 		},
 
 		groupImageItems: function(range) {
@@ -158,34 +160,10 @@ let app = new Vue({
 			return this.imageItems.indexOf(img);
 		},
 
-		isThumbnailDisplay: function(img) {
-			let index = this.images.indexOf(img);
-			if (index === 0) {
-				return true;
-			}
-
-			let date1 = this.images[index - 1].dateInMillis;
-			let date2 = this.images[index].dateInMillis;
-			let millisPerMinute = 60000;
-			console.log(date1 - date2);
-			return (date1 - date2) > millisPerMinute;
-		},
-
-		onMouseOverThumbnail: function(thumb) {
-			console.log('onMouseOverthumb', thumb);
-		},
-
 		addTag: function(tag) {
 			let found = this.tags.indexOf(tag);
 			if (found === -1) {
 				this.tags.push(tag);
-			}
-		},
-
-		removeTag: function(tag) {
-			let found = this.tags.indexOf(tag);
-			if (found > -1) {
-				this.tags.splice(found, 1);
 			}
 		},
 
@@ -195,12 +173,11 @@ let app = new Vue({
 		},
 
 		displayPhoto: function(img) {
-			this.pauseDetailedView();
 			this.selectedImage = img;
 		},
 
 		clearSelection: function() {
-			this.pauseThumbnailView();
+			this.pauseDetailedView();
 			this.selectedImage = null;
 		},
 
@@ -210,7 +187,6 @@ let app = new Vue({
 		},
 
 		selectPrevious: function(item) {
-			this.pauseThumbnailView();
 			let index = this.imageItems.indexOf(item);
 			if (index > 0) {
 				this.selectedImage = this.imageItems[index - 1];
@@ -218,7 +194,6 @@ let app = new Vue({
 		},
 
 		selectNext: function(item) {
-			this.pauseThumbnailView();
 			let index = this.imageItems.indexOf(item);
 			if (index < (this.imageItems.length - 1)) {
 				this.selectedImage = this.imageItems[index + 1];

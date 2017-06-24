@@ -278,3 +278,8 @@ body.dark.dark.photoindex {
 	border-radius: 0;
 	border-bottom-right-radius: 10px;
 }
+
+.pageButton {
+	margin-left: 0;
+	margin-right: 0;
+}

@@ -156,7 +156,7 @@ Vue.component('thumbnail', {
 		onClickInfo: function(event) {
 			let dateTag = getDateTag(this.photo.key.date, this.dateRange);
 			if (dateTag !== null) {
-			console.log('dateTag', dateTag);
+				console.log('dateTag', dateTag);
 				this.$emit('add-tag', dateTag);
 			}
 
@@ -316,28 +316,52 @@ Vue.component('photoDetailView', {
 });
 
 Vue.component('searchTags', {
+	props: ['value'],
 	data: function() {
 		return {
-			search: '',
-		}
+			search: ''
+		};
 	},
 	template: "<div><input class='searchToolbar' v-model='search' placeholder='Enter search criteria' " +
 	"v-on:keyup.enter='addSearchString' autofocus></input></div>",
 	methods: {
 		addSearchString: function() {
-			this.$emit('add-tag', this.search);
+			this.value.push(this.search);
+			this.$emit('input', this.value);
 			this.search = '';
 		}
 	}
 });
 
 Vue.component('selectedTags', {
-	props: ['tags'],
-	template: "<div><md-chip class='label action' v-for='tag in tags' :key='tag' :title='tag' " +
+	props: ['value'],
+	template: "<div><md-chip class='label action' v-for='tag in value' :key='tag' :title='tag' " +
 	"v-on:click.native='removeTag(tag)' md-deletable>{{tag}}</md-chip></div>",
 	methods: {
 		removeTag: function(tag) {
-			this.$emit('remove-tag', tag);
+			let found = this.value.indexOf(tag);
+			if (found > -1) {
+				this.value.splice(found, 1);
+			}
+			this.$emit('input', this.value);
+		}
+	}
+});
+
+Vue.component('pagination', {
+	props: ['value', 'pageCount'],
+	template: "<div class='pagination'><md-button @click.native='onClick(idx)' class='md-icon-button md-raised pageButton' " +
+	"v-for='idx in pageCount' :key='idx' :class='getCssClass(idx)'>{{idx}}</md-button></div>",
+	methods: {
+		onClick: function(idx) {
+			this.$emit('input', Number(idx));
+		},
+
+		getCssClass: function(idx) {
+			if (idx === this.value) {
+				return 'md-primary';
+			}
+			return '';
 		}
 	}
 });
