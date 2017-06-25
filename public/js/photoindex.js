@@ -70,7 +70,8 @@ let app = new Vue({
 		groupRangeOptions: RANGE,
 		tags: [],
 		handle: null,
-		pageCount: 1
+		pageCount: 1,
+		showDetails: true
 	},
 	mounted: function() {
 		setTimeout(() => {

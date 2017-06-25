@@ -133,11 +133,11 @@ function getDateDisplay(date, dateRange) {
 }
 
 Vue.component('thumbnail', {
-	props: ['photo', 'dateRange'],
+	props: ['photo', 'dateRange', 'showDetails'],
 	template: "<div class='photoThumbnailBox action' :title='photo.key.date' >" +
 	"<thumbnail-photo v-on:click.native='onClick' class='photoThumbnail' v-bind:loader-id='0' v-bind:photo='photo.key'>" +
-	"<md-chip v-if='photo.series.length > 1'>{{photo.series.length}}</md-chip>" +
-	"<div class='photoInfo' v-on:click.stop='onClickInfo' v-if='dateRange !== \"Minute\" && dateRange !== \"Off\"'><span class='thumbnailDate'>{{dateToDisplay}}</span></div></thumbnail-photo>" +
+	"<md-chip v-if='showDetails && photo.series.length > 1'>{{photo.series.length}}</md-chip>" +
+	"<div class='photoInfo' v-on:click.stop='onClickInfo' v-if='showDetails && dateRange !== \"Minute\" && dateRange !== \"Off\"'><span class='thumbnailDate'>{{dateToDisplay}}</span></div></thumbnail-photo>" +
 	"</div>",
 	computed: {
 		dateToDisplay: function() {
@@ -152,7 +152,6 @@ Vue.component('thumbnail', {
 		onClickInfo: function() {
 			let dateTag = getDateTag(this.photo.key.date, this.dateRange);
 			if (dateTag !== null) {
-				console.log('dateTag', dateTag);
 				this.$emit('add-tag', dateTag);
 			}
 		}
@@ -227,13 +226,14 @@ Vue.component('photoDetailView', {
 			showLeft: false,
 			showRight: false,
 			isLoading: false,
-			promise: null,
 			progress: 0,
 		};
 	},
-	template: "<div class='photoDetailView'><div class='photoView action' @click='onClick()' :class='{ loading: isLoading }' ref='photoView'>" +
-	"<div @click.stop='onNavigate(\"prev\")' class='navigationPane left' title='navigate to previous' @mousemove='showLeft = true' @mouseover='showLeft = true' @mouseleave='showLeft = false'><div v-show='showLeft' class='navigation left'></div></div>" +
-	"<div @click.stop='onNavigate(\"next\")' class='navigationPane right' title='navigate to next' @mousemove='showRight = true' @mouseover='showRight = true' @mouseleave='showRight = false'><div v-show='showRight' class='navigation right'></div></div></div>" +
+	template: "<div class='photoDetailView'>" +
+	"<photo-display @click.native='onClick()' v-bind:photo='selectedPhoto'>" +
+	"<div @click.stop='onNavigate(\"prev\")' class='navigationPane action left' title='navigate to previous' @mousemove='showLeft = true' @mouseover='showLeft = true' @mouseleave='showLeft = false'><div v-show='showLeft' class='navigation left'></div></div>" +
+	"<div @click.stop='onNavigate(\"next\")' class='navigationPane action right' title='navigate to next' @mousemove='showRight = true' @mouseover='showRight = true' @mouseleave='showRight = false'><div v-show='showRight' class='navigation right'></div></div>" +
+	"</photo-display>" +
 	"<photo-details v-bind:photo='selectedPhoto' v-bind:index='index' v-bind:size='size' v-bind:indexPosition='indexPosition'></photo-details>" +
 	"<photo-series v-if='photo.series.length > 1' v-on:select='selectSeriesPhoto' v-bind:photo='photo' v-bind:indexSeries='indexSeries'></photo-series></div>",
 	methods: {
@@ -247,16 +247,12 @@ Vue.component('photoDetailView', {
 		selectSeriesPhoto: function(img, indexSeries) {
 			this.indexSeries = indexSeries;
 			this.loadPhoto(img);
+
 		},
 
 		loadPhoto: function(photoToDisplay) {
-			this.isLoading = false;
-			if (this.promise && !this.promise.isDone()) {
-				this.promise.cancel();
-			}
-
-			this.progress = 0;
 			this.selectedPhoto = photoToDisplay;
+
 			this.index = this.$parent.imageItems.indexOf(this.photo);
 			this.indexPosition = {
 				image: {
@@ -268,21 +264,6 @@ Vue.component('photoDetailView', {
 					length: this.sizeImageItems
 				}
 			};
-
-			let photoView = this.$refs['photoView'];
-			photoView.style.backgroundImage = '';
-			let photoUrl = getPhotoUrl(photoToDisplay, 1000);
-			this.promise = imageLoader.load(photoUrl);
-			this.promise.then(() => {
-				this.isLoading = false;
-				photoView.style.backgroundImage = "url(" + photoUrl + ")";
-			}, (err) => {
-				this.isLoading = false;
-				console.error('error loading image', err);
-			}, (progress) => {
-				this.progress = progress;
-				this.isLoading = true;
-			});
 		}
 	},
 
@@ -300,11 +281,54 @@ Vue.component('photoDetailView', {
 			this.showRight = index > oldIndex;
 			this.loadPhoto(this.photo.key);
 		}
+	}
+
+});
+
+Vue.component('photoDisplay', {
+	props: ['photo'],
+	data: function() {
+		return {
+			status: 'idle',
+			promise: null
+		};
+	},
+	template: "<div class='photoDisplay' ref='photoDisplay'>" +
+	"<md-progress v-if='status == \"loading\"' md-indeterminate></md-progress><slot></slot></div></div>",
+	watch: {
+		photo: function(value) {
+			let photoView = this.$refs['photoDisplay'];
+			photoView.style.backgroundImage = "";
+			if (value === null) {
+				return;
+			}
+
+			if (this.promise && !this.promise.isDone()) {
+				this.promise.cancel();
+			}
+
+			let thumbUrl = getPhotoUrl(this.photo, 300);
+			if (imageLoader.isInCache(thumbUrl)) {
+				photoView.style.backgroundImage = "url(" + thumbUrl + ")";
+			}
+
+			let photoUrl = getPhotoUrl(this.photo, 1000);
+			this.promise = imageLoader.load(photoUrl);
+			this.promise.then(() => {
+				photoView.style.backgroundImage = "url(" + photoUrl + ")";
+				this.status = 'done';
+			}, err => {
+				this.status = 'error';
+				console.error('error loading image', err);
+			}, progress => {
+				console.log('progress', progress);
+				this.status = 'loading';
+			});
+		}
 	},
 	beforeDestroy: function() {
 		safeCancel(this.promise);
 	}
-
 });
 
 Vue.component('searchTags', {

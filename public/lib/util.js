@@ -197,6 +197,11 @@ class CachedLoader {
 		});
 	}
 
+	isInCache() {
+		let cacheKey = JSON.stringify(arguments);
+		return this.cache[cacheKey] !== undefined;
+	}
+
 	clear() {
 		this.loader.clear();
 	}
@@ -231,7 +236,7 @@ class LoaderFactory {
 
 	static createImageLoader(workerCount, isReverse) {
 		let workers = LoaderFactory.createWorkers(() => {
-			return new ImageXhrWorker();
+			return new ImageWorker();
 		}, workerCount);
 		return new CachedLoader(imageCache, new QueuedLoader(workers, !isReverse));
 	}

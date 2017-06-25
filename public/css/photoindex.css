@@ -32,6 +32,11 @@ body.dark.dark.photoindex {
 	}
 }
 
+.photoDisplay {
+	background-size: contain;
+	background-position: center;
+}
+
 .photoThumbnailBox {
 	/*width: 200px;*/
 	height: 200px;
@@ -60,7 +65,6 @@ body.dark.dark.photoindex {
 .photoThumbnail:hover {
 	opacity: 1;
 }
-
 
 .photoText {
 	background-color: rgba(0, 0, 0, 0.3);
@@ -118,7 +122,7 @@ body.dark.dark.photoindex {
 	padding: 0 4px;
 }
 
-.photoDetailView .photoView {
+.photoDetailView .photoDisplay {
 	position: absolute;
 	width: 80%;
 	height: 100%;
@@ -138,10 +142,6 @@ body.dark.dark.photoindex {
 	width: 36px;
 	height: 36px;
 	background-size: contain;
-}
-
-.photoDetailView .photoView.loading {
-	background-size: auto;
 }
 
 .noScroll {
@@ -287,4 +287,9 @@ body.dark.dark.photoindex {
 .photoindex .md-button.md-icon-button {
 	border-radius: 0;
 	margin: 0;
+}
+
+.photoindex .md-theme-default.md-progress .md-progress-track:after,
+.photoindex .md-theme-default.md-progress .md-progress-track:before {
+	background-color: darkturquoise;
 }
