@@ -9,6 +9,14 @@ function isElementInViewport(el) {
 		rect.left < (window.innerWidth || document.documentElement.clientWidth);
 }
 
+function scrollIntoView(el) {
+	el.scrollIntoView();
+}
+
+function setBackgroundImage(node, url) {
+	node.style.backgroundImage = 'url(' + url + ')';
+}
+
 function safeCancel(promise) {
 	if (promise) {
 		let pList = promise.constructor === Array ? promise : [promise];
@@ -25,24 +33,23 @@ Vue.component('thumbnailPhoto', {
 	data: function() {
 		return {
 			status: 'idle',
-			isLoading: false,
 			isDone: false,
 			promise: null,
-			isError: false,
-			progress: 0,
 		};
 	},
-	template: "<div ref='thumbnail' :class='{ loading: isLoading, imgError: isError }'><slot></slot></div>", //
-	// template: "<div ref='thumbnail'><slot></slot>{{status}}<md-spinner v-if='isLoading' :md-progress='progress' md-indeterminate></md-spinner></div>",
-	mounted: function() {
+	template: "<div ref='thumbnail' class='highlightable' :class='status'><md-progress v-if='status == \"loading\"' md-indeterminate></md-progress><slot></slot></div>",
 
+	mounted: function() {
 		['DOMContentLoaded', 'load', 'scroll', 'resize'].forEach((event) => {
-			window.addEventListener(event, () => {
-				this.loadImageIfInViewport();
-			}, false);
+			window.addEventListener(event, this.loadImageIfInViewport, false);
 		});
 		this.loadImageIfInViewport();
 	},
+
+	updated: function() {
+		this.loadImageIfInViewport();
+	},
+
 	methods: {
 		loadImageIfInViewport: function() {
 			if (this.isDone) {
@@ -50,6 +57,7 @@ Vue.component('thumbnailPhoto', {
 			}
 
 			if (!isElementInViewport(this.$el)) {
+				console.log('not in viewport');
 				// cancel queued items that have not been started
 				if (this.promise && !this.promise.hasProgress()) {
 					this.status = 'canceled';
@@ -61,6 +69,7 @@ Vue.component('thumbnailPhoto', {
 
 			// already on the queue
 			if (this.promise) {
+				console.log('already promised');
 				return;
 			}
 
@@ -70,23 +79,21 @@ Vue.component('thumbnailPhoto', {
 
 			this.promise = getThumbnailLoader(this.loaderId).load(photoUrl).then((data) => {
 				this.status = 'done';
-				this.isLoading = false;
 				this.isDone = true;
-				thumbnail.style.backgroundImage = 'url(' + data + ')';
+				setBackgroundImage(thumbnail, data);
 			}, (err) => {
 				this.status = 'error';
-				this.isLoading = false;
 				this.isDone = true;
-				this.isError = true;
 			}, (progress) => {
-				this.progress = progress;
 				this.status = 'loading';
-				this.isLoading = true;
 			});
 		},
 	},
 	beforeDestroy: function() {
 		this.status = 'destroyed';
+		['DOMContentLoaded', 'load', 'scroll', 'resize'].forEach((event) => {
+			window.removeEventListener(event, this.loadImageIfInViewport, false);
+		});
 		safeCancel(this.promise);
 	}
 });
@@ -166,17 +173,20 @@ Vue.component('photoDetails', {
 			tags: [],
 			date: null,
 			promise: null,
-			promiseTags: null
+			promiseTags: null,
+			downloadUrl: null
 		}
 	},
 	template: "<div class='exifView'><div v-if='indexPosition != null'><span>{{indexPosition.image.index + 1}} / {{indexPosition.image.length}}</span>" +
 	"<small> ({{indexPosition.imageItems.index + 1}} / {{indexPosition.imageItems.length}})</small></div><div :title='photo ? photo.date:\"\"'>Date: {{date}}</div>" +
+	"<a :href='downloadUrl' download><md-button class='md-fab'><md-icon>get_app</md-icon></md-button></a>" +
 	"<div class='exifFile' :title='photo ? photo.path: \"\"'>{{photo ? photo.path: \"\"}}</div>" +
 	"<md-chip v-for='tag in tags' :key='tag'>{{tag}}</md-chip>" +
 	"<div v-for='(exifSection, key) in exif'><div class='exifHeader'>{{key}}</div><table><tbody>" +
 	"<tr v-for='(value, key) in exifSection'><td class='key'>{{key}}</td><td>{{value}}</td></tr></tbody></table></div></div></div>",
 	watch: {
 		photo: function() {
+			this.downloadUrl = getPhotoUrl(this.photo);
 			safeCancel([this.promise, this.promiseTags]);
 			this.exif = {};
 			this.tags = {};
@@ -200,16 +210,25 @@ Vue.component('photoSeries', {
 	props: ['photo', 'indexSeries'],
 	template: "<div class='photoSeries' v-on:scroll='onScroll'><div class='seriesContainer'>" +
 	"<thumbnail-photo ref='thumbnails' class='seriesThumbnail action' v-for='(img, index) in photo.series' :key='img.id' " +
-	"@click.native='select(img, index)' :class='[indexSeries == index ? \"selected\" : \"\" ]' v-bind:loader-id='1' v-bind:photo='img'></thumbnail-photo></div></div>",
+	"@click.native='select(index)' :class='[indexSeries == index ? \"selected\" : \"\" ]' v-bind:loader-id='1' v-bind:photo='img'></thumbnail-photo></div></div>",
 	methods: {
-		select: function(img, index) {
-			this.$emit('select', img, index);
+		select: function(index) {
+			this.$emit('select', index);
 		},
 
 		onScroll: function() {
 			this.$refs['thumbnails'].forEach(thumbnail => {
 				thumbnail.loadImageIfInViewport();
 			});
+		}
+	},
+	watch: {
+		indexSeries: function(value) {
+			let seriesThumbnail = this.$refs['thumbnails'][value];
+			if (!isElementInViewport(seriesThumbnail.$el)) {
+				scrollIntoView(seriesThumbnail.$el);
+			}
+
 		}
 	}
 });
@@ -225,8 +244,6 @@ Vue.component('photoDetailView', {
 			selectedPhoto: null,
 			showLeft: false,
 			showRight: false,
-			isLoading: false,
-			progress: 0,
 		};
 	},
 	template: "<div class='photoDetailView'>" +
@@ -244,10 +261,8 @@ Vue.component('photoDetailView', {
 			this.$emit('close');
 		},
 
-		selectSeriesPhoto: function(img, indexSeries) {
+		selectSeriesPhoto: function(indexSeries) {
 			this.indexSeries = indexSeries;
-			this.loadPhoto(img);
-
 		},
 
 		loadPhoto: function(photoToDisplay) {
@@ -264,23 +279,57 @@ Vue.component('photoDetailView', {
 					length: this.sizeImageItems
 				}
 			};
+		},
+		onKeyDown: function(key) {
+			if (key.keyCode === 27) {
+				this.$emit('close');
+			} else if (key.keyCode === 37) {
+				this.$emit('prev', this.photo);
+			} else if (key.keyCode === 39) {
+				this.$emit('next', this.photo);
+			} else if (key.keyCode === 38) {
+				this.selectPreviousInSeries();
+			} else if (key.keyCode === 40) {
+				this.selectNextInSeries();
+			}
+		},
+
+		selectNextInSeries: function() {
+			if (this.indexSeries < this.photo.series.length - 1) {
+				this.indexSeries++;
+			}
+		},
+
+		selectPreviousInSeries: function() {
+			if (this.indexSeries > 0) {
+				this.indexSeries--;
+			}
 		}
 	},
 
 	mounted: function() {
 		this.indexSeries = 0;
 		this.loadPhoto(this.photo.key);
+		window.addEventListener('keydown', this.onKeyDown);
 	},
 
 	watch: {
 		photo: function(photo, previousPhoto) {
+			this.indexSeries = 0;
 			let index = this.$parent.imageItems.indexOf(photo);
 			let oldIndex = this.$parent.imageItems.indexOf(previousPhoto);
 			// preserve left/right button visibility
 			this.showLeft = index < oldIndex;
 			this.showRight = index > oldIndex;
 			this.loadPhoto(this.photo.key);
+		},
+
+		indexSeries: function(value) {
+			this.loadPhoto(this.photo.series[value]);
 		}
+	},
+	beforeDestroy: function() {
+		window.removeEventListener('keydown', this.onKeyDown);
 	}
 
 });
@@ -297,6 +346,7 @@ Vue.component('photoDisplay', {
 	"<md-progress v-if='status == \"loading\"' md-indeterminate></md-progress><slot></slot></div></div>",
 	watch: {
 		photo: function(value) {
+			this.status = 'idle';
 			let photoView = this.$refs['photoDisplay'];
 			photoView.style.backgroundImage = "";
 			if (value === null) {
@@ -309,19 +359,18 @@ Vue.component('photoDisplay', {
 
 			let thumbUrl = getPhotoUrl(this.photo, 300);
 			if (imageLoader.isInCache(thumbUrl)) {
-				photoView.style.backgroundImage = "url(" + thumbUrl + ")";
+				setBackgroundImage(photoView, thumbUrl);
 			}
 
 			let photoUrl = getPhotoUrl(this.photo, 1000);
 			this.promise = imageLoader.load(photoUrl);
 			this.promise.then(() => {
-				photoView.style.backgroundImage = "url(" + photoUrl + ")";
+				setBackgroundImage(photoView, photoUrl);
 				this.status = 'done';
 			}, err => {
 				this.status = 'error';
 				console.error('error loading image', err);
 			}, progress => {
-				console.log('progress', progress);
 				this.status = 'loading';
 			});
 		}

@@ -80,22 +80,13 @@ let app = new Vue({
 		document.onkeydown = (key) => {
 			console.log('key', key);
 
-			if (this.selectedImage !== null) {
-				if (key.keyCode === 27) {
-					this.clearSelection();
-				} else if (key.keyCode === 37) {
-					this.selectPrevious();
-				} else if (key.keyCode === 39) {
-					this.selectNext();
-				}
-			} else {
+			if (this.selectedImage == null) {
 				if (key.keyCode === 37) {
 					this.selectPreviousPage();
 				} else if (key.keyCode === 39) {
 					this.selectNextPage();
 				}
 			}
-
 		};
 	},
 
@@ -184,10 +175,6 @@ let app = new Vue({
 			});
 			this.imageItems = imageItems;
 		},
-
-		// getIndexOf: function(img) {
-		// 	return this.imageItems.indexOf(img);
-		// },
 
 		addTag: function(tag) {
 			let found = this.tags.indexOf(tag);

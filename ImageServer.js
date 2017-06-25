@@ -101,11 +101,13 @@ app.use('/photo/:id/:width', function(request, response) {
 });
 
 app.use('/photo/:id', function(request, response) {
-	response.setHeader('Content-Type', 'image/jpeg');
-
 	let deferred = createHttpDeferred(response);
 	dbIO.readPhotoById(request.params.id).then((row) => {
 		let file = fs.readFileSync(row.path, 'binary');
+		response.setHeader('Content-Type', 'image/jpeg');
+
+		let index = row.path.lastIndexOf('/');
+		response.setHeader('Content-Disposition', 'attachment; filename=' + row.path.substring(index + 1));
 		deferred.resolve(new Buffer(file, 'binary'));
 	}, (err) => {
 		deferred.reject(JSON.stringify(err));

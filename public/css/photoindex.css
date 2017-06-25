@@ -37,6 +37,14 @@ body.dark.dark.photoindex {
 	background-position: center;
 }
 
+
+.seriesThumbnail .md-progress,
+.photoThumbnail .md-progress,
+.photoDisplay .md-progress {
+	position: absolute;
+	bottom: 0;
+}
+
 .photoThumbnailBox {
 	/*width: 200px;*/
 	height: 200px;
@@ -46,7 +54,6 @@ body.dark.dark.photoindex {
 	margin: 0px;
 	float: left;
 	padding: 1px;
-	/*position: relative;*/
 }
 
 .photoThumbnail {
@@ -55,15 +62,25 @@ body.dark.dark.photoindex {
 	background-position: center;
 	background-color: #222;
 	position: relative;
-	opacity: .7;
-	transition: opacity .3s ease-out;
+}
+
+.highlightable:hover {
+	opacity: 1;
+	box-shadow: 0px 0px 30px rgba(0,0,0,0.9);
+	transform: scale(1.05);
+	z-index: 100;
+	border: 1px solid black;
+	background-color: black;
+}
+
+.highlightable {
+	background-color: black;
+	opacity: .6;
 	-moz-transition: opacity .3s ease-out;
 	-webkit-transition: opacity .3s ease-out;
 	-o-transition: opacity .3s ease-out;
-}
-
-.photoThumbnail:hover {
-	opacity: 1;
+	box-shadow: 0px 0px 0px rgba(0,0,0,0.15);
+	transition: all .3s ease-out;
 }
 
 .photoText {
@@ -131,13 +148,6 @@ body.dark.dark.photoindex {
 	background-repeat: no-repeat;
 }
 
-.photoindex .mainDiv .loading {
-	background-size: auto;
-	background-image: url("../img/loading.svg");
-	background-repeat: no-repeat;
-	background-position: center;
-}
-
 .busyDiv.loading {
 	width: 36px;
 	height: 36px;
@@ -193,7 +203,7 @@ body.dark.dark.photoindex {
 	background-image: url('../img/ic_keyboard_arrow_right_white_36px.svg');
 }
 
-.photoindex .photoThumbnail.imgError {
+.photoindex .photoThumbnail.error {
 	background-image: url('../img/ic_do_not_disturb_white_24px.svg');
 	background-size: auto;
 	background-position: center;
@@ -214,6 +224,7 @@ body.dark.dark.photoindex {
 	background-size: cover;
 	background-position: center;
 	opacity: 0.6;
+	position: relative;
 	border: 2px solid black;
 	transition: opacity .3s ease-out;
 	-moz-transition: opacity .3s ease-out;
