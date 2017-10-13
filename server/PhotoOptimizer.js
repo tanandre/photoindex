@@ -18,7 +18,7 @@
 		let deferred = new Deferred();
 		let thumbnail = getPhotoPathForThumbnail(path, maxSize);
 
-		fs.stat(path, function(err) {
+		fs.stat(thumbnail, function(err) {
 			if (err === null) {
 				let file = fs.readFileSync(thumbnail, 'binary');
 				deferred.resolve(new Buffer(file, 'binary'));
