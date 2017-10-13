@@ -348,7 +348,7 @@ Vue.component('photoDisplay', {
 		photo: function(value) {
 			this.status = 'idle';
 			let photoView = this.$refs['photoDisplay'];
-			photoView.style.backgroundImage = "";
+			//photoView.style.backgroundImage = "";
 			if (value === null) {
 				return;
 			}

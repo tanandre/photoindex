@@ -12,6 +12,11 @@ let thumbnailLoader1 = LoaderFactory.createImageLoader(4);
 let imageLoader = LoaderFactory.createReversedImageLoader(1);
 let jsonLoader = LoaderFactory.createReversedJsonLoader(2);
 
+let URL = {
+	listing: '/photoindex/listing.php',
+	photo: '/photoindex/photo?',
+};
+
 const RANGE = {
 	OFF: 'Off',
 	MINUTE: 'Minute',
@@ -136,7 +141,7 @@ let app = new Vue({
 			if (this.currentHandle) {
 				this.currentHandle.cancel();
 			}
-			this.currentHandle = jsonLoader.load('/listing', {params: data}).then(data => {
+			this.currentHandle = jsonLoader.load('listing', {params: data}).then(data => {
 				this.currentHandle = null;
 				this.isBusy = false;
 				this.images = data;
