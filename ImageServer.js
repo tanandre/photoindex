@@ -36,7 +36,7 @@ function createHttpDeferred(response) {
 	}, function(err) {
 		console.error(err);
 		response.status(500);
-		response.end(err);
+		response.end(JSON.stringify(err));
 	});
 	return httpDeferred;
 }
