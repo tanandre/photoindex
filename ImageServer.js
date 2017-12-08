@@ -21,6 +21,10 @@ log('Starting');
 
 let app = express();
 
+function setResponseHeaders(response) {
+	response.setHeader("Access-Control-Allow-Origin", "*");
+}
+
 function setCacheHeaders(response) {
 	if (isCacheHeadersEnabled) {
 		response.setHeader("Cache-Control", "public, max-age=31536000");
@@ -32,6 +36,7 @@ function createHttpDeferred(response) {
 	let httpDeferred = new Deferred();
 	httpDeferred.then(function(data) {
 		setCacheHeaders(response);
+		setResponseHeaders(response);
 		response.end(data);
 	}, function(err) {
 		console.error(err);
