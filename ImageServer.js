@@ -34,11 +34,11 @@ function setCacheHeaders(response) {
 
 function createHttpDeferred(response) {
 	let httpDeferred = new Deferred();
-	httpDeferred.then(function(data) {
+	httpDeferred.then(function (data) {
 		setCacheHeaders(response);
 		setResponseHeaders(response);
 		response.end(data);
-	}, function(err) {
+	}, function (err) {
 		console.error(err);
 		response.status(500);
 		response.end(JSON.stringify(err));
@@ -82,11 +82,11 @@ function optimizedImage(path, maxSize) {
 	});
 }
 
-app.use('/photo/:id/:width', function(request, response) {
+app.use('/photo/:id/:width', function (request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
 	let deferred = createHttpDeferred(response);
 
-	dbIO.readPhotoById(request.params.id).then(function(row) {
+	dbIO.readPhotoById(request.params.id).then(function (row) {
 		// TODO check if modified since if we are reading the file from the cache
 
 		if (request.params.width === undefined) {
@@ -105,7 +105,7 @@ app.use('/photo/:id/:width', function(request, response) {
 	});
 });
 
-app.use('/photo/:id', function(request, response) {
+app.use('/photo/:id', function (request, response) {
 	let deferred = createHttpDeferred(response);
 	dbIO.readPhotoById(request.params.id).then((row) => {
 		let file = fs.readFileSync(row.path, 'binary');
@@ -119,7 +119,7 @@ app.use('/photo/:id', function(request, response) {
 	});
 });
 
-app.use('/exif/:id', function(request, response) {
+app.use('/exif/:id', function (request, response) {
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/exif/' + request.params.id;
 	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
@@ -139,7 +139,7 @@ app.use('/exif/:id', function(request, response) {
 
 });
 
-app.use('/tags/:id', function(request, response) {
+app.use('/tags/:id', function (request, response) {
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/tags/' + request.params.id;
 	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
@@ -155,7 +155,7 @@ app.use('/tags/:id', function(request, response) {
 	});
 });
 
-app.get("/listing", function(request, response) {
+app.get("/listing", function (request, response) {
 	let alltimer = new Timer();
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/listing?' + JSON.stringify(request.query);

@@ -1,4 +1,4 @@
-(function() {
+(function () {
 	'use strict';
 	let sharp = null;
 	if (!isOnKanji) {
@@ -17,7 +17,7 @@
 		let deferred = new Deferred();
 		let thumbnail = getPhotoPathForThumbnail(path, maxSize);
 
-		fs.stat(thumbnail, function(err) {
+		fs.stat(thumbnail, function (err) {
 			if (err === null) {
 				let file = fs.readFileSync(thumbnail, 'binary');
 				deferred.resolve(new Buffer(file, 'binary'));

@@ -57,7 +57,7 @@ function getDateTimeFromFileName(fileName) {
 
 function readDateFromFile(file, done) {
 	let deferred = new Deferred();
-	fs.stat(file, function(err, stats) {
+	fs.stat(file, function (err, stats) {
 		if (err) {
 			console.error(err);
 			deferred.reject(err);
@@ -82,6 +82,7 @@ function readDateFromFile(file, done) {
 	});
 	return deferred.promise;
 }
+
 let dateUnconfirmedTag = 'dateUnconfirmed';
 
 function updatePhotoInfoUsingExif(max) {

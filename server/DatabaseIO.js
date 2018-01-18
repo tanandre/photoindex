@@ -4,7 +4,7 @@ let Deferred = require('../public/lib/Deferred');
 let Timer = require('../public/lib/Timer');
 let cache = require('memory-cache');
 
-(function() {
+(function () {
 	let mysql = require('mysql');
 
 	let connection = mysql.createConnection({
@@ -15,7 +15,7 @@ let cache = require('memory-cache');
 	});
 
 	function createDbHandle(logMessage, callback) {
-		return function(error, result) {
+		return function (error, result) {
 			if (error) {
 				throw error;
 			}
@@ -67,7 +67,7 @@ let cache = require('memory-cache');
 		}));
 	}
 
-	module.exports.initialize = function(done) {
+	module.exports.initialize = function (done) {
 		connection.connect((err) => {
 			if (err) {
 				done(err, connection);
@@ -80,24 +80,24 @@ let cache = require('memory-cache');
 
 	module.exports.createTables = createTables;
 
-	module.exports.addPhotoBatch = function(rows) {
+	module.exports.addPhotoBatch = function (rows) {
 		return query("INSERT INTO photo (date, path) VALUES ?;", [rows]).then((result) => {
 			console.log('batch inserted: ', rows.length);
 		});
 	};
 
-	module.exports.updatePhoto = function(row) {
+	module.exports.updatePhoto = function (row) {
 		return query("UPDATE photo SET date = ? WHERE id = ?;", row).then((result) => {
 			return result.insertId;
 		});
 	};
-	module.exports.addPhoto = function(row) {
+	module.exports.addPhoto = function (row) {
 		return query("INSERT INTO photo (date, path) VALUES ?;", [[row]]).then((result) => {
 			return result.insertId;
 		});
 	};
 
-	module.exports.addPhotoTag = function(photoId, tagId) {
+	module.exports.addPhotoTag = function (photoId, tagId) {
 		return query("INSERT INTO photo_tag (photoId, tagId) VALUES ?;", [[[photoId, tagId]]])
 			.then((result) => {
 				return result.insertId;
@@ -105,7 +105,7 @@ let cache = require('memory-cache');
 
 	};
 
-	module.exports.addOrGetTag = function(tag) {
+	module.exports.addOrGetTag = function (tag) {
 		let cacheUrl = 'tag/' + tag;
 		let cachedResponse = cache.get(cacheUrl);
 		if (cachedResponse) {
@@ -142,7 +142,7 @@ let cache = require('memory-cache');
 
 	module.exports.queryTag = queryTag;
 
-	module.exports.readAllPhotos = function() {
+	module.exports.readAllPhotos = function () {
 		return query("SELECT * FROM photo ORDER BY date DESC LIMIT 1000");
 	};
 
@@ -209,7 +209,7 @@ let cache = require('memory-cache');
 		});
 	}
 
-	module.exports.queryPhotos = function(queryTags) {
+	module.exports.queryPhotos = function (queryTags) {
 		if (queryTags === undefined || queryTags.length === 0) {
 			return query("SELECT * FROM photo ORDER BY date DESC LIMIT 1000");
 		}
@@ -228,7 +228,7 @@ let cache = require('memory-cache');
 		});
 	};
 
-	module.exports.readAllPhotosPaths = function() {
+	module.exports.readAllPhotosPaths = function () {
 		return query("SELECT id, path FROM photo").then(rows => {
 			if (isOnKanji) {
 				return fixPhotoPathsForLocalhost(rows);
@@ -236,13 +236,13 @@ let cache = require('memory-cache');
 		});
 	};
 
-	module.exports.readTagsForPhoto = function(id) {
+	module.exports.readTagsForPhoto = function (id) {
 		return query(
 			"SELECT tag.name FROM photo_tag INNER JOIN tag on photo_tag.tagId = tag.id WHERE photoId = ?;",
 			[id]);
 	};
 
-	module.exports.readPhotoById = function(id) {
+	module.exports.readPhotoById = function (id) {
 		let deferred = new Deferred();
 		query("SELECT * FROM photo where id = ?", [id]).then((rows) => {
 			if (rows.length === 0) {
