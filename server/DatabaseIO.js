@@ -11,7 +11,7 @@ let cache = require('memory-cache');
 		host: 'kanji',
 		user: 'photoindex',
 		password: 'dc0b5jjF7bNjarkA',
-		database: 'photoindex'
+		database: 'photoindex4'
 	});
 
 	function createDbHandle(logMessage, callback) {
@@ -45,7 +45,8 @@ let cache = require('memory-cache');
 		return deferred;
 	}
 
-	function createTables(connection, done) {
+	function recreateTables(connection) {
+		let deferred = new Deferred();
 		console.log("Connection with DB established");
 		// drop all tables
 		connection.query("DROP TABLE IF EXISTS photo_tag");
@@ -61,24 +62,27 @@ let cache = require('memory-cache');
 		connection.query(sqlCreatePhotoTable, createDbHandle('table photo created', () => {
 			connection.query(sqlCreateTagTable, createDbHandle('table tag created', () => {
 				connection.query(sqlCreateLinkTable, createDbHandle('table photo_tag created', () => {
-					done(null, connection);
+					deferred.resolve(connection)
 				}));
 			}));
 		}));
+		return deferred;
 	}
 
 	module.exports.initialize = function (done) {
+		let deferred = new Deferred();
+
 		connection.connect((err) => {
 			if (err) {
-				done(err, connection);
+				deferred.reject(err);
 				return;
 			}
-			done(null, connection);
-			// createTables(connection, done);
+			deferred.resolve(connection);
 		});
+		return deferred;
 	};
 
-	module.exports.createTables = createTables;
+	module.exports.recreateTables = recreateTables;
 
 	module.exports.addPhotoBatch = function (rows) {
 		return query("INSERT INTO photo (date, path) VALUES ?;", [rows]).then((result) => {

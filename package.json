@@ -16,6 +16,8 @@
     "express": "^4.15.2",
     "jimp": "^0.2.28",
     "memory-cache": "^0.1.6",
+    "mysql": "^2.15.0",
+    "recursive-readdir": "^2.2.1",
     "socket.io": "^1.7.3",
     "vue-material": "^0.7.1"
   }
