@@ -11,7 +11,7 @@ let cache = require('memory-cache');
 		host: 'kanji',
 		user: 'photoindex',
 		password: 'dc0b5jjF7bNjarkA',
-		database: 'photoindex4'
+		database: 'photoindex2'
 	});
 
 	function createDbHandle(logMessage, callback) {
@@ -39,7 +39,7 @@ let cache = require('memory-cache');
 				deferred.reject(err);
 				return;
 			}
-			console.log('sql time:', timer.stamp(), ' - ', sql);
+			//console.log('sql time:', timer.stamp(), ' - ', sql);
 			deferred.resolve(result);
 		});
 		return deferred;

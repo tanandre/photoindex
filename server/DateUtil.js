@@ -31,6 +31,16 @@ function getDateTimeFromFileName(fileName) {
 	return new Date(Date.parse(parseDateFileName(dateStr)));
 }
 
+function getDateTimeFromFolder(fileName) {
+	if (/(19|20)\d{2}-\d{2}-\d{2}/.test(fileName)) {
+		let regex = /((?:19|20)\d{2}-\d{2}-\d{2})/.exec(fileName);
+		let dateStr = regex[1]
+		let date = new Date(Date.parse(dateStr + ' 00:00:00'));
+		return date;
+	}
+	return null;
+}
+
 
 module.exports.readDateFromFile = function (file) {
 	let deferred = new Deferred();
@@ -51,10 +61,20 @@ module.exports.readDateFromFile = function (file) {
 			// console.log('parsed date: ', dateString, date);
 			// dates.push(date);
 
-			dates.push(getDateTimeFromFileName(fileName));
+			let dateTimeFromFileName = getDateTimeFromFileName(fileName);
+			if (dateTimeFromFileName) {
+				dates.push(dateTimeFromFileName);
+			}
+		} else {
+			let dateTimeFromDirName = getDateTimeFromFolder(file);
+			if (dateTimeFromDirName) {
+				dates.push(dateTimeFromDirName);
+			}
 		}
 
-		deferred.resolve(getOldestDate(dates));
+		deferred.resolve(getOldestDate(dates.filter(date => {
+			return date !== undefined && date !== null
+		})));
 	});
 	return deferred.promise;
 }

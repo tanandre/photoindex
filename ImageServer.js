@@ -1,6 +1,7 @@
 "use strict";
 
 global.isOnKanji = require('os').hostname() === 'kanji';
+
 let fs = require('fs');
 let os = require('os');
 let path = require('path');
@@ -41,6 +42,7 @@ function createHttpDeferred(response) {
 	}, function (err) {
 		console.error(err);
 		response.status(500);
+		setResponseHeaders(response);
 		response.end(JSON.stringify(err));
 	});
 	return httpDeferred;
@@ -72,8 +74,8 @@ let server = app.listen(1337, () => {
 	log('photoindex listening on port 1337!');
 });
 
-app.use(express.static('public'));
-app.use('/node_modules', express.static('node_modules'));
+app.get(express.static('public'));
+app.get('/node_modules', express.static('node_modules'));
 
 function optimizedImage(path, maxSize) {
 	let timer = new Timer();
@@ -82,7 +84,7 @@ function optimizedImage(path, maxSize) {
 	});
 }
 
-app.use('/photo/:id/:width', function (request, response) {
+app.get('/photo/:id/:width', function (request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
 	let deferred = createHttpDeferred(response);
 
@@ -105,7 +107,7 @@ app.use('/photo/:id/:width', function (request, response) {
 	});
 });
 
-app.use('/photo/:id', function (request, response) {
+app.get('/photo/:id', function (request, response) {
 	let deferred = createHttpDeferred(response);
 	dbIO.readPhotoById(request.params.id).then((row) => {
 		let file = fs.readFileSync(row.path, 'binary');
@@ -119,7 +121,7 @@ app.use('/photo/:id', function (request, response) {
 	});
 });
 
-app.use('/exif/:id', function (request, response) {
+app.get('/exif/:id', function (request, response) {
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/exif/' + request.params.id;
 	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
@@ -139,7 +141,7 @@ app.use('/exif/:id', function (request, response) {
 
 });
 
-app.use('/tags/:id', function (request, response) {
+app.get('/tags/:id', function (request, response) {
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/tags/' + request.params.id;
 	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {

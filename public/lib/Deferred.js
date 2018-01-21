@@ -136,7 +136,7 @@ class Deferred {
 				if (isAllComplete) {
 					let isRejected = deferredList.some(d => d._isRejected);
 					if (isRejected) {
-						globalDeferred.reject(deferredList.map(d => d.__data));
+						globalDeferred.reject(deferredList.map(d => d.__data).filter(data => data !== undefined));
 					} else {
 						globalDeferred.resolve(deferredList.map(d => d.__data));
 					}
