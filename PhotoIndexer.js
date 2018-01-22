@@ -90,19 +90,14 @@ function indexFolderRoot(rootFolder) {
 
 
 dbIO.initialize().then(connection => {
-	dbIO.recreateTables(connection).then(() => {
-		indexFolderRoot(folder).then(() => {
-		// 	process.exit(0)
-		// }, err => {
-		// 	console.error(err)
-		// 	process.exit(1)
-		// })
+	// dbIO.recreateTables(connection).then(() => {
+	indexFolderRoot(folder).then(() => {
 		// indexFolder(folder).then(() => {
-			process.exit(0)
-		}, err => {
-			console.error(err)
-			process.exit(1)
-		})
-	});
+		process.exit(0)
+	}, err => {
+		console.error(err)
+		process.exit(1)
+	})
+	// });
 }, console.error);
 

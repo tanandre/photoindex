@@ -11,7 +11,7 @@ let cache = require('memory-cache');
 		host: 'kanji',
 		user: 'photoindex',
 		password: 'dc0b5jjF7bNjarkA',
-		database: 'photoindex2'
+		database: 'photoindex4'
 	});
 
 	function createDbHandle(logMessage, callback) {
@@ -95,6 +95,7 @@ let cache = require('memory-cache');
 			return result.insertId;
 		});
 	};
+
 	module.exports.addPhoto = function (row) {
 		return query("INSERT INTO photo (date, path) VALUES ?;", [[row]]).then((result) => {
 			return result.insertId;
@@ -147,7 +148,7 @@ let cache = require('memory-cache');
 	module.exports.queryTag = queryTag;
 
 	module.exports.readAllPhotos = function () {
-		return query("SELECT * FROM photo ORDER BY date DESC LIMIT 1000");
+		return query("SELECT * FROM photo ORDER BY date DESC");
 	};
 
 	function getSqlTagMatch(tagLabels) {

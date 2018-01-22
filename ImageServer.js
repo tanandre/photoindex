@@ -3,12 +3,9 @@
 global.isOnKanji = require('os').hostname() === 'kanji';
 
 let fs = require('fs');
-let os = require('os');
-let path = require('path');
 let getExif = require('exif-async');
 let express = require("express");
 let cache = require('memory-cache');
-let util = require('./public/lib/util');
 let Deferred = require('./public/lib/Deferred');
 let Timer = require('./public/lib/Timer');
 let log = require('./public/lib/log');
@@ -16,8 +13,7 @@ let dbIO = require('./server/DatabaseIO');
 let photoOptimizer = require('./server/PhotoOptimizer');
 
 let isCacheEnabled = false;
-let isCacheHeadersEnabled = true;
-let cacheDir = isOnKanji ? '/tmp/photoindex/' : "c:\\temp\\photoindex\\cache\\";
+let isCacheHeadersEnabled = false;
 log('Starting');
 
 let app = express();
@@ -155,6 +151,12 @@ app.get('/tags/:id', function (request, response) {
 			}));
 		});
 	});
+});
+
+app.post("/date/:id/:date", function (request, response) {
+	let deferred = createHttpDeferred(response)
+	dbIO.updatePhoto([new Date(Number(request.params.date)), request.params.id]).then(deferred.resolve, deferred.reject);
+
 });
 
 app.get("/listing", function (request, response) {
