@@ -41,22 +41,24 @@ function updateExif() {
 					getExif(row.path).then(exif => {
 						console.log('read exif for: ', row.path)
 						// 	def.resolve([row, exif])
-						internResolve({row: row, exif: exif});
+						// internResolve({row: row, exif: exif});
+						internResolve([exif.exif.CreateDate, row.id]);
 					}).catch(err => {
 						console.error('error reading exif for ', row.path)
-						internResolve({row: row, error: err})
+						internResolve(null)
 					})
 				})
 			})
 			Promise.all(promiseList).then((results) => {
 				// console.log(results)
-				let promises = results.map(result => {
-					if (result.error) {
-						return Promise.resolve();
-					}
-					return updatePhotoExifData(result.row.id, result.exif)
-					// console.log()
-				})
+				let validResults = results.filter(result => result !== null);
+				// let promises = results.map(result => {
+				// 	if (result.error) {
+				// 		return Promise.resolve();
+				// 	}
+				// 	return updatePhotoExifData(result.row.id, result.exif)
+				// 	// console.log()
+				// })
 				Promise.all(promises).then(resolve).catch(reject)
 			}).catch(reject)
 		}).catch(reject)
