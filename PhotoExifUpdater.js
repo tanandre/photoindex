@@ -17,7 +17,7 @@ function updatePhotoExifData(photoId, exif) {
 
 		let deviceTag = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
 		let exifDate = exif.exif.CreateDate;
-		log('updating photo date: ' +  photoId + ' ' +  exifDate)
+		log('updating photo date: ' + photoId + ' ' + exifDate)
 
 		let deferred1 = dbIO.updatePhoto([exifDate, photoId])
 		let deferredAll = [deferred1]
@@ -35,11 +35,11 @@ function updateExif() {
 		dbIO.readAllPhotos().then(data => {
 			log('found photos: ' + data.length)
 
-			let promiseList = data.filter(row => isImage(row)).slice(0, 100).map(row => {
-				console.log('starting to read exif for: ', row.path)
+			let promiseList = data.filter(row => isImage(row)).map(row => {
+				//console.log('starting to read exif for: ', row.path)
 				return new Promise((internResolve, internReject) => {
 					getExif(row.path).then(exif => {
-						console.log('read exif for: ', row.path)
+						//		console.log('read exif for: ', row.path)
 						// 	def.resolve([row, exif])
 						// internResolve({row: row, exif: exif});
 						internResolve([exif.exif.CreateDate, row.id]);
@@ -52,13 +52,10 @@ function updateExif() {
 			Promise.all(promiseList).then((results) => {
 				// console.log(results)
 				let validResults = results.filter(result => result !== null);
-				// let promises = results.map(result => {
-				// 	if (result.error) {
-				// 		return Promise.resolve();
-				// 	}
-				// 	return updatePhotoExifData(result.row.id, result.exif)
-				// 	// console.log()
-				// })
+				let promises = validResults.map(result => {
+					return updatePhotoExifData(result.row.id, result.exif)
+					// console.log()
+				})
 				Promise.all(promises).then(resolve).catch(reject)
 			}).catch(reject)
 		}).catch(reject)

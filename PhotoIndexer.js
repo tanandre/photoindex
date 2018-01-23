@@ -82,7 +82,7 @@ function indexFolder(folder) {
 function indexFolderRoot(rootFolder) {
 	let findSubdirs = p => fs.readdirSync(p).filter(f => fs.statSync(path.join(p, f)).isDirectory())
 	let subdirs = findSubdirs(rootFolder);
-	let promises = subdirs.filter(s => s !== 'phone').map(subdir => {
+	let promises = subdirs.filter(s => s !== 'phone' && s !== '@eaDir').map(subdir => {
 		return indexFolder(path.join(rootFolder, subdir))
 	})
 	return Deferred.all(promises)
