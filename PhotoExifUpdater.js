@@ -39,20 +39,19 @@ function updatePhotoExifData(photoId, exif) {
  */
 function throttledProcess(arr, fnc, batchSize) {
 	return new Promise((resolve, reject) => {
-		function doProcess(arr) {
-			if (arr.length === 0) {
-				resolve()
-				return;
-			}
-			return arr.splice(0, batchSize).map(item => {
+		function repeat() {
+			let promiseList = arr.splice(0, batchSize).map(item => {
 				return fnc(item)
 			})
+			Promise.all(promiseList).then(() => {
+				console.log('processed batch', batchSize)
+				if (arr.length === 0) {
+					resolve()
+					return;
+				}
+				repeat()
+			}).catch(reject)
 		}
-
-		let promiseList = doProcess(arr)
-		Promise.all(promiseList).then(() => {
-			doProcess(arr)
-		}).catch(reject)
 	})
 }
 
