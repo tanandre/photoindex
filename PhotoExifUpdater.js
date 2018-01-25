@@ -32,14 +32,14 @@ function updatePhotoExifData(photoId, exif) {
 
 /**
  * calls a function on an array but only X at the same time
- * @param arr
- * @param fnc
- * @param batchSize
+ * @param arr the array to iteratively call the function for
+ * @param fnc must return a promise
+ * @param batchSize the number to process simultaneously
  * @returns {Promise}
  */
 function throttledProcess(arr, fnc, batchSize) {
 	return new Promise((resolve, reject) => {
-		function repeat() {
+		function recurse() {
 			let promiseList = arr.splice(0, batchSize).map(item => {
 				return fnc(item)
 			})
@@ -49,9 +49,11 @@ function throttledProcess(arr, fnc, batchSize) {
 					resolve()
 					return;
 				}
-				repeat()
+				recurse()
 			}).catch(reject)
 		}
+
+		recurse()
 	})
 }
 
@@ -64,12 +66,15 @@ function updateExifInBatches() {
 			function fnc(row) {
 				return new Promise((res, rej) => {
 					getExif(row.path).then(exif => {
-						dbIO.updatePhoto([exif.exif.CreateDate, row.id]).then(res).catch(rej)
-					}).catch(rej)
+						updatePhotoExifData(row.id, exif).then(res).catch(rej)
+					}).catch(err => {
+						console.error('error reading exif for ', row.path)
+						res()
+					})
 				});
 			}
 
-			let promise = throttledProcess(data.filter(row => isImage(row)), fnc, 10);
+			let promise = throttledProcess(data.filter(row => isImage(row)), fnc, 100);
 			promise.then(resolve).catch(reject)
 		}).catch(reject)
 	})
