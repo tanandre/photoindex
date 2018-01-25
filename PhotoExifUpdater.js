@@ -30,18 +30,63 @@ function updatePhotoExifData(photoId, exif) {
 	});
 }
 
+/**
+ * calls a function on an array but only X at the same time
+ * @param arr
+ * @param fnc
+ * @param batchSize
+ * @returns {Promise}
+ */
+function throttledProcess(arr, fnc, batchSize) {
+	return new Promise((resolve, reject) => {
+		function doProcess(arr) {
+			if (arr.length === 0) {
+				resolve()
+				return;
+			}
+			return arr.splice(0, batchSize).map(item => {
+				return fnc(item)
+			})
+		}
+
+		let promiseList = doProcess(arr)
+		Promise.all(promiseList).then(() => {
+			doProcess(arr)
+		}).catch(reject)
+	})
+}
+
+
+function updateExifInBatches() {
+	let promise = new Promise(function (resolve, reject) {
+		dbIO.readAllPhotos().then(data => {
+			log('found photos: ' + data.length)
+
+			function fnc(row) {
+				return new Promise((res, rej) => {
+					getExif(row.path).then(exif => {
+						dbIO.updatePhoto([exif.exif.CreateDate, row.id]).then(res).catch(rej)
+					}).catch(rej)
+				});
+			}
+
+			let promise = throttledProcess(data.filter(row => isImage(row)), fnc, 10);
+			promise.then(resolve).catch(reject)
+		}).catch(reject)
+	})
+	return promise
+}
+
+
 function updateExif() {
 	let promise = new Promise(function (resolve, reject) {
 		dbIO.readAllPhotos().then(data => {
 			log('found photos: ' + data.length)
 
-			let promiseList = data.filter(row => isImage(row)).map(row => {
+			let promiseList = data.filter(row => isImage(row)).slice(0, 100).map(row => {
 				//console.log('starting to read exif for: ', row.path)
 				return new Promise((internResolve, internReject) => {
 					getExif(row.path).then(exif => {
-						//		console.log('read exif for: ', row.path)
-						// 	def.resolve([row, exif])
-						// internResolve({row: row, exif: exif});
 						internResolve([exif.exif.CreateDate, row.id]);
 					}).catch(err => {
 						console.error('error reading exif for ', row.path)
@@ -66,7 +111,7 @@ function updateExif() {
 
 dbIO.initialize().then(connection => {
 	// dbIO.recreateTables(connection).then(() => {
-	updateExif().then(() => {
+	updateExifInBatches().then(() => {
 		// indexFolder(folder).then(() => {
 		process.exit(0)
 	}).catch(err => {

@@ -11,7 +11,7 @@ let cache = require('memory-cache');
 		host: 'kanji',
 		user: 'photoindex',
 		password: 'dc0b5jjF7bNjarkA',
-		database: 'photoindex3'
+		database: 'photoindex2'
 	});
 
 	function createDbHandle(logMessage, callback) {
