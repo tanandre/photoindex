@@ -151,6 +151,13 @@ let cache = require('memory-cache');
 		return query("SELECT * FROM photo ORDER BY date DESC");
 	};
 
+	module.exports.queryStats = function () {
+		let promises = []
+		promises.push(query("SELECT count(*) FROM photo"))
+		promises.push(query("SELECT name FROM tags"))
+		return Deferred.all(promises)
+	};
+
 	function getSqlTagMatch(tagLabels) {
 		if (tagLabels.length === 0) {
 			return '';

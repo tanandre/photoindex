@@ -159,6 +159,12 @@ app.post("/date/:id/:date", function (request, response) {
 
 });
 
+app.get("/stats", function (request, response) {
+	response.setHeader('Content-Type', 'application/json');
+	let deferred = createHttpDeferred(response)
+	dbIO.queryStats().then(deferred.resolve, deferred.reject);
+});
+
 app.get("/listing", function (request, response) {
 	let alltimer = new Timer();
 	response.setHeader('Content-Type', 'application/json');
