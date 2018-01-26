@@ -17,7 +17,7 @@ function updatePhotoExifData(photoId, exif) {
 
 		let deviceTag = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
 		let exifDate = exif.exif.CreateDate;
-		log('updating photo date: ' + photoId + ' ' + exifDate)
+		//log('updating photo date: ' + photoId + ' ' + exifDate)
 
 		let deferred1 = dbIO.updatePhoto([exifDate, photoId])
 		let deferredAll = [deferred1]
@@ -44,7 +44,7 @@ function throttledProcess(arr, fnc, batchSize) {
 				return fnc(item)
 			})
 			Promise.all(promiseList).then(() => {
-				console.log('processed batch', batchSize)
+				console.log('processed batch', batchSize, ' arr: ', arr.length)
 				if (arr.length === 0) {
 					resolve()
 					return;
