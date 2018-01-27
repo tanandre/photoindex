@@ -154,7 +154,7 @@ let cache = require('memory-cache');
 	module.exports.queryStats = function () {
 		let promises = []
 		promises.push(query("SELECT count(*) FROM photo"))
-		promises.push(query("SELECT name FROM tags"))
+		promises.push(query("SELECT name FROM tag"))
 		return Deferred.all(promises)
 	};
 
@@ -190,12 +190,11 @@ let cache = require('memory-cache');
 	function getSqlMatchCriteria(queryTags) {
 		let tagDates = queryTags.filter(isDateTag);
 		let tagLabels = queryTags.filter((tag) => !isDateTag(tag)).map((tag) => '%' + tag + '%');
-
 		if (tagDates.length === 0) {
 			return {
 				sql: getSqlTagMatch(tagLabels),
 				values: tagLabels,
-				hasTagLabels: false
+				hasTagLabels: tagLabels.length > 0
 			};
 		}
 
@@ -227,12 +226,12 @@ let cache = require('memory-cache');
 		}
 
 		let sqlMatch = getSqlMatchCriteria(queryTags);
+
 		let joinTagTable = !sqlMatch.hasTagLabels ? '' : // let joinTagTable =
 			'LEFT JOIN photo_tag pt ON pt.photoId = p.id INNER JOIN tag t ON pt.tagId = t.id';
 		let sql = "SELECT p.* FROM photo p " + joinTagTable + " WHERE " + sqlMatch.sql +
 			" ORDER BY p.date DESC";
 
-		console.log(sql, queryTags);
 		return query(sql, sqlMatch.values).then(rows => {
 			if (isOnKanji) {
 				return fixPhotoPathsForLocalhost(rows);

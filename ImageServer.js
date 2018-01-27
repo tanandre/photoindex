@@ -47,7 +47,7 @@ function createHttpDeferred(response) {
 function wrapCache(cache, cacheId, deferred, fnc) {
 	let cachedResponse = cache.get(cacheId);
 	if (isCacheEnabled && cachedResponse) {
-		console.log('** returning cached response', cacheId);
+		// console.log('** returning cached response', cacheId);
 		deferred.resolve(cachedResponse);
 		return;
 	}
@@ -76,7 +76,7 @@ app.get('/node_modules', express.static('node_modules'));
 function optimizedImage(path, maxSize) {
 	let timer = new Timer();
 	return photoOptimizer.optimizeImage(path, maxSize).then(() => {
-		console.log('image optimization: ', timer.stamp());
+		// console.log('image optimization: ', timer.stamp());
 	});
 }
 
@@ -162,7 +162,11 @@ app.post("/date/:id/:date", function (request, response) {
 app.get("/stats", function (request, response) {
 	response.setHeader('Content-Type', 'application/json');
 	let deferred = createHttpDeferred(response)
-	dbIO.queryStats().then(deferred.resolve, deferred.reject);
+	dbIO.queryStats().then(dbresults => {
+		let photoCount = dbresults[0]
+		let tags = dbresults[1]
+		deferred.resolve({photo: photoCount, tags: tags})
+	}, deferred.reject);
 });
 
 app.get("/listing", function (request, response) {
@@ -171,14 +175,11 @@ app.get("/listing", function (request, response) {
 	let cacheUrl = '/listing?' + JSON.stringify(request.query);
 	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
 		dbIO.queryPhotos(request.query.tag).then((rows) => {
-			let timer = new Timer();
 			rows.forEach((row) => {
 				row.dateInMillis = Date.parse(row.date);
 				row.dateObject = new Date(row.dateInMillis);
 			});
-			console.log('patch date', timer.stamp());
 			deferred.resolve(JSON.stringify(rows));
-			console.log('all', alltimer.stamp());
 		}, (err) => {
 			deferred.reject(JSON.stringify({
 				images: [],
