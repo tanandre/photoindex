@@ -14,7 +14,7 @@ let cache = require('memory-cache');
 		database: 'photoindex4'
 	});
 
-	function createDbHandle(logMessage, callback) {
+	function createDbHandle (logMessage, callback) {
 		return function (error, result) {
 			if (error) {
 				throw error;
@@ -24,7 +24,7 @@ let cache = require('memory-cache');
 		};
 	}
 
-	function query(sql, values, isSuppressErrorLog) {
+	function query (sql, values, isSuppressErrorLog) {
 		let timer = new Timer();
 		let deferred = new Deferred();
 		connection.query(sql, values, (err, result) => {
@@ -45,7 +45,7 @@ let cache = require('memory-cache');
 		return deferred;
 	}
 
-	function recreateTables(connection) {
+	function recreateTables (connection) {
 		let deferred = new Deferred();
 		console.log("Connection with DB established");
 		// drop all tables
@@ -84,12 +84,27 @@ let cache = require('memory-cache');
 
 	module.exports.recreateTables = recreateTables;
 
-	module.exports.addPhotoBatch = function (rows) {
+	function addPhotoBatch (rows) {
 		return query("INSERT INTO photo (date, path) VALUES ?;", [rows]).then((result) => {
 			console.log('batch inserted: ', rows.length);
 			console.log('batch ids: ', result);
 		});
-	};
+	}
+
+	function addPhotoBatchSafe (rows) {
+		let batchSize = 10
+		if (rows.length < batchSize) {
+			return addPhotoBatch(rows)
+		}
+		let promise = addPhotoBatch(rows.splice(0, batchSize))
+		if (rows.length === 0) {
+			return promise
+		}
+		return addPhotoBatchSafe(rows)
+	}
+
+	module.exports.addPhotoBatchSafe = addPhotoBatchSafe
+	module.exports.addPhotoBatch = addPhotoBatch
 
 	module.exports.updatePhoto = function (row) {
 		return query("UPDATE photo SET date = ? WHERE id = ?;", row).then((result) => {
@@ -141,7 +156,7 @@ let cache = require('memory-cache');
 		return deferred;
 	};
 
-	function queryTag(tags) {
+	function queryTag (tags) {
 		let sqlMatch = tags.map(() => 'name like ?').join(' OR ');
 		query("SELECT id FROM tag WHERE " + sqlMatch, [[tags]]);
 	}
@@ -163,7 +178,7 @@ let cache = require('memory-cache');
 		return Deferred.all(promises)
 	};
 
-	function getSqlTagMatch(tagLabels) {
+	function getSqlTagMatch (tagLabels) {
 		if (tagLabels.length === 0) {
 			return '';
 		}
@@ -171,7 +186,7 @@ let cache = require('memory-cache');
 		return tagLabels.map(() => 't.name like ?').join(' OR ');
 	}
 
-	function getSqlDateMatch(dateStr, tagLabels) {
+	function getSqlDateMatch (dateStr, tagLabels) {
 		let tagSqlMatch = tagLabels.length === 0 ? '' : ' AND (' + getSqlTagMatch(tagLabels) + ')';
 
 		if (dateStr.length === 4) {
@@ -192,7 +207,7 @@ let cache = require('memory-cache');
 		};
 	}
 
-	function getSqlMatchCriteria(queryTags) {
+	function getSqlMatchCriteria (queryTags) {
 		let tagDates = queryTags.filter(isDateTag);
 		let tagLabels = queryTags.filter((tag) => !isDateTag(tag)).map((tag) => '%' + tag + '%');
 		if (tagDates.length === 0) {
@@ -214,11 +229,11 @@ let cache = require('memory-cache');
 		}
 	}
 
-	function isDateTag(tag) {
+	function isDateTag (tag) {
 		return /^\d{4,8}$/.test(tag);
 	}
 
-	function fixPhotoPathsForLocalhost(rows) {
+	function fixPhotoPathsForLocalhost (rows) {
 		return rows.map(row => {
 			row.path = row.path.replace(/\\/g, '/').replace('//kanji', '/volume1');
 			return row;

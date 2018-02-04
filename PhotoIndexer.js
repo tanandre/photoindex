@@ -66,7 +66,7 @@ function indexFolder(folder) {
 			Deferred.all(datePromiseList).then(results => {
 				// log('starting batch insert: ' + results.length);
 
-				dbIO.addPhotoBatch(results).then(() => {
+				dbIO.addPhotoBatchSafe(results).then(() => {
 					log('batch insert completed: ' + folder + ' photos:' + results.length)
 					deferredIndexer.resolve();
 				}, err => {
