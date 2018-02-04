@@ -17,9 +17,9 @@ function getDeviceTag (exif) {
 	let model = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
 	let make = exif.image.Make
 	if (model.toLowerCase().contains(make.toLowerCase())) {
-		return model
+		return model.trim()
 	}
-	return make + ' ' + model
+	return make.trim() + ' ' + model.trim()
 }
 
 function updatePhotoExifData (photoId, exif) {

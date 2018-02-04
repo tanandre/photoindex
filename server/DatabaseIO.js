@@ -227,7 +227,7 @@ let cache = require('memory-cache');
 
 	module.exports.queryPhotos = function (queryTags) {
 		if (queryTags === undefined || queryTags.length === 0) {
-			return query("SELECT * FROM photo ORDER BY date DESC LIMIT 1000");
+			return query("SELECT * FROM photo ORDER BY date DESC");
 		}
 
 		let sqlMatch = getSqlMatchCriteria(queryTags);
