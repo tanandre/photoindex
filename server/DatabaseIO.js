@@ -158,7 +158,7 @@ let cache = require('memory-cache');
 
 	module.exports.queryStats = function () {
 		let promises = []
-		promises.push(query("SELECT count(*) FROM photo"))
+		promises.push(query("SELECT count(*) as photoCount FROM photo"))
 		promises.push(query("SELECT name FROM tag"))
 		return Deferred.all(promises)
 	};

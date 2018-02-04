@@ -165,7 +165,7 @@ app.get("/stats", function (request, response) {
 	dbIO.queryStats().then(dbresults => {
 		let photoCount = dbresults[0]
 		let tags = dbresults[1]
-		deferred.resolve({photo: photoCount, tags: tags})
+		deferred.resolve(JSON.stringify({photo: photoCount, tags: tags}))
 	}, deferred.reject);
 });
 
