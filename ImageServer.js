@@ -13,23 +13,23 @@ let dbIO = require('./server/DatabaseIO');
 let photoOptimizer = require('./server/PhotoOptimizer');
 
 let isCacheEnabled = false;
-let isCacheHeadersEnabled = false;
+let isCacheHeadersEnabled = true;
 log('Starting');
 
 let app = express();
 
-function setResponseHeaders(response) {
+function setResponseHeaders (response) {
 	response.setHeader("Access-Control-Allow-Origin", "*");
 }
 
-function setCacheHeaders(response) {
+function setCacheHeaders (response) {
 	if (isCacheHeadersEnabled) {
 		response.setHeader("Cache-Control", "public, max-age=31536000");
 		response.setHeader("Expires", new Date(Date.now() + 31536000000).toUTCString());
 	}
 }
 
-function createHttpDeferred(response) {
+function createHttpDeferred (response) {
 	let httpDeferred = new Deferred();
 	httpDeferred.then(function (data) {
 		setCacheHeaders(response);
@@ -44,7 +44,7 @@ function createHttpDeferred(response) {
 	return httpDeferred;
 }
 
-function wrapCache(cache, cacheId, deferred, fnc) {
+function wrapCache (cache, cacheId, deferred, fnc) {
 	let cachedResponse = cache.get(cacheId);
 	if (isCacheEnabled && cachedResponse) {
 		// console.log('** returning cached response', cacheId);
@@ -73,7 +73,7 @@ let server = app.listen(1337, () => {
 app.get(express.static('public'));
 app.get('/node_modules', express.static('node_modules'));
 
-function optimizedImage(path, maxSize) {
+function optimizedImage (path, maxSize) {
 	let timer = new Timer();
 	return photoOptimizer.optimizeImage(path, maxSize).then(() => {
 		// console.log('image optimization: ', timer.stamp());
@@ -174,7 +174,8 @@ app.get("/listing", function (request, response) {
 	response.setHeader('Content-Type', 'application/json');
 	let cacheUrl = '/listing?' + JSON.stringify(request.query);
 	wrapCache(cache, cacheUrl, createHttpDeferred(response), (deferred) => {
-		dbIO.queryPhotos(request.query.tag).then((rows) => {
+		let tags = request.query.tag ? request.query.tag.map(t => decodeURIComponent(t)) : []
+		dbIO.queryPhotos(tags).then((rows) => {
 			rows.forEach((row) => {
 				row.dateInMillis = Date.parse(row.date);
 				row.dateObject = new Date(row.dateInMillis);

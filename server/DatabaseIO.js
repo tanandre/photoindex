@@ -11,7 +11,7 @@ let cache = require('memory-cache');
 		host: 'kanji',
 		user: 'photoindex',
 		password: 'dc0b5jjF7bNjarkA',
-		database: 'photoindex2'
+		database: 'photoindex4'
 	});
 
 	function createDbHandle(logMessage, callback) {
@@ -87,6 +87,7 @@ let cache = require('memory-cache');
 	module.exports.addPhotoBatch = function (rows) {
 		return query("INSERT INTO photo (date, path) VALUES ?;", [rows]).then((result) => {
 			console.log('batch inserted: ', rows.length);
+			console.log('batch ids: ', result);
 		});
 	};
 
@@ -149,6 +150,10 @@ let cache = require('memory-cache');
 
 	module.exports.readAllPhotos = function () {
 		return query("SELECT * FROM photo ORDER BY date DESC");
+	};
+
+	module.exports.readAllPhotosReversed = function () {
+		return query("SELECT * FROM photo ORDER BY date ASC");
 	};
 
 	module.exports.queryStats = function () {
@@ -232,19 +237,11 @@ let cache = require('memory-cache');
 		let sql = "SELECT p.* FROM photo p " + joinTagTable + " WHERE " + sqlMatch.sql +
 			" ORDER BY p.date DESC";
 
-		return query(sql, sqlMatch.values).then(rows => {
-			if (isOnKanji) {
-				return fixPhotoPathsForLocalhost(rows);
-			}
-		});
+		return query(sql, sqlMatch.values)
 	};
 
 	module.exports.readAllPhotosPaths = function () {
-		return query("SELECT id, path FROM photo").then(rows => {
-			if (isOnKanji) {
-				return fixPhotoPathsForLocalhost(rows);
-			}
-		});
+		return query("SELECT id, path FROM photo")
 	};
 
 	module.exports.readTagsForPhoto = function (id) {
@@ -260,11 +257,7 @@ let cache = require('memory-cache');
 				deferred.reject(new Error('could not find photo for id' + id));
 				return;
 			}
-			if (isOnKanji) {
-				deferred.resolve(fixPhotoPathsForLocalhost(rows)[0]);
-			} else {
-				deferred.resolve(rows[0]);
-			}
+			deferred.resolve(rows[0]);
 		}, (err) => {
 			deferred.reject(err);
 		});
