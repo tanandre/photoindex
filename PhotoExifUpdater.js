@@ -4,23 +4,34 @@ let log = require('./public/lib/log');
 let Deferred = require('./public/lib/Deferred');
 let dbIO = require('./server/DatabaseIO');
 let getExif = require('exif-async');
+global.isOnKanji = true;
 
 log('start reading exif data')
 
-function isImage(row) {
+function isImage (row) {
 	let fileName = row.path.toLowerCase();
 	return fileName.endsWith('.jpg') || fileName.endsWith('.jpeg');
 }
 
-function updatePhotoExifData(photoId, exif) {
+function getDeviceTag (exif) {
+	let model = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
+	let make = exif.image.Make
+	if (model.toLowerCase().contains(make.toLowerCase())) {
+		return model
+	}
+	return make + ' ' + model
+}
+
+function updatePhotoExifData (photoId, exif) {
 	return new Promise((resolve, reject) => {
 
-		let deviceTag = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
+		let deviceTag = getDeviceTag(exif);
 		let exifDate = exif.exif.CreateDate;
-		//log('updating photo date: ' + photoId + ' ' + exifDate)
 
-		let deferred1 = dbIO.updatePhoto([exifDate, photoId])
-		let deferredAll = [deferred1]
+		let deferredAll = []
+		if (exifDate) {
+			deferredAll.push(dbIO.updatePhoto([exifDate, photoId]))
+		}
 		if (deviceTag) {
 			deferredAll.push(dbIO.addOrGetTag(deviceTag).then((tagId) => {
 				dbIO.addPhotoTag(photoId, tagId);
@@ -37,9 +48,9 @@ function updatePhotoExifData(photoId, exif) {
  * @param batchSize the number to process simultaneously
  * @returns {Promise}
  */
-function throttledProcess(arr, fnc, batchSize) {
+function throttledProcess (arr, fnc, batchSize) {
 	return new Promise((resolve, reject) => {
-		function recurse() {
+		function recurse () {
 			let promiseList = arr.splice(0, batchSize).map(item => {
 				return fnc(item)
 			})
@@ -58,12 +69,13 @@ function throttledProcess(arr, fnc, batchSize) {
 }
 
 
-function updateExifInBatches() {
+function updateExifInBatches () {
 	let promise = new Promise(function (resolve, reject) {
-		dbIO.readAllPhotos().then(data => {
+		//dbIO.readAllPhotos().then(data => {
+		dbIO.queryTag(['2014']).then(data => {
 			log('found photos: ' + data.length)
 
-			function fnc(row) {
+			function fnc (row) {
 				return new Promise((res, rej) => {
 					getExif(row.path).then(exif => {
 						updatePhotoExifData(row.id, exif).then(res).catch(rej)
@@ -82,7 +94,7 @@ function updateExifInBatches() {
 }
 
 
-function updateExif() {
+function updateExif () {
 	let promise = new Promise(function (resolve, reject) {
 		dbIO.readAllPhotos().then(data => {
 			log('found photos: ' + data.length)

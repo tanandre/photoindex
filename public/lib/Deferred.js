@@ -5,19 +5,19 @@
  */
 class Deferred {
 
-	static createResolved(data) {
+	static createResolved (data) {
 		let deferred = new Deferred();
 		deferred.resolve(data);
 		return deferred;
 	}
 
-	static createRejected(err) {
+	static createRejected (err) {
 		let deferred = new Deferred();
 		deferred.reject(err);
 		return deferred;
 	}
 
-	constructor() {
+	constructor () {
 		this._isResolved = false;
 		this._isRejected = false;
 		this._isCanceled = false;
@@ -35,23 +35,23 @@ class Deferred {
 		};
 	}
 
-	isResolved() {
+	isResolved () {
 		return this._isResolved;
 	}
 
-	isRejected() {
+	isRejected () {
 		return this._isRejected;
 	}
 
-	isCanceled() {
+	isCanceled () {
 		return this._isCanceled;
 	}
 
-	hasProgress() {
+	hasProgress () {
 		return this._hasProgress;
 	}
 
-	then(onOk, onError, onProgress) {
+	then (onOk, onError, onProgress) {
 		let listener = [onOk, onError, onProgress];
 		this.listeners.push(listener);
 
@@ -63,7 +63,7 @@ class Deferred {
 		return this;
 	}
 
-	catch(onError) {
+	catch (onError) {
 		let listener = [undefined, onError, undefined];
 		this.listeners.push(listener);
 		if (this._isRejected) {
@@ -71,16 +71,16 @@ class Deferred {
 		}
 	}
 
-	isDone() {
+	isDone () {
 		return this._isResolved || this._isRejected || this._isCanceled;
 	}
 
-	progress(data) {
+	progress (data) {
 		this._hasProgress = true;
 		this.signalListeners(data, 2);
 	}
 
-	resolve(data) {
+	resolve (data) {
 		if (this._isResolved) {
 			throw new Error('Cannot resolve, deferred already resolved');
 		}
@@ -92,7 +92,7 @@ class Deferred {
 		this.signalListeners(data, 0);
 	}
 
-	reject(data) {
+	reject (data) {
 		if (this._isResolved) {
 			console.error(data);
 			throw new Error('Cannot reject, deferred already resolved');
@@ -106,11 +106,11 @@ class Deferred {
 		this.signalListeners(data, 1);
 	}
 
-	cancel() {
+	cancel () {
 		this._isCanceled = true;
 	}
 
-	signalListeners(data, index) {
+	signalListeners (data, index) {
 		if (this._isCanceled) {
 			return;
 		}
@@ -133,10 +133,14 @@ class Deferred {
 	 * @param deferredList
 	 * @returns {Deferred.constructor}
 	 */
-	static all(deferredList) {
+	static all (deferredList) {
+		if (deferredList.length === 0) {
+			return Deferred.createResolved()
+		}
+
 		let globalDeferred = new Deferred();
 		deferredList.forEach(deferred => {
-			function onComplete(data) {
+			function onComplete (data) {
 				deferred.__data = data;
 
 				let isAllComplete = deferredList.every(d => d._isResolved || d._isRejected);
