@@ -16,7 +16,7 @@ function isImage (row) {
 function getDeviceTag (exif) {
 	let model = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
 	let make = exif.image.Make
-	if (model.toLowerCase().contains(make.toLowerCase())) {
+	if (model.toLowerCase().indexOf(make.toLowerCase()) !== -1) {
 		return model.trim()
 	}
 	return make.trim() + ' ' + model.trim()
@@ -71,8 +71,8 @@ function throttledProcess (arr, fnc, batchSize) {
 
 function updateExifInBatches () {
 	let promise = new Promise(function (resolve, reject) {
-		//dbIO.readAllPhotos().then(data => {
-		dbIO.queryTag(['2014']).then(data => {
+		dbIO.readAllPhotos().then(data => {
+			// dbIO.queryTag(['2014']).then(data => {
 			log('found photos: ' + data.length)
 
 			function fnc (row) {
