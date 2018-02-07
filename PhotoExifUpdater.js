@@ -35,17 +35,12 @@ function updatePhotoExifData (photoId, exif) {
 
 		let promiseAll = []
 		if (exifDate) {
-			// console.log('updating date')
 			promiseAll.push(dbIO.updatePhoto([exifDate, photoId]))
 		}
 		if (deviceTag) {
-			console.log('updating deviceTag', deviceTag, photoId)
-
 			let promise = new Promise((resolve, reject) => {
 				dbIO.addOrGetTag(deviceTag).then((tagId) => {
-					console.log('storing deviceTag', tagId, photoId)
 					dbIO.addPhotoTag(photoId, tagId).then(result => {
-						console.log('success')
 						resolve(result)
 					}).catch(reject);
 				}).catch(reject);
@@ -94,7 +89,7 @@ function updateExifInBatches () {
 				return new Promise((res, rej) => {
 					getExif(row.path).then(exif => {
 						updatePhotoExifData(row.id, exif).then(res).catch(err => {
-							console.error('error storing exif for ', row.path)
+							console.error('error storing exif:', row.path)
 							res()
 						})
 					}).catch(err => {

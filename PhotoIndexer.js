@@ -13,12 +13,13 @@ if (process.argv.length < 3) {
 	console.error('please specify the folder to index');
 	return
 }
-
+let args = process.argv.filter(s => !s.startsWith('--'))
 let folder = process.argv[2];
-let recreateDb = process.argv[3] === '--db';
+let database = args[3];
+let recreateDb = process.argv.indexOf('--db') !== -1;
 log('start indexing folder: ' + folder)
 
-function handleError(file) {
+function handleError (file) {
 	return function (err) {
 		console.log('file not processed: ', file)
 		console.error(err)
@@ -26,7 +27,7 @@ function handleError(file) {
 }
 
 
-function addPhotoToDb(file, tagId) {
+function addPhotoToDb (file, tagId) {
 	let deferred = new Deferred();
 	let promise1 = dateUtil.readDateFromFile(file);
 	promise1.then(date => {
@@ -49,8 +50,8 @@ function addPhotoToDb(file, tagId) {
 	return deferred;
 }
 
-function indexFolder(folder) {
-		log('indexFolder: ' + folder);
+function indexFolder (folder) {
+	log('indexFolder: ' + folder);
 	let deferredIndexer = new Deferred();
 	dbIO.addOrGetTag('dateUnconfirmed').then(tagId => {
 		log('start indexing folder: ' + folder);
@@ -81,7 +82,7 @@ function indexFolder(folder) {
 	return deferredIndexer;
 }
 
-function indexFolderRoot(rootFolder) {
+function indexFolderRoot (rootFolder) {
 	let findSubdirs = p => fs.readdirSync(p).filter(f => fs.statSync(path.join(p, f)).isDirectory())
 	let subdirs = findSubdirs(rootFolder);
 	let promises = subdirs.filter(s => s !== '@eaDir').map(subdir => {
@@ -91,7 +92,7 @@ function indexFolderRoot(rootFolder) {
 }
 
 
-dbIO.initialize().then(connection => {
+dbIO.initialize(database).then(connection => {
 	if (recreateDb) {
 		dbIO.recreateTables(connection).then(() => {
 			indexFolderRoot(folder).then(() => {

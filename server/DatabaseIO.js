@@ -6,12 +6,7 @@ let cache = require('memory-cache');
 (function () {
 	let mysql = require('mysql');
 
-	let connection = mysql.createConnection({
-		host: 'kanji',
-		user: 'photoindex',
-		password: 'dc0b5jjF7bNjarkA',
-		database: 'photoindex3'
-	});
+	let connection = null;
 
 	function createDbHandle (logMessage, callback) {
 		return function (error, result) {
@@ -25,6 +20,9 @@ let cache = require('memory-cache');
 
 	function query (sql, values, isSuppressErrorLog) {
 		let timer = new Timer();
+		if (connection === null) {
+			return Promise.reject(new Error('call initialize first before doing DB queries'))
+		}
 		let promise = new Promise((resolve, reject) => {
 			connection.query(sql, values, (err, result) => {
 				if (err) {
@@ -70,7 +68,16 @@ let cache = require('memory-cache');
 		})
 	}
 
-	module.exports.initialize = function (done) {
+	module.exports.initialize = function (database) {
+		let db = database ? database : 'photoindex3'
+		connection = mysql.createConnection({
+			host: 'kanji',
+			user: 'photoindex',
+			password: 'dc0b5jjF7bNjarkA',
+			database: db
+		});
+		console.log('connecting to db: ', db)
+
 		return new Promise((resolve, reject) => {
 			connection.connect((err) => {
 				if (err) {
