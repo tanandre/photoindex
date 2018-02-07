@@ -146,6 +146,11 @@ let cache = require('memory-cache');
 			}
 			//console.error('tag already exists will query', tag, err);
 			query("SELECT id FROM tag WHERE name = ?", [[[tag]]]).then((row) => {
+				if (row.length === 0) {
+					console.error('cannot find tag: ', tag, err);
+					deferred.reject(new Error('cannot find tag: ' + tag));
+					return;
+				}
 				cache.put(cacheUrl, row[0].id);
 				deferred.resolve(row[0].id);
 			}, (err) => {
