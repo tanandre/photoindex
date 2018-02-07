@@ -1,6 +1,5 @@
 'use strict';
 
-let Deferred = require('../public/lib/Deferred');
 let Timer = require('../public/lib/Timer');
 let cache = require('memory-cache');
 
@@ -11,7 +10,7 @@ let cache = require('memory-cache');
 		host: 'kanji',
 		user: 'photoindex',
 		password: 'dc0b5jjF7bNjarkA',
-		database: 'photoindex4'
+		database: 'photoindex3'
 	});
 
 	function createDbHandle (logMessage, callback) {
@@ -26,60 +25,61 @@ let cache = require('memory-cache');
 
 	function query (sql, values, isSuppressErrorLog) {
 		let timer = new Timer();
-		let deferred = new Deferred();
-		connection.query(sql, values, (err, result) => {
-			if (err) {
-				if (!isSuppressErrorLog) {
-					if (err.code === 'ER_DUP_ENTRY') {
-						console.error('-- duplicate entry');
-					} else {
-						console.error(sql, values, err);
+		let promise = new Promise((resolve, reject) => {
+			connection.query(sql, values, (err, result) => {
+				if (err) {
+					if (!isSuppressErrorLog) {
+						if (err.code === 'ER_DUP_ENTRY') {
+							console.error('-- duplicate entry');
+						} else {
+							console.error(sql, values, err);
+						}
 					}
+					reject(err);
+					return;
 				}
-				deferred.reject(err);
-				return;
-			}
-			//console.log('sql time:', timer.stamp(), ' - ', sql);
-			deferred.resolve(result);
+				//console.log('sql time:', timer.stamp(), ' - ', sql);
+				resolve(result);
+			});
 		});
-		return deferred;
+
+		return promise;
 	}
 
 	function recreateTables (connection) {
-		let deferred = new Deferred();
-		console.log("Connection with DB established");
-		// drop all tables
-		connection.query("DROP TABLE IF EXISTS photo_tag");
-		connection.query("DROP TABLE IF EXISTS tag");
-		connection.query("DROP TABLE IF EXISTS photo");
+		return new Promise((resolve, reject) => {
+			console.log("Connection with DB established");
+			// drop all tables
+			query("DROP TABLE IF EXISTS photo_tag").catch(reject);
+			query("DROP TABLE IF EXISTS tag").catch(reject);
+			query("DROP TABLE IF EXISTS photo").catch(reject);
 
-		let sqlCreatePhotoTable = "CREATE TABLE if not exists photo " +
-			"( id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, path VARCHAR(255) NOT NULL, description VARCHAR(255) NULL, " +
-			"PRIMARY KEY (id), INDEX IX_DATE (date), UNIQUE(path))";
-		let sqlCreateTagTable = "CREATE TABLE if not exists tag ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL , PRIMARY KEY (id), UNIQUE(name) )";
-		let sqlCreateLinkTable = "CREATE TABLE if not exists photo_tag ( photoid INT NOT NULL , tagid INT NOT NULL, " +
-			"INDEX IX_PHOTO_ID (photoid), INDEX IX_TAG_ID (tagid), UNIQUE(photoid, tagid), FOREIGN KEY (photoid) REFERENCES photo(id), FOREIGN KEY (tagid) REFERENCES tag(id))";
-		connection.query(sqlCreatePhotoTable, createDbHandle('table photo created', () => {
-			connection.query(sqlCreateTagTable, createDbHandle('table tag created', () => {
-				connection.query(sqlCreateLinkTable, createDbHandle('table photo_tag created', () => {
-					deferred.resolve(connection)
-				}));
-			}));
-		}));
-		return deferred;
+			let sqlCreatePhotoTable = "CREATE TABLE if not exists photo " +
+				"( id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, path VARCHAR(255) NOT NULL, description VARCHAR(255) NULL, " +
+				"PRIMARY KEY (id), INDEX IX_DATE (date), UNIQUE(path))";
+			let sqlCreateTagTable = "CREATE TABLE if not exists tag ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL , PRIMARY KEY (id), UNIQUE(name) )";
+			let sqlCreateLinkTable = "CREATE TABLE if not exists photo_tag ( photoid INT NOT NULL , tagid INT NOT NULL, " +
+				"INDEX IX_PHOTO_ID (photoid), INDEX IX_TAG_ID (tagid), UNIQUE(photoid, tagid), FOREIGN KEY (photoid) REFERENCES photo(id), FOREIGN KEY (tagid) REFERENCES tag(id))";
+			query(sqlCreatePhotoTable, createDbHandle('table photo created', () => {
+				query(sqlCreateTagTable, createDbHandle('table tag created', () => {
+					query(sqlCreateLinkTable, createDbHandle('table photo_tag created', () => {
+						resolve(connection)
+					})).catch(reject);
+				})).catch(reject);
+			})).catch(reject);
+		})
 	}
 
 	module.exports.initialize = function (done) {
-		let deferred = new Deferred();
-
-		connection.connect((err) => {
-			if (err) {
-				deferred.reject(err);
-				return;
-			}
-			deferred.resolve(connection);
-		});
-		return deferred;
+		return new Promise((resolve, reject) => {
+			connection.connect((err) => {
+				if (err) {
+					reject(err);
+					return;
+				}
+				resolve(connection);
+			});
+		})
 	};
 
 	module.exports.recreateTables = recreateTables;
@@ -131,34 +131,34 @@ let cache = require('memory-cache');
 		let cachedResponse = cache.get(cacheUrl);
 		if (cachedResponse) {
 			// console.log('reading tag from cache');
-			return Deferred.createResolved(cachedResponse);
+			return Promise.resolve(cachedResponse);
 		}
 
-		let deferred = new Deferred();
-		query("INSERT INTO tag (name) VALUES ?;", [[[tag]]], true).then((result) => {
-			cache.put(cacheUrl, result.insertId);
-			deferred.resolve(result.insertId)
-		}, (err) => {
-			if (err.code !== 'ER_DUP_ENTRY') {
-				console.error('error while trying to insert tag: ', tag, err);
-				deferred.reject(err);
-				return;
-			}
-			//console.error('tag already exists will query', tag, err);
-			query("SELECT id FROM tag WHERE name = ?", [[[tag]]]).then((row) => {
-				if (row.length === 0) {
-					console.error('cannot find tag: ', tag, err);
-					deferred.reject(new Error('cannot find tag: ' + tag));
+		return new Promise((resolve, reject) => {
+
+			query("INSERT INTO tag (name) VALUES ?;", [[[tag]]], true).then((result) => {
+				cache.put(cacheUrl, result.insertId);
+				resolve(result.insertId)
+			}).catch((err) => {
+				if (err.code !== 'ER_DUP_ENTRY') {
+					console.error('error while trying to insert tag: ', tag, err);
+					reject(err);
 					return;
 				}
-				cache.put(cacheUrl, row[0].id);
-				deferred.resolve(row[0].id);
-			}, (err) => {
-				deferred.reject(err);
-			})
-		});
-
-		return deferred;
+				//console.error('tag already exists will query', tag, err);
+				query("SELECT id FROM tag WHERE name = ?", [[[tag]]]).then((row) => {
+					if (row.length === 0) {
+						console.error('cannot find tag: ', tag, err);
+						reject(new Error('cannot find tag: ' + tag));
+						return;
+					}
+					cache.put(cacheUrl, row[0].id);
+					resolve(row[0].id);
+				}).catch((err) => {
+					reject(err);
+				})
+			});
+		})
 	};
 
 	function queryTag (tags) {
@@ -180,7 +180,7 @@ let cache = require('memory-cache');
 		let promises = []
 		promises.push(query("SELECT count(*) as photoCount FROM photo"))
 		promises.push(query("SELECT name FROM tag"))
-		return Deferred.all(promises)
+		return Promise.all(promises)
 	};
 
 	function getSqlTagMatch (tagLabels) {
@@ -271,17 +271,16 @@ let cache = require('memory-cache');
 	};
 
 	module.exports.readPhotoById = function (id) {
-		let deferred = new Deferred();
-		query("SELECT * FROM photo where id = ?", [id]).then((rows) => {
-			if (rows.length === 0) {
-				deferred.reject(new Error('could not find photo for id' + id));
-				return;
-			}
-			deferred.resolve(rows[0]);
-		}, (err) => {
-			deferred.reject(err);
-		});
-
-		return deferred;
+		return new Promise((resolve, reject) => {
+			query("SELECT * FROM photo where id = ?", [id]).then((rows) => {
+				if (rows.length === 0) {
+					reject(new Error('could not find photo for id' + id));
+					return;
+				}
+				resolve(rows[0]);
+			}).catch(err => {
+				reject(err);
+			});
+		})
 	};
 }());

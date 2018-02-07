@@ -97,8 +97,8 @@ app.get('/photo/:id/:width', function (request, response) {
 		optimizedImage(row.path, maxSize)
 			.then(data => {
 				deferred.resolve(new Buffer(data, 'binary'));
-			}, err => deferred.reject(err));
-	}, (err) => {
+			}).catch(err => deferred.reject(err));
+	}).catch((err) => {
 		deferred.reject(JSON.stringify(err));
 	});
 });
@@ -112,7 +112,7 @@ app.get('/photo/:id', function (request, response) {
 		let index = row.path.lastIndexOf('/');
 		response.setHeader('Content-Disposition', 'attachment; filename=' + row.path.substring(index + 1));
 		deferred.resolve(new Buffer(file, 'binary'));
-	}, (err) => {
+	}).catch(err => {
 		deferred.reject(JSON.stringify(err));
 	});
 });
@@ -130,7 +130,7 @@ app.get('/exif/:id', function (request, response) {
 			}).catch(() => {
 				deferred.resolve('{}');
 			});
-		}, (err) => {
+		}).catch((err) => {
 			deferred.reject(JSON.stringify(err));
 		});
 	});
@@ -144,7 +144,7 @@ app.get('/tags/:id', function (request, response) {
 		dbIO.readTagsForPhoto(request.params.id).then((rows) => {
 			let tags = rows.map((row) => row.name);
 			deferred.resolve(JSON.stringify({tags: tags}));
-		}, (err) => {
+		}).catch((err) => {
 			deferred.reject(JSON.stringify({
 				error: err,
 				tags: []
@@ -181,7 +181,7 @@ app.get("/listing", function (request, response) {
 				row.dateObject = new Date(row.dateInMillis);
 			});
 			deferred.resolve(JSON.stringify(rows));
-		}, (err) => {
+		}).catch((err) => {
 			deferred.reject(JSON.stringify({
 				images: [],
 				error: err

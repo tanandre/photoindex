@@ -1,7 +1,6 @@
 "use strict";
 
 let log = require('./public/lib/log');
-let Deferred = require('./public/lib/Deferred');
 let dbIO = require('./server/DatabaseIO');
 let getExif = require('exif-async');
 global.isOnKanji = true;
@@ -34,16 +33,26 @@ function updatePhotoExifData (photoId, exif) {
 		let deviceTag = getDeviceTag(exif);
 		let exifDate = exif.exif.CreateDate;
 
-		let deferredAll = []
+		let promiseAll = []
 		if (exifDate) {
-			deferredAll.push(dbIO.updatePhoto([exifDate, photoId]))
+			// console.log('updating date')
+			promiseAll.push(dbIO.updatePhoto([exifDate, photoId]))
 		}
 		if (deviceTag) {
-			deferredAll.push(dbIO.addOrGetTag(deviceTag).then((tagId) => {
-				dbIO.addPhotoTag(photoId, tagId);
-			}));
+			console.log('updating deviceTag', deviceTag, photoId)
+
+			let promise = new Promise((resolve, reject) => {
+				dbIO.addOrGetTag(deviceTag).then((tagId) => {
+					console.log('storing deviceTag', tagId, photoId)
+					dbIO.addPhotoTag(photoId, tagId).then(result => {
+						console.log('success')
+						resolve(result)
+					}).catch(reject);
+				}).catch(reject);
+			})
+			promiseAll.push(promise)
 		}
-		Deferred.all(deferredAll).then(resolve).catch(reject)
+		Promise.all(promiseAll).then(resolve).catch(reject)
 	});
 }
 
@@ -61,7 +70,7 @@ function throttledProcess (arr, fnc, batchSize) {
 				return fnc(item)
 			})
 			Promise.all(promiseList).then(() => {
-				console.log('processed batch', batchSize, ' arr: ', arr.length)
+				console.log('processed batch', promiseList.length, ' arr: ', arr.length)
 				if (arr.length === 0) {
 					resolve()
 					return;
@@ -84,7 +93,10 @@ function updateExifInBatches () {
 			function fnc (row) {
 				return new Promise((res, rej) => {
 					getExif(row.path).then(exif => {
-						updatePhotoExifData(row.id, exif).then(res).catch(rej)
+						updatePhotoExifData(row.id, exif).then(res).catch(err => {
+							console.error('error storing exif for ', row.path)
+							res()
+						})
 					}).catch(err => {
 						console.error('error reading exif for ', row.path)
 						res()

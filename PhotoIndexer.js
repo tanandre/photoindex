@@ -15,6 +15,7 @@ if (process.argv.length < 3) {
 }
 
 let folder = process.argv[2];
+let recreateDb = process.argv[3] === '--db';
 log('start indexing folder: ' + folder)
 
 function handleError(file) {
@@ -34,14 +35,14 @@ function addPhotoToDb(file, tagId) {
 			let promise3 = dbIO.addPhotoTag(photoId, tagId)
 			promise3.then(() => {
 				deferred.resolve();
-			}, (err) => {
+			}).catch((err) => {
 				deferred.reject(new Error('could not add tag for photo: ' + file));
 			})
-		}, (err) => {
+		}).catch((err) => {
 			handleError(file)
 			deferred.reject(new Error('could not add photo: ' + file));
 		})
-	}, (err) => {
+	}).catch((err) => {
 		handleError(file)
 		deferred.reject(new Error('could not read date from photo: ' + file));
 	});
@@ -49,6 +50,7 @@ function addPhotoToDb(file, tagId) {
 }
 
 function indexFolder(folder) {
+		log('indexFolder: ' + folder);
 	let deferredIndexer = new Deferred();
 	dbIO.addOrGetTag('dateUnconfirmed').then(tagId => {
 		log('start indexing folder: ' + folder);
@@ -69,7 +71,7 @@ function indexFolder(folder) {
 				dbIO.addPhotoBatchSafe(results).then(() => {
 					log('batch insert completed: ' + folder + ' photos:' + results.length)
 					deferredIndexer.resolve();
-				}, err => {
+				}).catch(err => {
 					console.error('error inserting', err)
 					deferredIndexer.reject(err);
 				})
@@ -90,14 +92,24 @@ function indexFolderRoot(rootFolder) {
 
 
 dbIO.initialize().then(connection => {
-	// dbIO.recreateTables(connection).then(() => {
-	indexFolderRoot(folder).then(() => {
-		// indexFolder(folder).then(() => {
-		process.exit(0)
-	}, err => {
-		console.error(err)
-		process.exit(1)
-	})
-	// });
+	if (recreateDb) {
+		dbIO.recreateTables(connection).then(() => {
+			indexFolderRoot(folder).then(() => {
+				// indexFolder(folder).then(() => {
+				process.exit(0)
+			}).catch(err => {
+				console.error(err)
+				process.exit(1)
+			})
+		});
+	} else {
+		indexFolderRoot(folder).then(() => {
+			// indexFolder(folder).then(() => {
+			process.exit(0)
+		}).catch(err => {
+			console.error(err)
+			process.exit(1)
+		})
+	}
 }, console.error);
 
