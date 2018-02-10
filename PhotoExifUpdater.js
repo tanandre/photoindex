@@ -7,6 +7,10 @@ global.isOnKanji = true;
 
 log('start reading exif data')
 
+let args = process.argv.filter(s => !s.startsWith('--'))
+let database = args[2];
+
+
 function isImage (row) {
 	let fileName = row.path.toLowerCase();
 	return fileName.endsWith('.jpg') || fileName.endsWith('.jpeg');
@@ -138,15 +142,12 @@ function updateExif () {
 }
 
 
-dbIO.initialize().then(connection => {
-	// dbIO.recreateTables(connection).then(() => {
+dbIO.initialize(database).then(() => {
 	updateExifInBatches().then(() => {
-		// indexFolder(folder).then(() => {
 		process.exit(0)
 	}).catch(err => {
 		console.error(err)
 		process.exit(1)
 	})
-	// });
-}, console.error);
+}).catch(console.error);
 

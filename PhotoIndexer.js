@@ -1,8 +1,5 @@
 "use strict";
 
-let fs = require('fs');
-let path = require('path');
-
 let log = require('./public/lib/log');
 let Deferred = require('./public/lib/Deferred');
 let dbIO = require('./server/DatabaseIO');
@@ -14,9 +11,10 @@ if (process.argv.length < 3) {
 	return
 }
 let args = process.argv.filter(s => !s.startsWith('--'))
-let folder = process.argv[2];
+let folder = args[2];
 let database = args[3];
-let recreateDb = process.argv.indexOf('--db') !== -1;
+let recreateDb = args.indexOf('--db') !== -1;
+
 log('start indexing folder: ' + folder)
 
 function handleError (file) {
@@ -67,8 +65,6 @@ function indexFolder (folder) {
 				return deferred;
 			})
 			Deferred.all(datePromiseList).then(results => {
-				// log('starting batch insert: ' + results.length);
-
 				dbIO.addPhotoBatchSafe(results).then(() => {
 					log('batch insert completed: ' + folder + ' photos:' + results.length)
 					deferredIndexer.resolve();
@@ -82,20 +78,10 @@ function indexFolder (folder) {
 	return deferredIndexer;
 }
 
-function indexFolderRoot (rootFolder) {
-	let findSubdirs = p => fs.readdirSync(p).filter(f => fs.statSync(path.join(p, f)).isDirectory())
-	let subdirs = findSubdirs(rootFolder);
-	let promises = subdirs.filter(s => s !== '@eaDir').map(subdir => {
-		return indexFolder(path.join(rootFolder, subdir))
-	})
-	return Deferred.all(promises)
-}
-
-
 dbIO.initialize(database).then(connection => {
 	if (recreateDb) {
 		dbIO.recreateTables(connection).then(() => {
-			indexFolderRoot(folder).then(() => {
+			indexFolder(folder).then(() => {
 				// indexFolder(folder).then(() => {
 				process.exit(0)
 			}).catch(err => {
@@ -104,13 +90,12 @@ dbIO.initialize(database).then(connection => {
 			})
 		});
 	} else {
-		indexFolderRoot(folder).then(() => {
-			// indexFolder(folder).then(() => {
+		indexFolder(folder).then(() => {
 			process.exit(0)
 		}).catch(err => {
 			console.error(err)
 			process.exit(1)
 		})
 	}
-}, console.error);
+}).catch(console.error);
 
