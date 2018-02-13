@@ -28,6 +28,8 @@ function maxPhotoDate($conn) {
 
 $stats->photoCount = photoCount($conn);
 $stats->maxPhotoDate = maxPhotoDate($conn);
+
+header('Content-Type: application/json');
 echo json_encode($stats);
 
 $conn->close(); 

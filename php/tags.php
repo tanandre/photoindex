@@ -12,6 +12,8 @@ if ($result->num_rows > 0) {
 }
 
 $stats->tags = $output;
+
+header('Content-Type: application/json');
 echo json_encode($stats);
 $conn->close(); 
-     ?>
+?>
