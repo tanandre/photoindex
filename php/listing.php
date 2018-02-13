@@ -11,7 +11,6 @@ if ($result->num_rows > 0) {
 	 }
 }
 
-$stats->tags = $output;
-echo json_encode($stats);
+echo json_encode($output);
 $conn->close(); 
-     ?>
+?>
