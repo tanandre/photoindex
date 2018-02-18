@@ -14,4 +14,22 @@ function setCacheHeaders($duration) {
 	header("Expires: $ts");
 	header("Cache-Control: max-age=$seconds_to_cache");
 }
+
+function getPhoto($id) {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("SELECT path FROM photo WHERE id = ?");
+	$stmt->execute(array($id));
+	$row = $stmt->fetch();
+	$dbh = null;
+	return $row["path"];
+}
+
+function getTags() {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("SELECT name FROM tag");
+	$stmt->execute();
+	$output = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	$dbh = null;
+	return $output;
+}
 ?>
