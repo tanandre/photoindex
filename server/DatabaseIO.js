@@ -98,8 +98,8 @@ let cache = require('memory-cache');
 
 	function addPhotoBatch (rows) {
 		return query("INSERT INTO photo (date, path) VALUES ?;", [rows]).then((result) => {
-			console.log('batch inserted: ', rows.length);
-			console.log('batch ids: ', result);
+			// console.log('batch inserted: ', rows.length);
+			// console.log('batch ids: ', result);
 		});
 	}
 
@@ -331,7 +331,6 @@ let cache = require('memory-cache');
 		let sql = "SELECT p.* FROM photo p " + joinTagTable + " WHERE " + sqlMatch.sql +
 			" ORDER BY p.date DESC";
 
-		console.log(sql)
 		return query(sql, sqlMatch.values)
 	};
 

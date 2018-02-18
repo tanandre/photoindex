@@ -86,6 +86,7 @@ dbIO.initialize(database).then(connection => {
 		dbIO.recreateTables(connection).then(() => {
 			indexFolder(folder).then(() => {
 				// indexFolder(folder).then(() => {
+				log('-- all done --')
 				process.exit(0)
 			}).catch(err => {
 				console.error(err)
@@ -94,6 +95,7 @@ dbIO.initialize(database).then(connection => {
 		});
 	} else {
 		indexFolder(folder).then(() => {
+			log('-- all done --')
 			process.exit(0)
 		}).catch(err => {
 			console.error(err)

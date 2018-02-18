@@ -146,6 +146,7 @@ function updateExif () {
 
 dbIO.initialize(database).then(() => {
 	updateExifInBatches().then(() => {
+		log('-- all done --')
 		process.exit(0)
 	}).catch(err => {
 		console.error(err)
