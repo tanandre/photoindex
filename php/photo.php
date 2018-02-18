@@ -7,12 +7,9 @@ $quality = $_GET['q'];
 
 try {
 	$dbh = connectDb();
-
 	$stmt = $dbh->prepare("SELECT path FROM photo WHERE id = ?");
-
 	$stmt->execute(array($id));
 	$row = $stmt->fetch();
-
 	$dbh = null;
 
 	$file = str_replace("/volume1/photo", "/var/services/photo", $row["path"]);
@@ -23,7 +20,7 @@ try {
 	}
 	
 	$fp = fopen($file, 'rb');
-	setCacheHeaders();
+	setCacheHeaders(31536000);
 	header("Content-Type: image/jpg");
 	header("Content-Length: " . filesize($file));
 	fpassthru($fp);
