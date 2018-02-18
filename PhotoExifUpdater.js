@@ -19,7 +19,7 @@ function isImage (row) {
 function getDeviceTag (exif) {
 	let model = exif.image.Model ? exif.image.Model.replace(/\0/g, '') : null;
 	if (model) {
-		let make = exif.image.Make
+		let make = exif.image.Make.replace(/\0/g, '')
 		if (make) {
 			if (model.toLowerCase().indexOf(make.toLowerCase()) !== -1) {
 				return model.trim()
