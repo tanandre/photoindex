@@ -41,4 +41,15 @@ function getTags() {
 	$dbh = null;
 	return $output;
 }
+
+function getPhotoFile($photo, $quality) {
+	$file = str_replace("/volume1/photo", "/var/services/photo", $photo);
+	if (isset($quality)) {
+		$pos = strripos($file, "/");
+		$thumb = $quality == 1 ? "/SYNOPHOTO_THUMB_M.jpg" : "/SYNOPHOTO_THUMB_XL.jpg";
+		$file = substr($file, 0, $pos)."/@eaDir".substr($file, $pos).$thumb;
+	}
+	return $file;
+}
+
 ?>
