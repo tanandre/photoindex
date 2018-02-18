@@ -31,7 +31,7 @@ function getDeviceTag (exif) {
 	return null
 }
 
-function updatePhotoExifData (photoId, exif) {
+function updatePhotoExifData (photoId, exif, tagGroupId) {
 	return new Promise((resolve, reject) => {
 
 		let deviceTag = getDeviceTag(exif);
@@ -43,7 +43,7 @@ function updatePhotoExifData (photoId, exif) {
 		}
 		if (deviceTag) {
 			let promise = new Promise((resolve, reject) => {
-				dbIO.addOrGetTag(deviceTag).then((tagId) => {
+				dbIO.addOrGetTag(deviceTag, tagGroupId).then((tagId) => {
 					dbIO.addPhotoTag(photoId, tagId).then(result => {
 						resolve(result)
 					}).catch(reject);
@@ -85,28 +85,30 @@ function throttledProcess (arr, fnc, batchSize) {
 
 function updateExifInBatches () {
 	let promise = new Promise(function (resolve, reject) {
-		dbIO.readAllPhotos().then(data => {
-			// dbIO.queryTag(['2014']).then(data => {
-			log('found photos: ' + data.length)
+		dbIO.addOrGetTagGroup('Camera').then(tagGroupId => {
+			dbIO.readAllPhotos().then(data => {
+				// dbIO.queryTag(['2014']).then(data => {
+				log('found photos: ' + data.length)
 
-			function fnc (row) {
-				return new Promise((res, rej) => {
-					getExif(row.path).then(exif => {
-						updatePhotoExifData(row.id, exif).then(res).catch(err => {
-							console.error('error storing exif:', row.path)
+				function fnc (row) {
+					return new Promise((res, rej) => {
+						getExif(row.path).then(exif => {
+							updatePhotoExifData(row.id, exif, tagGroupId).then(res).catch(err => {
+								console.error('error storing exif:', row.path, err)
+								res()
+							})
+						}).catch(err => {
+							console.error('error reading exif for ', row.path)
 							res()
 						})
-					}).catch(err => {
-						console.error('error reading exif for ', row.path)
-						res()
-					})
-				});
-			}
+					});
+				}
 
-			let promise = throttledProcess(data.filter(row => isImage(row)), fnc, 100);
-			promise.then(resolve).catch(reject)
+				let promise = throttledProcess(data.filter(row => isImage(row)), fnc, 100);
+				promise.then(resolve).catch(reject)
+			}).catch(reject)
 		}).catch(reject)
-	})
+	});
 	return promise
 }
 

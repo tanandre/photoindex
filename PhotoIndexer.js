@@ -13,7 +13,7 @@ if (process.argv.length < 3) {
 let args = process.argv.filter(s => !s.startsWith('--'))
 let folder = args[2];
 let database = args[3];
-let recreateDb = args.indexOf('--db') !== -1;
+let recreateDb = process.argv.indexOf('--db') !== -1;
 
 log('start indexing folder: ' + folder)
 
@@ -50,36 +50,39 @@ function addPhotoToDb (file, tagId) {
 
 function indexFolder (folder) {
 	log('indexFolder: ' + folder);
-	let deferredIndexer = new Deferred();
-	dbIO.addOrGetTag('dateUnconfirmed').then(tagId => {
-		log('start indexing folder: ' + folder);
-		fileCrawler.findFiles(folder).then(files => {
-			// log('retrieving date for photos: ' + files.length);
+	return new Promise((resolve, reject) => {
+		dbIO.addOrGetTagGroup('Date').then(tagGroupId => {
+			dbIO.addOrGetTag('dateUnconfirmed', tagGroupId).then(tagId => {
+				log('start indexing folder: ' + folder);
+				fileCrawler.findFiles(folder).then(files => {
+					// log('retrieving date for photos: ' + files.length);
 
-			let datePromiseList = files.map(file => {
-				let deferred = new Deferred();
-				let readDateFromFile = dateUtil.readDateFromFile(file);
-				readDateFromFile.then(date => {
-					deferred.resolve([date, file])
-				}, deferred.reject);
-				return deferred;
-			})
-			Deferred.all(datePromiseList).then(results => {
-				dbIO.addPhotoBatchSafe(results).then(() => {
-					log('batch insert completed: ' + folder + ' photos:' + results.length)
-					deferredIndexer.resolve();
-				}).catch(err => {
-					console.error('error inserting', err)
-					deferredIndexer.reject(err);
+					let datePromiseList = files.map(file => {
+						let deferred = new Deferred();
+						let readDateFromFile = dateUtil.readDateFromFile(file);
+						readDateFromFile.then(date => {
+							deferred.resolve([date, file])
+						}, deferred.reject);
+						return deferred;
+					})
+					Deferred.all(datePromiseList).then(results => {
+						dbIO.addPhotoBatchSafe(results).then(() => {
+							log('batch insert completed: ' + folder + ' photos:' + results.length)
+							resolve();
+						}).catch(err => {
+							console.error('error inserting', err)
+							reject(err);
+						})
+					})
 				})
-			})
-		})
+			}).catch(reject)
+		}).catch(reject)
 	});
-	return deferredIndexer;
 }
 
 dbIO.initialize(database).then(connection => {
 	if (recreateDb) {
+		console.log('recreating db')
 		dbIO.recreateTables(connection).then(() => {
 			indexFolder(folder).then(() => {
 				// indexFolder(folder).then(() => {

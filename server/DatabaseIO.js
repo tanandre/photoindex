@@ -51,17 +51,22 @@ let cache = require('memory-cache');
 			query("DROP TABLE IF EXISTS photo_tag").catch(reject);
 			query("DROP TABLE IF EXISTS tag").catch(reject);
 			query("DROP TABLE IF EXISTS photo").catch(reject);
+			query("DROP TABLE IF EXISTS tag_group").catch(reject);
 
 			let sqlCreatePhotoTable = "CREATE TABLE if not exists photo " +
 				"( id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, path VARCHAR(255) NOT NULL, description VARCHAR(255) NULL, " +
 				"PRIMARY KEY (id), INDEX IX_DATE (date), UNIQUE(path))";
-			let sqlCreateTagTable = "CREATE TABLE if not exists tag ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL , PRIMARY KEY (id), UNIQUE(name) )";
+			let sqlCreateGroupTable = "CREATE TABLE if not exists tag_group ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL, PRIMARY KEY (id), UNIQUE(name) )";
+			let sqlCreateTagTable = "CREATE TABLE if not exists tag ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL, groupid INT NOT NULL, " +
+				"FOREIGN KEY (groupid) REFERENCES tag_group(id), PRIMARY KEY (id), UNIQUE(name) )";
 			let sqlCreateLinkTable = "CREATE TABLE if not exists photo_tag ( photoid INT NOT NULL , tagid INT NOT NULL, " +
 				"INDEX IX_PHOTO_ID (photoid), INDEX IX_TAG_ID (tagid), UNIQUE(photoid, tagid), FOREIGN KEY (photoid) REFERENCES photo(id), FOREIGN KEY (tagid) REFERENCES tag(id))";
 			query(sqlCreatePhotoTable, createDbHandle('table photo created', () => {
-				query(sqlCreateTagTable, createDbHandle('table tag created', () => {
-					query(sqlCreateLinkTable, createDbHandle('table photo_tag created', () => {
-						resolve(connection)
+				query(sqlCreateGroupTable, createDbHandle('table tag_group created', () => {
+					query(sqlCreateTagTable, createDbHandle('table tag created', () => {
+						query(sqlCreateLinkTable, createDbHandle('table photo_tag created', () => {
+							resolve(connection)
+						})).catch(reject);
 					})).catch(reject);
 				})).catch(reject);
 			})).catch(reject);
@@ -133,7 +138,70 @@ let cache = require('memory-cache');
 
 	};
 
-	module.exports.addOrGetTag = function (tag) {
+	function getTagGroup (tagGroup) {
+		return new Promise((resolve, reject) => {
+				query("SELECT id FROM tag_group WHERE name = ?;", [[[tagGroup]]]).then((row) => {
+					if (row.length === 0) {
+						resolve(null);
+					}
+					resolve(row[0].id);
+				}).catch(reject)
+			}
+		);
+	}
+
+	function addTagGroup (tagGroup) {
+		return new Promise((resolve, reject) => {
+				query("INSERT INTO tag_group (name) VALUES ?;", [[[tagGroup]]], true).then((result) => {
+					resolve(result.insertId)
+				}).catch(reject)
+			}
+		);
+	}
+
+	module.exports.getTagGroup = getTagGroup
+
+	module.exports.addTagGroup = addTagGroup
+
+	function addOrGetTagGroup (tagGroup) {
+		return new Promise((resolve, reject) => {
+			addTagGroup(tagGroup).then(resolve).catch(err => {
+				if (err.code !== 'ER_DUP_ENTRY') {
+					console.error('error while trying to insert tag_group: ', tagGroup, err);
+					reject(err);
+					return;
+				}
+				getTagGroup(tagGroup).then(id => {
+					if (id) {
+						resolve(id);
+						return;
+					}
+					reject(new Error('could not find tag group nor insert it'))
+				});
+
+			})
+		});
+	}
+
+	function wrapFunctionInCache (fnc) {
+		return function (arg) {
+			let key = JSON.stringify(arguments)
+			console.log('checking cache!')
+			if (cache.get(key)) {
+				console.log('cache hit!')
+				return Promise.resolve(cache.get(key))
+			}
+			return fnc.apply(this, arguments).then(value => {
+				console.log('populating cache', key)
+				cache.put(key, value)
+				return value
+			})
+		};
+	}
+
+	module.exports.addOrGetTagGroup = wrapFunctionInCache(addOrGetTagGroup)
+
+	module.exports.addOrGetTag = function (tag, tagGroupId) {
 		let cacheUrl = 'tag/' + tag;
 		let cachedResponse = cache.get(cacheUrl);
 		if (cachedResponse) {
@@ -142,8 +210,7 @@ let cache = require('memory-cache');
 		}
 
 		return new Promise((resolve, reject) => {
-
-			query("INSERT INTO tag (name) VALUES ?;", [[[tag]]], true).then((result) => {
+			query("INSERT INTO tag (name, groupid) VALUES ?;", [[[tag, tagGroupId]]], true).then((result) => {
 				cache.put(cacheUrl, result.insertId);
 				resolve(result.insertId)
 			}).catch((err) => {
@@ -164,7 +231,7 @@ let cache = require('memory-cache');
 				}).catch((err) => {
 					reject(err);
 				})
-			});
+			}).catch(reject);
 		})
 	};
 
@@ -264,6 +331,7 @@ let cache = require('memory-cache');
 		let sql = "SELECT p.* FROM photo p " + joinTagTable + " WHERE " + sqlMatch.sql +
 			" ORDER BY p.date DESC";
 
+		console.log(sql)
 		return query(sql, sqlMatch.values)
 	};
 
