@@ -66,15 +66,22 @@ function isValidDate($date) {
 	return $row["valid"] != null;
 }
 
-
-
-function updatePhoto($ids, $date) {
+function updatePhotosDate($ids, $date) {
 	if (!isValidDate($date)) {
-		return '-1';
+		return '-1'.$date;
 	}
 	$dbh = connectDb();
 	$stmt = $dbh->prepare("UPDATE photo SET date = ? WHERE id in (".toQ($ids).")");
 	$stmt->execute(array_merge(array($date), $ids));
+	$rowCount = $stmt->rowCount();
+	$dbh = null;
+	return $rowCount;
+}
+
+function updatePhotosDateOffset($ids, $daysOffset) {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("UPDATE photo SET date = ADDDATE(date, ?) WHERE id in (".toQ($ids).")");
+	$stmt->execute(array_merge(array($daysOffset), $ids));
 	$rowCount = $stmt->rowCount();
 	$dbh = null;
 	return $rowCount;

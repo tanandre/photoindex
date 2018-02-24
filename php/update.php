@@ -4,6 +4,8 @@ include('util.php');
 $id = $_POST['id'];
 $date = $_POST['date'];
 
-$rowCount = updatePhoto($id, $date);
-echo $rowCount  . " records UPDATED successfully";
+$result = new \stdClass();
+$result->rowCount = updatePhotosDate($id, $date);
+header('Content-Type: application/json');
+echo json_encode($result);
 ?>
