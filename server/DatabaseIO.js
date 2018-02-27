@@ -52,20 +52,28 @@ let cache = require('memory-cache');
 			query("DROP TABLE IF EXISTS tag").catch(reject);
 			query("DROP TABLE IF EXISTS photo").catch(reject);
 			query("DROP TABLE IF EXISTS tag_group").catch(reject);
+			query("DROP TABLE IF EXISTS photo_stats").catch(reject);
 
+			let sqlCreatePhotoStatsTable = "CREATE TABLE if not exists photo_stats " +
+				"( listingLastUpdateTime DATETIME NOT NULL, tagLastUpdateTime DATETIME NOT NULL)";
+			let sqlInsertPhotoStats = "INSERT INTO photo_stats (listingLastUpdateTime, tagLastUpdateTime) VALUES (SYSDATE(), SYSDATE())";
 			let sqlCreatePhotoTable = "CREATE TABLE if not exists photo " +
-				"( id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, path VARCHAR(255) NOT NULL, description VARCHAR(255) NULL, " +
+				"( id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, path VARCHAR(255) NOT NULL, description VARCHAR(255) NULL, rating INT NOT NULL DEFAULT 5, " +
 				"PRIMARY KEY (id), INDEX IX_DATE (date), UNIQUE(path))";
 			let sqlCreateGroupTable = "CREATE TABLE if not exists tag_group ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL, PRIMARY KEY (id), UNIQUE(name) )";
 			let sqlCreateTagTable = "CREATE TABLE if not exists tag ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL, groupid INT NOT NULL, " +
 				"FOREIGN KEY (groupid) REFERENCES tag_group(id), PRIMARY KEY (id), UNIQUE(name) )";
 			let sqlCreateLinkTable = "CREATE TABLE if not exists photo_tag ( photoid INT NOT NULL , tagid INT NOT NULL, " +
 				"INDEX IX_PHOTO_ID (photoid), INDEX IX_TAG_ID (tagid), UNIQUE(photoid, tagid), FOREIGN KEY (photoid) REFERENCES photo(id), FOREIGN KEY (tagid) REFERENCES tag(id))";
-			query(sqlCreatePhotoTable, createDbHandle('table photo created', () => {
-				query(sqlCreateGroupTable, createDbHandle('table tag_group created', () => {
-					query(sqlCreateTagTable, createDbHandle('table tag created', () => {
-						query(sqlCreateLinkTable, createDbHandle('table photo_tag created', () => {
-							resolve(connection)
+			query(sqlCreatePhotoStatsTable, createDbHandle('table photo_stats created', () => {
+				query(sqlInsertPhotoStats, createDbHandle('insert photo_stats', () => {
+					query(sqlCreatePhotoTable, createDbHandle('table photo created', () => {
+						query(sqlCreateGroupTable, createDbHandle('table tag_group created', () => {
+							query(sqlCreateTagTable, createDbHandle('table tag created', () => {
+								query(sqlCreateLinkTable, createDbHandle('table photo_tag created', () => {
+									resolve(connection)
+								})).catch(reject);
+							})).catch(reject);
 						})).catch(reject);
 					})).catch(reject);
 				})).catch(reject);
@@ -74,7 +82,7 @@ let cache = require('memory-cache');
 	}
 
 	module.exports.initialize = function (database) {
-		let db = database ? database : 'photoindex3'
+		let db = database ? database : 'photoindex2'
 		connection = mysql.createConnection({
 			host: 'kanji',
 			user: 'photoindex',

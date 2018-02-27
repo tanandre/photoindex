@@ -3,7 +3,7 @@ function connectDb() {
 	$servername = "localhost";
 	$username = "photoindex";
 	$password = "dc0b5jjF7bNjarkA";
-	$dbname = "photoindex4";
+	$dbname = "photoindex3";
 
 	return new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
 }
@@ -25,9 +25,9 @@ function toQ($items) {
 function queryPhotos($tags) {
 	function createSql($tags) {
 		if (empty($tags)) {
-			return "SELECT p.id, p.date, p.path, p.description FROM photo p ORDER BY date DESC";
+			return "SELECT p.id, p.date, p.path, p.description, p.rating FROM photo p ORDER BY date DESC";
 		}
-		return "SELECT p.id, p.date, p.path, p.description FROM photo p"
+		return "SELECT p.id, p.date, p.path, p.description, p.rating FROM photo p"
 			." LEFT JOIN photo_tag pt ON pt.photoId = p.id INNER JOIN tag t ON pt.tagId = t.id"
 			." WHERE t.name in ("
 			.toQ($tags) 
@@ -46,6 +46,47 @@ function queryPhotos($tags) {
 function validateMysqlDate( $date ) {
     return preg_match( '#^(?P<year>\d{2}|\d{4})([- /.])(?P<month>\d{1,2})\2(?P<day>\d{1,2})$#', $date, $matches )
            && checkdate($matches['month'],$matches['day'],$matches['year']);
+}
+
+function touchListing() {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("UPDATE photo_stats SET listingLastUpdateTime = SYSDATE()");
+	$stmt->execute();
+	$dbh = null;
+}
+
+function touchTags() {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("UPDATE photo_stats SET tagLastUpdateTime = SYSDATE()");
+	$stmt->execute();
+	$dbh = null;
+}
+
+function getLastModifiedTimeListing() {
+	return getLastModified('listingLastUpdateTime');
+}
+
+function getLastModifiedTimeTags() {
+	return getLastModified('tagLastUpdateTime');
+}
+
+function getLastModified($column) {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("SELECT ".$column." FROM photo_stats");
+	$stmt->execute();
+	$row = $stmt->fetch();
+	$dbh = null;
+	return strtotime($row[$column]);	
+}
+
+
+function checkModifiedSince($lastModified) {
+	if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && 
+	    strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) >= $lastModified) {
+	    header('HTTP/1.0 304 Not Modified');
+	    exit;
+	}
+	header('Last-Modified: '.gmdate('D, d M Y H:i:s', $lastModified).' GMT');
 }
 
 function getPhoto($id) {
@@ -74,6 +115,22 @@ function updatePhotosDate($ids, $date) {
 	$stmt = $dbh->prepare("UPDATE photo SET date = ? WHERE id in (".toQ($ids).")");
 	$stmt->execute(array_merge(array($date), $ids));
 	$rowCount = $stmt->rowCount();
+
+	if ($rowCount > 0) {
+		touchListing();
+	}
+	$dbh = null;
+	return $rowCount;
+}
+
+function updatePhotosRating($ids, $value) {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("UPDATE photo SET rating = ? WHERE id in (".toQ($ids).")");
+	$stmt->execute(array_merge(array($value), $ids));
+	$rowCount = $stmt->rowCount();
+	if ($rowCount > 0) {
+		touchListing();
+	}
 	$dbh = null;
 	return $rowCount;
 }
@@ -83,6 +140,9 @@ function updatePhotosDateOffset($ids, $daysOffset) {
 	$stmt = $dbh->prepare("UPDATE photo SET date = ADDDATE(date, ?) WHERE id in (".toQ($ids).")");
 	$stmt->execute(array_merge(array($daysOffset), $ids));
 	$rowCount = $stmt->rowCount();
+	if ($rowCount > 0) {
+		touchListing();
+	}
 	$dbh = null;
 	return $rowCount;
 }
@@ -98,7 +158,8 @@ function getPhotoTags($id) {
 
 function getTags() {
 	$dbh = connectDb();
-	$stmt = $dbh->prepare("SELECT name FROM tag");
+	//$stmt = $dbh->prepare("SELECT t.id, t.name FROM tag t inner join tag_group tg ON tg.id = t.groupid");
+	$stmt = $dbh->prepare("select t.id, t.name, tg.id as groupId, tg.name as groupName from tag t inner join tag_group tg ON tg.id = t.groupid order by t.name");
 	$stmt->execute();
 	$output = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	$dbh = null;

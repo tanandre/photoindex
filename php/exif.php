@@ -10,6 +10,6 @@ $exif = exif_read_data($file, 0, true);
 
 setCacheHeaders(3600);
 header('Content-Type: application/json');
-echo json_encode($exif);
+echo json_encode($exif, JSON_NUMERIC_CHECK);
 
 ?>
