@@ -51,32 +51,28 @@ function addPhotoToDb (file, tagId) {
 function indexFolder (folder) {
 	log('indexFolder: ' + folder);
 	return new Promise((resolve, reject) => {
-		// dbIO.addOrGetTagGroup('Date').then(tagGroupId => {
-		// 	dbIO.addOrGetTag('dateUnconfirmed', tagGroupId).then(tagId => {
-				log('start indexing folder: ' + folder);
-				fileCrawler.findFiles(folder).then(files => {
-					// log('retrieving date for photos: ' + files.length);
+		log('start indexing folder: ' + folder);
+		fileCrawler.findFiles(folder).then(files => {
+			// log('retrieving date for photos: ' + files.length);
 
-					let datePromiseList = files.map(file => {
-						let deferred = new Deferred();
-						let readDateFromFile = dateUtil.readDateFromFile(file);
-						readDateFromFile.then(date => {
-							deferred.resolve([date, file])
-						}, deferred.reject);
-						return deferred;
-					})
-					Deferred.all(datePromiseList).then(results => {
-						dbIO.addPhotoBatchSafe(results).then(() => {
-							log('batch insert completed: ' + folder + ' photos:' + results.length)
-							resolve();
-						}).catch(err => {
-							console.error('error inserting', err)
-							reject(err);
-						})
-					})
+			let datePromiseList = files.map(file => {
+				let deferred = new Deferred();
+				let readDateFromFile = dateUtil.readDateFromFile(file);
+				readDateFromFile.then(date => {
+					deferred.resolve([date, file])
+				}, deferred.reject);
+				return deferred;
+			})
+			Deferred.all(datePromiseList).then(results => {
+				dbIO.addPhotoBatchSafe(results).then(() => {
+					log('batch insert completed: ' + folder + ' photos:' + results.length)
+					resolve();
+				}).catch(err => {
+					console.error('error inserting', err)
+					reject(err);
 				})
-		// 	}).catch(reject)
-		// }).catch(reject)
+			})
+		})
 	});
 }
 
@@ -87,19 +83,35 @@ dbIO.initialize(database).then(connection => {
 			indexFolder(folder).then(() => {
 				// indexFolder(folder).then(() => {
 				log('-- all done --')
-				process.exit(0)
+				dbIO.touchIndexDate().then(() => {
+					process.exit(0)
+				}).catch(() => {
+					process.exit(1)
+				})
 			}).catch(err => {
 				console.error(err)
-				process.exit(1)
+				dbIO.touchIndexDate().then(() => {
+					process.exit(1)
+				}).catch(() => {
+					process.exit(2)
+				})
 			})
 		});
 	} else {
 		indexFolder(folder).then(() => {
 			log('-- all done --')
-			process.exit(0)
+			dbIO.touchIndexDate().then(() => {
+				process.exit(0)
+			}).catch(() => {
+				process.exit(1)
+			})
 		}).catch(err => {
 			console.error(err)
-			process.exit(1)
+			dbIO.touchIndexDate().then(() => {
+				process.exit(1)
+			}).catch(() => {
+				process.exit(2)
+			})
 		})
 	}
 }).catch(console.error);
