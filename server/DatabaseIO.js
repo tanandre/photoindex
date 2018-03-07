@@ -58,7 +58,7 @@ let cache = require('memory-cache');
 				"( listingLastUpdateTime DATETIME NOT NULL, tagLastUpdateTime DATETIME NOT NULL)";
 			let sqlInsertPhotoStats = "INSERT INTO photo_stats (listingLastUpdateTime, tagLastUpdateTime) VALUES (SYSDATE(), SYSDATE())";
 			let sqlCreatePhotoTable = "CREATE TABLE if not exists photo " +
-				"( id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, path VARCHAR(255) NOT NULL, description VARCHAR(255) NULL, rating INT NOT NULL DEFAULT 5, " +
+				"( id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, path VARCHAR(255) NOT NULL, description VARCHAR(255) NULL, rating INT NOT NULL DEFAULT 3, " +
 				"PRIMARY KEY (id), INDEX IX_DATE (date), UNIQUE(path))";
 			let sqlCreateGroupTable = "CREATE TABLE if not exists tag_group ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL, PRIMARY KEY (id), UNIQUE(name) )";
 			let sqlCreateTagTable = "CREATE TABLE if not exists tag ( id INT NOT NULL AUTO_INCREMENT, name VARCHAR(32) NOT NULL, groupid INT NOT NULL, " +

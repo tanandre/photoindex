@@ -51,8 +51,8 @@ function addPhotoToDb (file, tagId) {
 function indexFolder (folder) {
 	log('indexFolder: ' + folder);
 	return new Promise((resolve, reject) => {
-		dbIO.addOrGetTagGroup('Date').then(tagGroupId => {
-			dbIO.addOrGetTag('dateUnconfirmed', tagGroupId).then(tagId => {
+		// dbIO.addOrGetTagGroup('Date').then(tagGroupId => {
+		// 	dbIO.addOrGetTag('dateUnconfirmed', tagGroupId).then(tagId => {
 				log('start indexing folder: ' + folder);
 				fileCrawler.findFiles(folder).then(files => {
 					// log('retrieving date for photos: ' + files.length);
@@ -75,8 +75,8 @@ function indexFolder (folder) {
 						})
 					})
 				})
-			}).catch(reject)
-		}).catch(reject)
+		// 	}).catch(reject)
+		// }).catch(reject)
 	});
 }
 
