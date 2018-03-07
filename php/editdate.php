@@ -9,6 +9,7 @@ if (!isset($daysOffset)) {
 	return;
 }
 
+$result = new \stdClass();
 $result->rowCount = updatePhotosDateOffset($id, $daysOffset);
 header('Content-Type: application/json');
 echo json_encode($result, JSON_NUMERIC_CHECK);

@@ -1,16 +1,15 @@
 <?php
 include('util.php');
 
-$id = $_POST['id'];
-$rating = $_POST['rating'];
+$group = $_POST['group'];
 
-if (!isset($rating)) {
-	echo 'please specify rating';
+if (!isset($group)) {
+	echo 'please specify group';
 	return;
 }
 
 $result = new \stdClass();
-$result->rowCount = updatePhotosRating($id, $rating);
+$result->rowCount = insertTagGroup($group);
 header('Content-Type: application/json');
 echo json_encode($result, JSON_NUMERIC_CHECK);
 ?>

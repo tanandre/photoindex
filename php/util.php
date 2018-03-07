@@ -8,6 +8,14 @@ function connectDb() {
 	return new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
 }
 
+function getParameter($param) {
+	if (!isset($param)) {
+	    header('HTTP/1.0 400 Bad Request');
+		exit;
+	}	
+	return $param;
+}
+
 function setCacheHeaders($duration) {
 	$seconds_to_cache = $duration;
 	$ts = gmdate("D, d M Y H:i:s", time() + $seconds_to_cache) . " GMT";
@@ -132,6 +140,97 @@ function updatePhotosRating($ids, $value) {
 		touchListing();
 	}
 	$dbh = null;
+	return $rowCount;
+}
+
+function insertPhotoTag($id, $tagId) {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("INSERT INTO photo_tag (photoid, tagid) VALUES (?, ?)");
+	$stmt->execute(array($id, $tagId));
+	$rowCount = $stmt->rowCount();
+	if ($rowCount > 0) {
+		touchListing();
+	}
+	$dbh = null;
+	return $rowCount;
+}
+
+
+function updatePhotosTags($ids, $tagIds) {
+	$dbh = connectDb();
+	$rowCount = 0;
+	foreach($ids as $photoId) {
+		foreach ($tagIds as $tagId) {
+			$rowCount += insertPhotoTag($photoId, $tagId);
+		}
+
+	}
+	if ($rowCount > 0) {
+		touchTags();
+	}
+	$dbh = null;
+	return $rowCount;
+}
+
+function getTagGroups() {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("SELECT tg.id, tg.name FROM tag_group tg ORDER BY tg.name");
+	$stmt->execute();
+	$output = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	$dbh = null;
+	return $output;
+}
+
+function getTagGroup($group) {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("SELECT id FROM tag_group WHERE name = ?");
+	$stmt->execute(array($group));
+	$row = $stmt->fetch();
+	$dbh = null;
+	return $row["id"];
+}
+
+function insertTagGroup($group) {
+	$dbh = connectDb();
+	$stmt = $dbh->prepare("INSERT INTO tag_group (name) VALUES (?)");
+	$stmt->execute(array($group));
+	$row = $stmt->fetch();
+	$lastInsertId = $dbh->lastInsertId();
+	$dbh = null;
+	touchTags();
+	return $lastInsertId;
+}
+
+function insertTag($tag, $groupId) {
+	$dbh = connectDb();
+	error_log("INSERT INTO tag (name, groupid) VALUES (?, ?)");
+	error_log($tag);
+	error_log($group);
+	$stmt = $dbh->prepare("INSERT INTO tag (name, groupid) VALUES (?, ?)");
+	$stmt->execute(array($tag, $groupId));
+	$row = $stmt->fetch();
+	$rowCount = $stmt->rowCount();
+	$dbh = null;
+	return $rowCount;
+}
+
+function getOrAddGroup($group) {
+	$id = getTagGroup($group);
+	if ($id == null) {
+		$id = insertTagGroup($group);
+	}
+	return $id;
+}
+
+function updateTagsAndGroup($group, $tags) {
+	$groupId = getOrAddGroup($group);
+	$rowCount = 0;
+	foreach ($tags as $tag) {
+		$rowCount += insertTag($tag, $groupId);
+	}
+	if ($rowCount > 0) {
+		touchTags();
+	}
 	return $rowCount;
 }
 
