@@ -29,6 +29,21 @@ function setCacheHeaders (response) {
 	}
 }
 
+function createHttpDeferredForImage (response) {
+	let httpDeferred = new Deferred();
+	httpDeferred.then(function (data) {
+		setCacheHeaders(response);
+		setResponseHeaders(response);
+		response.end(data);
+	}, function (err) {
+		console.error(err);
+		response.status(500);
+		setResponseHeaders(response);
+		response.end(JSON.stringify(err));
+	});
+	return httpDeferred;
+}
+
 function createHttpDeferred (response) {
 	let httpDeferred = new Deferred();
 	httpDeferred.then(function (data) {
@@ -59,12 +74,8 @@ function wrapCache (cache, cacheId, deferred, fnc) {
 	fnc(deferred);
 }
 
-dbIO.initialize((err, connection) => {
-	if (err) {
-		console.error(err);
-		return;
-	}
-});
+dbIO.initialize().then(() => {
+}).catch(console.error);
 
 let server = app.listen(1337, () => {
 	log('photoindex listening on port 1337!');
@@ -82,7 +93,7 @@ function optimizedImage (path, maxSize) {
 
 app.get('/photo/:id/:width', function (request, response) {
 	response.setHeader('Content-Type', 'image/jpeg');
-	let deferred = createHttpDeferred(response);
+	let deferred = createHttpDeferredForImage(response);
 
 	dbIO.readPhotoById(request.params.id).then(function (row) {
 		// TODO check if modified since if we are reading the file from the cache
@@ -104,7 +115,7 @@ app.get('/photo/:id/:width', function (request, response) {
 });
 
 app.get('/photo/:id', function (request, response) {
-	let deferred = createHttpDeferred(response);
+	let deferred = createHttpDeferredForImage(response);
 	dbIO.readPhotoById(request.params.id).then((row) => {
 		let file = fs.readFileSync(row.path, 'binary');
 		response.setHeader('Content-Type', 'image/jpeg');

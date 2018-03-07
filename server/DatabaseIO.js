@@ -55,7 +55,7 @@ let cache = require('memory-cache');
 			query("DROP TABLE IF EXISTS photo_stats").catch(reject);
 
 			let sqlCreatePhotoStatsTable = "CREATE TABLE if not exists photo_stats " +
-				"( listingLastUpdateTime DATETIME NOT NULL, tagLastUpdateTime DATETIME NOT NULL)";
+				"( listingLastUpdateTime DATETIME NOT NULL, tagLastUpdateTime DATETIME NOT NULL, indexLastUpdateTime DATETIME NOT NULL)";
 			let sqlInsertPhotoStats = "INSERT INTO photo_stats (listingLastUpdateTime, tagLastUpdateTime) VALUES (SYSDATE(), SYSDATE())";
 			let sqlCreatePhotoTable = "CREATE TABLE if not exists photo " +
 				"( id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, path VARCHAR(255) NOT NULL, description VARCHAR(255) NULL, rating INT NOT NULL DEFAULT 3, " +
@@ -130,6 +130,10 @@ let cache = require('memory-cache');
 		return query("UPDATE photo SET date = ? WHERE id = ?;", row).then((result) => {
 			return result.insertId;
 		});
+	};
+
+	module.exports.touchIndexDate = function () {
+		return query("UPDATE photo_stats SET listingLastUpdateTime = SYSDATE()")
 	};
 
 	module.exports.addPhoto = function (row) {
