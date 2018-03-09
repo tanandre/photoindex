@@ -85,69 +85,51 @@ function throttledProcess (arr, fnc, batchSize) {
 
 function updateExifInBatches () {
 	let promise = new Promise(function (resolve, reject) {
-		dbIO.addOrGetTagGroup('Camera').then(tagGroupId => {
-			dbIO.readAllPhotos().then(data => {
-				// dbIO.queryTag(['2014']).then(data => {
-				log('found photos: ' + data.length)
+		dbIO.getLastPhotoIdIndex().then(lastIndex => {
+			dbIO.addOrGetTagGroup('Camera').then(tagGroupId => {
+				dbIO.readAllPhotosFromLastIndex(lastIndex).then(data => {
+					// dbIO.queryTag(['2014']).then(data => {
+					log('found photos: ' + data.length)
 
-				function fnc (row) {
-					return new Promise((res, rej) => {
-						getExif(row.path).then(exif => {
-							updatePhotoExifData(row.id, exif, tagGroupId).then(res).catch(err => {
-								console.error('error storing exif:', row.path, err)
+					let lastDbIndex = data.length === 0 ? -1 : Math.max(...data.map(row => row.id))
+
+					function fnc (row) {
+						return new Promise((res, rej) => {
+							getExif(row.path).then(exif => {
+								updatePhotoExifData(row.id, exif, tagGroupId).then(res).catch(err => {
+									console.error('error storing exif:', row.path, err)
+									res()
+								})
+							}).catch(err => {
+								console.error('error reading exif for ', row.path)
 								res()
 							})
-						}).catch(err => {
-							console.error('error reading exif for ', row.path)
-							res()
-						})
-					});
-				}
+						});
+					}
 
-				let promise = throttledProcess(data.filter(row => isImage(row)), fnc, 100);
-				promise.then(resolve).catch(reject)
+					let promise = throttledProcess(data.filter(row => isImage(row)), fnc, 100);
+					promise.then(() => {
+						resolve(lastDbIndex)
+					}).catch(reject)
+				}).catch(reject)
 			}).catch(reject)
 		}).catch(reject)
 	});
 	return promise
 }
 
-
-function updateExif () {
-	let promise = new Promise(function (resolve, reject) {
-		dbIO.readAllPhotos().then(data => {
-			log('found photos: ' + data.length)
-
-			let promiseList = data.filter(row => isImage(row)).slice(0, 100).map(row => {
-				//console.log('starting to read exif for: ', row.path)
-				return new Promise((internResolve, internReject) => {
-					getExif(row.path).then(exif => {
-						internResolve([exif.exif.CreateDate, row.id]);
-					}).catch(err => {
-						console.error('error reading exif for ', row.path)
-						internResolve(null)
-					})
-				})
-			})
-			Promise.all(promiseList).then((results) => {
-				// console.log(results)
-				let validResults = results.filter(result => result !== null);
-				let promises = validResults.map(result => {
-					return updatePhotoExifData(result.row.id, result.exif)
-					// console.log()
-				})
-				Promise.all(promises).then(resolve).catch(reject)
-			}).catch(reject)
-		}).catch(reject)
-	})
-	return promise
-}
-
-
 dbIO.initialize(database).then(() => {
-	updateExifInBatches().then(() => {
+	updateExifInBatches().then(lastIndex => {
 		log('-- all done --')
-		process.exit(0)
+		if (lastIndex === -1) {
+			process.exit(0)
+		}
+		dbIO.setLastPhotoIdIndex(lastIndex).then(() => {
+			process.exit(0)
+		}).catch(err => {
+			console.error(err)
+			process.exit(1)
+		})
 	}).catch(err => {
 		console.error(err)
 		process.exit(1)

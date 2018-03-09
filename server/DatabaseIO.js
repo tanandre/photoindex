@@ -136,6 +136,19 @@ let cache = require('memory-cache');
 		return query("UPDATE photo_stats SET listingLastUpdateTime = SYSDATE()")
 	};
 
+	module.exports.setLastPhotoIdIndex = function (id) {
+		return query("UPDATE photo_stats SET photoIdLastIndex = ?", id)
+	};
+
+	module.exports.getLastPhotoIdIndex = function () {
+		return query("SELECT photoIdLastIndex from photo_stats").then(row => {
+			if (row.length === 0) {
+				return 0
+			}
+			return row[0].photoIdLastIndex;
+		})
+	};
+
 	module.exports.addPhoto = function (row) {
 		return query("INSERT INTO photo (date, path) VALUES ?;", [[row]]).then((result) => {
 			return result.insertId;
@@ -198,13 +211,10 @@ let cache = require('memory-cache');
 	function wrapFunctionInCache (fnc) {
 		return function (arg) {
 			let key = JSON.stringify(arguments)
-			console.log('checking cache!')
 			if (cache.get(key)) {
-				console.log('cache hit!')
 				return Promise.resolve(cache.get(key))
 			}
 			return fnc.apply(this, arguments).then(value => {
-				console.log('populating cache', key)
 				cache.put(key, value)
 				return value
 			})
@@ -256,6 +266,10 @@ let cache = require('memory-cache');
 
 	module.exports.readAllPhotos = function () {
 		return query("SELECT * FROM photo ORDER BY date DESC");
+	};
+
+	module.exports.readAllPhotosFromLastIndex = function (lastIndex) {
+		return query("SELECT * FROM photo WHERE id > ? ORDER BY date DESC", lastIndex);
 	};
 
 	module.exports.readAllPhotosReversed = function () {
