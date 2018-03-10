@@ -16,5 +16,6 @@ $fp = fopen($file, 'rb');
 setCacheHeaders(31536000);
 header("Content-Type: image/jpg");
 header("Content-Length: " . filesize($file));
+header("Content-Disposition: attachment; filename=" . basename($file));
 fpassthru($fp);
 ?>
