@@ -15,17 +15,16 @@ if (!file_exists($file)) {
 
 
 $filesize = filesize($file);
-
+$rangeEnabled = false;
+// Send the content type header
+header("Content-Type: ".mime_content_type($file));
 $offset = 0;
 
 
 $size = filesize($file); // The size of the file
  
-// Send the content type header
-header("Content-Type: ".mime_content_type($file));
- 
 // Check if it's a HTTP range request
-if(isset($_SERVER['HTTP_RANGE'])){
+if($rangeEnabled && isset($_SERVER['HTTP_RANGE'])){
     // Parse the range header to get the byte offset
     $ranges = array_map(
         'intval', // Parse the parts into integer
@@ -39,6 +38,7 @@ if(isset($_SERVER['HTTP_RANGE'])){
 	$rangeDefaultSize = 524288;
 
     if(!$ranges[1]){
+    	//$ranges[1] = min( ($rangeDefaultSize + $ranges[0]), $size);
         $ranges[1] = $size - 1;
 
         if ($ranges[0] == ($size - 1)) {
@@ -132,13 +132,15 @@ if(isset($_SERVER['HTTP_RANGE'])){
 
 // } else {
 	checkModifiedSince(filemtime($file));
-checkETag(md5_file($file));
+	checkETag(md5_file($file));
 
 	setCacheHeaders(31536000);
 	header("Content-Type: ".mime_content_type($file));
 	header("Content-Length: " . filesize($file));
 	header("Content-Disposition: attachment; filename=" . basename($file));
-	header('Accept-Ranges: bytes');
+	if ($rangeEnabled) {
+		header('Accept-Ranges: bytes');
+	}
 
 	safeOutputFile($file);
 
