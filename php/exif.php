@@ -6,10 +6,15 @@ $id = $_GET['id'];
 $photo = getPhoto($id);
 $file = getPhotoFile($photo);
 
-$exif = exif_read_data($file, 0, true);
+$extension = strtolower(pathinfo($file)['extension']);
 
 setCacheHeaders(3600);
 header('Content-Type: application/json');
-echo json_encode($exif, JSON_NUMERIC_CHECK);
 
+if ($extension == 'jpeg' || $extension == 'jpg') {
+	$exif = exif_read_data($file, 0, true);
+	echo json_encode($exif, JSON_NUMERIC_CHECK);
+} else {
+	json_encode (new stdClass);
+}
 ?>
