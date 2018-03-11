@@ -4,7 +4,7 @@ include('util.php');
 $id = $_GET['id'];
 
 $photo = getPhoto($id);
-$file = getPhotoFile($photo);
+$file = getPhotoFile($photo, null);
 
 $extension = strtolower(pathinfo($file)['extension']);
 

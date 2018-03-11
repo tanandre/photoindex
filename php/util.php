@@ -282,14 +282,23 @@ function getPhotoFile($photo, $quality) {
 	return $file;
 }
 
+function getSynologyIndexedFile($file, $filepart) {
+	$pos = strripos($file, "/");
+	return substr($file, 0, $pos)."/@eaDir".substr($file, $pos).$filepart;
+}
+
+
 function getVideoFile($photo, $type) {
-	$file = str_replace("/volume1/photo", "/var/services/photo", $photo);
+	$originalFile = str_replace("/volume1/photo", "/var/services/photo", $photo);
 	if ($type == 'flv') {
-		$pos = strripos($file, "/");
-		$video = "/SYNOPHOTO_FILM.flv";
-		$file = substr($file, 0, $pos)."/@eaDir".substr($file, $pos).$video;
-	}
-	return $file;
+		return getSynologyIndexedFile($originalFile, "/SYNOPHOTO_FILM.flv");
+	} else if ($type == 'mp4') {
+		$mp4File = getSynologyIndexedFile($originalFile, "/SYNOPHOTO_FILM_CONVERT_MPEG4.mp4");;
+		if (file_exists($mp4File)) {
+			return $mp4File;
+		}
+	} 
+	return $originalFile;
 }
 
 function safeOutputFile($file) {
