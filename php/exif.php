@@ -13,8 +13,12 @@ header('Content-Type: application/json');
 
 if ($extension == 'jpeg' || $extension == 'jpg') {
 	$exif = exif_read_data($file, 0, true);
-	echo json_encode($exif, JSON_NUMERIC_CHECK);
+	if ($exif == false) {
+		header('HTTP/1.0 500 Internal Server Error - cannot read exif data');
+		exit;
+	}
+	echo json_encode($exif);
 } else {
-	json_encode (new stdClass);
+	echo json_encode (new stdClass);
 }
 ?>

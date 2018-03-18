@@ -6,7 +6,7 @@ let log = require('../public/lib/log');
 
 module.exports.findFiles = function (folder) {
 	let deferred = new Deferred();
-	recursive(folder, ['@eaDir', 'Thumbs.db', '__*', '*.tacitpart', '*.info', '*.THM'], function (err, files) {
+	recursive(folder, ['@eaDir', 'Thumbs.db', '__*', '*.tacitpart', '*.info', '*.THM', '*.tmp'], function (err, files) {
 		if (err) {
 			deferred.reject(err)
 			return

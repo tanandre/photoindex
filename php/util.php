@@ -30,14 +30,15 @@ function toQ($items) {
 	return join(",", array_map("q", $items));
 }
 
-function queryPhotos($tags) {
+function queryPhotos($tags, $rating) {
 	function createSql($tags) {
 		if (empty($tags)) {
-			return "SELECT p.id, p.date, p.path, p.description, p.rating FROM photo p ORDER BY date DESC";
+			return "SELECT p.id, p.date, p.path, p.description, p.rating FROM photo p WHERE p.rating >= ? ORDER BY date DESC";
 		}
 		return "SELECT p.id, p.date, p.path, p.description, p.rating FROM photo p"
 			." LEFT JOIN photo_tag pt ON pt.photoId = p.id INNER JOIN tag t ON pt.tagId = t.id"
-			." WHERE t.name in ("
+			." WHERE p.rating >= ?"
+			." AND t.name in ("
 			.toQ($tags) 
 			.") ORDER BY date DESC";
 	}
@@ -45,7 +46,8 @@ function queryPhotos($tags) {
 	$dbh = connectDb();
 	$stmt = $dbh->prepare(createSql($tags));
 
-	$stmt->execute($tags);
+	$params = empty($tags) ? array($rating) : array_merge(array($rating), $tags);
+	$stmt->execute($params);
 	$output = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	$dbh = null;
 	return $output;

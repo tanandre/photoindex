@@ -3,7 +3,8 @@ include('util.php');
 	
 checkModifiedSince(getLastModifiedTimeListing());
 
-$output = queryPhotos($_GET['tag']);
+ob_start("ob_gzhandler");
+$output = queryPhotos($_GET['tag'], $_GET['rating']);
 setCacheHeaders(3600);
 header('Content-Type: application/json');
 echo json_encode($output, JSON_NUMERIC_CHECK);
