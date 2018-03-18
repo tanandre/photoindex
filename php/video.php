@@ -131,8 +131,11 @@ if($rangeEnabled && isset($_SERVER['HTTP_RANGE'])){
 // 	echo $data;
 
 // } else {
-	checkModifiedSince(filemtime($file));
-	checkETag(md5_file($file));
+
+	if (!strpos($user_agent, 'Edge')) {
+		checkModifiedSince(filemtime($file));
+		checkETag(md5_file($file));
+	}
 
 	setCacheHeaders(31536000);
 	header("Content-Type: ".mime_content_type($file));
