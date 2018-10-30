@@ -3,7 +3,7 @@ function connectDb() {
 	$servername = "localhost";
 	$username = "photoindex";
 	$password = "dc0b5jjF7bNjarkA";
-	$dbname = "photoindex3";
+	$dbname = "photoindex";
 
 	return new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
 }
@@ -30,14 +30,15 @@ function toQ($items) {
 	return join(",", array_map("q", $items));
 }
 
-function queryPhotos($tags) {
+function queryPhotos($tags, $rating) {
 	function createSql($tags) {
 		if (empty($tags)) {
-			return "SELECT p.id, p.date, p.path, p.description, p.rating FROM photo p ORDER BY date DESC";
+			return "SELECT p.id, p.date, p.path, p.description, p.rating FROM photo p WHERE p.rating >= ? ORDER BY date DESC";
 		}
 		return "SELECT p.id, p.date, p.path, p.description, p.rating FROM photo p"
 			." LEFT JOIN photo_tag pt ON pt.photoId = p.id INNER JOIN tag t ON pt.tagId = t.id"
-			." WHERE t.name in ("
+			." WHERE p.rating >= ?"
+			." AND t.name in ("
 			.toQ($tags) 
 			.") ORDER BY date DESC";
 	}
@@ -45,7 +46,8 @@ function queryPhotos($tags) {
 	$dbh = connectDb();
 	$stmt = $dbh->prepare(createSql($tags));
 
-	$stmt->execute($tags);
+	$params = empty($tags) ? array($rating) : array_merge(array($rating), $tags);
+	$stmt->execute($params);
 	$output = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	$dbh = null;
 	return $output;
@@ -87,7 +89,6 @@ function getLastModified($column) {
 	return strtotime($row[$column]);	
 }
 
-
 function checkModifiedSince($lastModified) {
 	if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && 
 	    strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) >= $lastModified) {
@@ -95,6 +96,14 @@ function checkModifiedSince($lastModified) {
 	    exit;
 	}
 	header('Last-Modified: '.gmdate('D, d M Y H:i:s', $lastModified).' GMT');
+}
+
+function checkETag($etag) {
+	if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && trim($_SERVER['HTTP_IF_NONE_MATCH']) >= $etag) {
+	    header('HTTP/1.0 304 Not Modified');
+	    exit;
+	}
+	header("Etag: $etag"); 
 }
 
 function getPhoto($id) {
@@ -273,6 +282,38 @@ function getPhotoFile($photo, $quality) {
 		$file = substr($file, 0, $pos)."/@eaDir".substr($file, $pos).$thumb;
 	}
 	return $file;
+}
+
+function getSynologyIndexedFile($file, $filepart) {
+	$pos = strripos($file, "/");
+	return substr($file, 0, $pos)."/@eaDir".substr($file, $pos).$filepart;
+}
+
+
+function getVideoFile($photo, $type) {
+	$originalFile = str_replace("/volume1/photo", "/var/services/photo", $photo);
+	if ($type == 'flv') {
+		return getSynologyIndexedFile($originalFile, "/SYNOPHOTO_FILM.flv");
+	} else if ($type == 'mp4') {
+		$mp4File = getSynologyIndexedFile($originalFile, "/SYNOPHOTO_FILM_CONVERT_MPEG4.mp4");;
+		if (file_exists($mp4File)) {
+			return $mp4File;
+		}
+	} 
+	return $originalFile;
+}
+
+function safeOutputFile($file) {
+	$fp = fopen($file, 'rb');
+	if (filesize($file) < 134217728) {
+		fpassthru($fp);
+		return;
+	}
+
+	while (!feof($fp)) {
+	    echo fread($fp, 16384);
+	}
+	fclose($fp);
 }
 
 ?>
