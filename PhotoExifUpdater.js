@@ -91,7 +91,7 @@ function updateExifInBatches () {
 					// dbIO.queryTag(['2014']).then(data => {
 					log('found photos: ' + data.length)
 
-					let lastDbIndex = data.length === 0 ? -1 : Math.max(...data.map(row => row.id))
+					let lastDbIndex = data.length === 0 ? -1 : Math.max.apply(null, data.map(row => row.id))
 
 					function fnc (row) {
 						return new Promise((res, rej) => {
