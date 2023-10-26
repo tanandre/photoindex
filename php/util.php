@@ -30,6 +30,12 @@ function toQ($items) {
 	return join(",", array_map("q", $items));
 }
 
+function writeToFileCache($cacheFile, $data) {
+	$myfile = fopen($cacheFile, "w") or die("Unable to open cache file!");
+	fwrite($myfile, $data);
+	fclose($myfile);
+}
+
 function queryPhotos($tags, $rating) {
 	function createSql($tags) {
 		if (empty($tags)) {
